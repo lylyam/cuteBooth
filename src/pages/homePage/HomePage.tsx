@@ -1,7 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import PhotoBooth from '../../assets/PhotoBooth.png';
 import Button from '../../components/ui/Button';
-import homeStyle from './HomePage.module.css'
+import PageShell from '../../components/layouts/PageShell';
+import homeStyle from './HomePage.module.css';
 
 function HomePage() {
     const navigate = useNavigate(); // Hook para manejar la navegación
@@ -11,7 +12,7 @@ function HomePage() {
     };
 
     return(
-        <div className={homeStyle.container}>
+        <PageShell>
             <div className={homeStyle.imageWrapper}>
                 <img
                     className={homeStyle.photoBooth}
@@ -22,14 +23,7 @@ function HomePage() {
                     <Button onClick={handleButtonClick}>Let's shoot!</Button>
                 </div>
             </div>
-            <footer className={homeStyle.footer}>
-                <div className={homeStyle.footerLinks}>
-                    <Link to="/about" className={homeStyle.footerLink}>About Lym</Link>
-                    <Link to="/privacy" className={homeStyle.footerLink}>Privacy Policy</Link>
-                </div>
-                <span className={homeStyle.footerText}>A Lym's proyect</span>
-            </footer>
-        </div>
+        </PageShell>
     );
 };
 

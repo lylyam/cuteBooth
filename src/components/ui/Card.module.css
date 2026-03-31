@@ -1,0 +1,34 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.94px solid #222;
+  border-radius: 17.59px;
+  padding: 70px 10px 40px 10px;
+  width: 100%;
+  gap: 20px;
+}
+
+.imageContainer {
+  width: 72.559px;
+  height: 192.429px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.imageContainer img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
