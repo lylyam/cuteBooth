@@ -1,0 +1,168 @@
+/* DecorationPage — nodo D5, Figma 102:319 ("Decorarion"), plantilla de los tres pasos */
+
+.windowContent {
+  justify-content: space-between;
+  gap: clamp(1.5rem, 3vh, 40px);
+}
+
+.layout {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+/* Left panel: title + tabs (step 3 only) + scrollable grid */
+.panel {
+  flex: 1 1 380px;
+  max-width: 425px;
+  max-height: 543px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 25px;
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--dark-secondary);
+}
+
+/* Step 3 only: 3dStyle / drawStyle / feltStyle / pixelStyle */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tab {
+  padding: 6px 12px;
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-sm);
+  background-color: transparent;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.tabActive {
+  background-color: var(--dark-secondary);
+  color: var(--background-color);
+}
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 30px;
+  align-content: start;
+}
+
+/* Frames & Icons swatch: shows the whole art, uncropped */
+.swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 172 / 121;
+  padding: 4px;
+  border: none;
+  background-color: transparent;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+}
+
+.swatch:hover,
+.swatch:focus-visible {
+  background-color: var(--background-color);
+}
+
+.swatchSelected {
+  border: var(--border-width) solid var(--dark-secondary);
+}
+
+.swatch img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Backgrounds swatch (step 2 only): cropped fill, never the full image */
+.backgroundSwatch {
+  padding: 0;
+  overflow: hidden;
+}
+
+.backgroundSwatch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Right side: the live strip preview, painted by useCanvas (C4) */
+.preview {
+  position: relative;
+  flex: 0 0 auto;
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.previewClassic {
+  width: min(217px, 100%);
+  aspect-ratio: 218 / 637;
+}
+
+.previewWide,
+.previewSpotlight {
+  width: min(468px, 100%);
+  aspect-ratio: 468 / 419;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Step 3 only: draggable stickers sit above the canvas */
+.stickerLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sticker {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.sticker:active {
+  cursor: grabbing;
+}
+
+.footerActions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    justify-content: center;
+  }
+}

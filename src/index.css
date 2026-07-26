@@ -7,7 +7,6 @@
   font-style: normal;
 
   /* ---- Colors ---- */
-  --primary-color: #c2c2c2;
   --secondary-color: #565656;
   --background-color: #dedede;
   --dark-secondary: #222;
@@ -17,7 +16,9 @@
   --font-family-base: 'Fira Code', monospace;
   --font-size-sm: 14px;
   --font-size-md: 22px;
+  --font-size-lg: 40px;
   --font-size-title: clamp(2rem, 5vw, 4.625rem);
+  --font-size-label: 17px;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --line-height-tight: 1;
@@ -26,6 +27,7 @@
   /* ---- Borders & radius ---- */
   --border-width: 1.94px;
   --border-radius-sm: 8px;
+  --border-radius-md: 10px;
   --border-radius-lg: 17.59px;
   --border-radius-pill: 999px;
 

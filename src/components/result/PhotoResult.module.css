@@ -1,0 +1,87 @@
+/* PhotoResult — compartido por /review (D7, Figma 91:1346) y /final (D6, Figma 2074:52) */
+
+.layout {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.textBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  flex: 1 1 480px;
+  max-width: 776px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Overrides the global h1 (var(--secondary-color)): here the title reads
+   darker than its subtitle, per the Figma text colors. */
+.title {
+  color: var(--dark-secondary);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--secondary-color);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.stripWrapper {
+  flex: 0 0 auto;
+  width: min(320px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.strip {
+  transform: rotate(7.28deg);
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.stripClassic {
+  width: min(205px, 100%);
+  aspect-ratio: 218 / 637;
+}
+
+.stripWide,
+.stripSpotlight {
+  width: min(320px, 100%);
+  aspect-ratio: 468 / 419;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    justify-content: center;
+  }
+
+  .strip {
+    transform: none;
+  }
+}

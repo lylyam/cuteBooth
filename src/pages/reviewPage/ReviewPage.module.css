@@ -1,0 +1,14 @@
+/* ReviewPage — nodo D7, Figma 91:1346. El bloque de resultado vive en
+   components/result/PhotoResult.module.css; aquí solo el encaje de la ventana. */
+
+.windowContent {
+  padding-left: 50px;
+  padding-right: 50px;
+}
+
+@media (max-width: 640px) {
+  .windowContent {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}

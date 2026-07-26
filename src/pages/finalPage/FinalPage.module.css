@@ -1,0 +1,14 @@
+/* FinalPage — nodo D6, Figma 2074:52. Estructuralmente idéntica a /review:
+   reutiliza components/result/PhotoResult.module.css, no lo rehace. */
+
+.windowContent {
+  padding-left: 50px;
+  padding-right: 50px;
+}
+
+@media (max-width: 640px) {
+  .windowContent {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
