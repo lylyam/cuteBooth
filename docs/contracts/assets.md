@@ -33,23 +33,44 @@ gato) sustituyen el hueco rectangular por `path` + `mask`.
 
 ```ts
 // src/constants/frames.ts
-export type FrameId = /* los 8 del menú */;
+export type FrameId = string;   // `${LayoutId}/${fichero}`, p. ej. 'classic/Frame 7'
 
 export type FrameDef = {
   id: FrameId;
-  menuIcon: string;                        // icons for frames menu/*.svg
-  art: Record<LayoutId, string>;            // un SVG por layout
+  layout: LayoutId;
+  art: string;      // el SVG del marco
+  swatch: string;   // la muestra del menú, generada del propio art
 };
+
+export const FRAMES: Record<LayoutId, FrameDef[]>;   // 8 por layout
 ```
+
+**Los IDs de marco son por layout, y eso disuelve el problema del mapeo.** No hace falta
+saber qué marco de `classic` es "el mismo" que cuál de `wide`: el layout se elige **antes**
+de decorar y no hay camino de vuelta a `/layout`. Un `frame` solo tiene que resolver
+dentro de su propio layout.
 
 Consecuencias:
 
-1. **El estado guarda un solo `FrameId`**, y el layout activo elige el SVG. Ver
+1. **El estado guarda un solo `FrameId`**, válido únicamente para el layout activo. Ver
    [state.md](state.md).
 2. **`canvasUtils` (C2) dibuja el marco como capa superior**, escalado del viewBox del
    SVG al canvas del layout. No lo reconstruye con `Path2D` a mano.
 3. **Recortar la foto solo hace falta en los marcos no rectangulares.** El recorte sale
    del mismo SVG, no de una lista aparte.
+
+## La muestra del menú se genera del propio marco
+
+**Decidido el 2026-07-26.** `assets/frames/icons for frames menu/` **no se usa**. Para
+cada marco, X1 genera su muestra recortando el `viewBox` del SVG al **primer hueco** (el
+de menor `y`, luego menor `x`) con un margen pequeño.
+
+Es determinista y **no puede desincronizarse**: muestra y marco son el mismo fichero. La
+alternativa —mantener a mano una tabla de 8 iconos × 3 layouts— era el único dato que
+faltaba para cerrar X1, y así deja de faltar.
+
+La carpeta de iconos del menú se queda donde está, sin usar. Borrarla es decisión de
+diseño, no de código.
 
 ## Los fondos son por familia de layout, no globales
 
@@ -74,7 +95,8 @@ puede pasar: el layout se elige antes de decorar y `/layout` no es alcanzable de
    cambia el arte, cambia el manifiesto y **nadie más se toca**. Ese es todo el valor
    del patrón.
 3. **Un `frame`, `background` o sticker desconocido al rehidratar se trata como
-   `null`.** El manifiesto manda sobre el estado guardado.
+   `null`.** El manifiesto manda sobre el estado guardado. Un `frame` de otro layout
+   cuenta como desconocido.
 4. `asset-pipeline` **no escribe CSS ni TSX.** Solo `assets/**` y
    `constants/{frames,backgrounds,stickers}.ts`.
 
@@ -84,28 +106,20 @@ puede pasar: el layout se elige antes de decorar y `/layout` no es alcanzable de
 |---|---|---|
 | `frames/square/` | `frames/spotlight/` | `square` miente y se renombra en S2 |
 | `backgrounds/wide and square/` | `backgrounds/wide-and-spotlight/` | Espacios en rutas de import |
-| `frames/icons for frames menu/` | `frames/menu-icons/` | Igual |
+| `frames/icons for frames menu/` | — | **Sin usar.** Las muestras se generan del marco |
 | `icons/` | `stickers/` | Son pegatinas, no iconos de UI. `assets/icons/` induce a error |
 
 Los nombres de fichero (`1.png`, `Frame 7.svg`) **se dejan como están**: renombrar 320
 ficheros para ganar legibilidad que el manifiesto ya da es trabajo sin retorno.
 
-## Pendiente de un dato — bloquea X1 parcialmente
-
-**¿Qué icono del menú corresponde a qué marco, en cada layout?** No se puede deducir:
-son 8 iconos con nombres de Figma (`Ellipse 68`, `Subtract`, `Union-1`…) y 8 marcos por
-layout con numeración que **no coincide entre layouts** — `classic` va del 7 al 14,
-`spotlight` es 7, 8, 9, 10, 12, 13, 15, 18. Hacen falta las ocho ternas
-`icono → classic → wide → spotlight`. Solo lo sabe quien dibujó los marcos.
-
-Mientras no esté, X1 puede generar el manifiesto de fondos y de pegatinas, y dejar el de
-marcos declarado pero vacío.
-
 ## Criterio de aceptación de X1
 
 - [ ] `constants/{frames,backgrounds,stickers}.ts` exportan IDs tipados y sus rutas
-- [ ] Los 8 marcos tienen los 3 layouts resueltos, y ninguno apunta a un fichero que no
-      existe (verificado, no supuesto)
+- [ ] `FRAMES` tiene 8 entradas por layout, y ninguna apunta a un fichero que no existe
+      (verificado, no supuesto)
+- [ ] Cada marco tiene su muestra generada de su propio SVG, recortada al primer hueco
+- [ ] La geometría que usa S2 sale de los tres marcos rectangulares que lista
+      [layouts.md](layouts.md)
 - [ ] `BACKGROUND_FAMILY` cubre los 3 layouts
 - [ ] Ningún icono ni fondo entra por el bundler; los marcos sí
 - [ ] Las cuatro rutas de §Renombrados están renombradas y no queda ninguna con espacios

@@ -17,19 +17,17 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Contracts between layers | `docs/contracts/{state,layouts,design-tokens,assets}.md` |
 | Per-screen scope, literal copy, acceptance | `specs/{camera,upload,review,decoration,final}.md` |
 
-**Twelve product decisions are CLOSED** in
-[KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them.
+**Fifteen product decisions are CLOSED** in
+[KICKOFF.md](docs/orchestration/KICKOFF.md) §4, and **nothing is open**. Don't reopen
+them, and don't invent geometry or copy — if a datum is missing, report and ask.
 
-**Two things are still open, and no agent decides them alone** —
-[KICKOFF.md](docs/orchestration/KICKOFF.md) §6:
+Two of those decisions are the ones agents get wrong on their own:
 
-1. **Slot geometry disagrees by 10 px** between the Upload wireframe and the frame
-   artwork. **This blocks S2**, the root of the critical path. See
-   [docs/contracts/layouts.md](docs/contracts/layouts.md).
-2. **The menu-icon → frame mapping is missing.** Leaves X1 partial. See
-   [docs/contracts/assets.md](docs/contracts/assets.md).
-
-Report and ask. Never invent geometry or copy.
+- **Slot geometry comes from the frame artwork**, not the Upload wireframe — the frame is
+  drawn *on top of* the photos, so it is the only source that can be right. Numbers in
+  [docs/contracts/layouts.md](docs/contracts/layouts.md).
+- **A frame id is scoped to its layout** (`'classic/Frame 7'`). There is no
+  cross-layout correspondence and none is needed.
 
 ### Context rules
 

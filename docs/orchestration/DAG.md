@@ -61,10 +61,13 @@ graph LR
 | P8 | Prettier + `.editorconfig` | orquestador | — | ✅ configurado · **la pasada sobre `src/` está pendiente de autorización**: toca 17 ficheros que ahora mismo tienen cambios sin commitear |
 | P9 | `CLAUDE.md` como índice | orquestador | P1, P3, P5 | ✅ hecho |
 
-**DAG-0 cerrado el 2026-07-26.** El primer nodo de producto es **S2**, y arranca
-🔴 **bloqueado** por la discrepancia de geometría de
-[../contracts/layouts.md](../contracts/layouts.md) §⚠️. Mientras no se resuelva, el
-conjunto listo es **S1, C1, D1 y X1** (parcial) — ninguno depende de la geometría.
+**DAG-0 cerrado el 2026-07-26**, y con él las dos dudas que quedaban: la geometría la
+manda el arte de los marcos ([../contracts/layouts.md](../contracts/layouts.md)) y las
+muestras del menú se generan del propio marco
+([../contracts/assets.md](../contracts/assets.md)).
+
+**No queda nada bloqueado.** El primer nodo es **S2**, con la geometría ya escrita y
+verificada contra los SVG. La ola 1 es S2 + D1.
 
 ## 4. DAG-1 · Construcción del producto
 
@@ -112,11 +115,11 @@ graph LR
 
 | ID | Nodo | Dueño | Necesita | Produce | Aceptación | Estado |
 |---|---|---|---|---|---|---|
-| **S2** | Geometría y labels de los 3 layouts | `booth-state` | ⚠️ decisión de geometría | `constants/layouts.ts` | Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md) | 🔴 |
+| **S2** | Geometría y labels de los 3 layouts | `booth-state` | — | `constants/layouts.ts` | Geometría ya extraída del arte. Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md) | ⬜ |
 | **S1** | Reducer completo + tipos | `booth-state` | — | `context/PhotoBoothContext.tsx`, `types/` | 6 campos y **11** acciones (`SET_FRAME` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
 | **S3** | Guards de ruta | `booth-state` | S1 | `hooks/useRouteGuard.ts` | Tabla de guards y checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
 | **C1** | Utilidades de imagen | `canvas-media` | — | `utils/imageUtils.ts` | resize, dataURL↔Blob, sin fugas | ⬜ |
-| **C2** | Composición sobre canvas | `canvas-media` | S2, C1, **X1** | `utils/canvasUtils.ts` | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares. ⚠️ Antes hay que cerrar la discrepancia de geometría de [../contracts/layouts.md](../contracts/layouts.md) | ⬜ |
+| **C2** | Composición sobre canvas | `canvas-media` | S2, C1, **X1** | `utils/canvasUtils.ts` | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares | ⬜ |
 | **C3** | Hook de cámara | `canvas-media` | C1 | `hooks/useCamera.ts` | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado | ⬜ |
 | **C4** | Hook de canvas | `canvas-media` | C2 | `hooks/useCanvas.ts` | `draw(state)` + `exportAsBlob()` | ⬜ |
 | **C5** | Hook de stickers | `canvas-media` | S1, C4 | `hooks/useStickers.ts` | Arrastre correcto con escalado px-CSS ↔ px-canvas | ⬜ |
@@ -129,7 +132,7 @@ graph LR
 | **D6** | CSS FinalPage · nodo `2074:52` | `figma-design-sync` | D1, D7 | `FinalPage.module.css` | Idéntica a D7: reutilizar, no rehacer | ⬜ |
 | **D7** | CSS SelectedPicturesPage · nodo `91:1346` | `figma-design-sync` | D1 | `PhotoResult.module.css`, `ReviewPage.module.css` | El CSS del bloque de resultado es **compartido** con D6 | ⬜ |
 | **C7** | Componente `Loading` · nodo `91:1283` | `ui-composer` | D1 | `components/ui/Loading.tsx` | Spinner, no ruta. Lo usan las páginas que esperan | ⬜ |
-| **X1** | Manifiestos de assets | `asset-pipeline` | — | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md). 🟡 **Parcial**: falta el mapeo icono→marco por layout | 🟡 |
+| **X1** | Manifiestos de assets | `asset-pipeline` | — | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Las muestras del menú se generan del propio marco, así que no falta ningún dato. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md) | ⬜ |
 | **U1** | CameraPage `/camera` | `ui-composer` | S1,S3,C3,C7,D3 | página + `components/camera/` | Checklist en [../../specs/camera.md](../../specs/camera.md) | ⬜ |
 | **U2** | UploadPage `/upload` | `ui-composer` | S1,S3,C1,C7,D4 | página + `components/upload/` | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md) | ⬜ |
 | **U5** | **SelectedPicturesPage `/review`** | `ui-composer` | S1,S3,C4,D7 | página + `components/result/PhotoResult.tsx` | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md) | ⬜ |

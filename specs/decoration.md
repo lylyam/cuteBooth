@@ -57,12 +57,14 @@ contenido de la rejilla. Un solo componente de panel parametrizado, no tres.
 
 ### 1 · Frames
 
-La rejilla muestra los 8 marcos, con las muestras de
-`assets/frames/menu-icons/`. Elegir una escribe **un** `frame`, y el layout activo
-decide cuál de los tres SVG se dibuja: hay un fichero por marco **y por layout**
-(`assets/frames/{classic,wide,spotlight}/`). Cada SVG es la tira entera — borde exterior
-y cuatro huecos — y `canvasUtils` (C2) lo pinta encima, escalado del viewBox al canvas.
-Detalle en [../docs/contracts/assets.md](../docs/contracts/assets.md).
+La rejilla muestra los **8 marcos del layout activo** — hay 8 por layout, en
+`assets/frames/{classic,wide,spotlight}/`. Cada muestra se **genera del propio marco**,
+recortando su SVG al primer hueco: así muestra y marco no pueden desincronizarse.
+
+Elegir una escribe un `frame`, que es un id acotado a su layout (`'classic/Frame 7'`).
+Cada SVG es la tira entera — borde exterior y cuatro huecos — y `canvasUtils` (C2) lo
+pinta encima, escalado del viewBox al canvas. Detalle en
+[../docs/contracts/assets.md](../docs/contracts/assets.md).
 
 ### 2 · Backgrounds
 

@@ -7,108 +7,97 @@
 ## Los tres layouts
 
 **Decidido: `square` se renombra a `spotlight`.** El nombre viejo mentía — no es
-cuadrado, es apaisado con una foto destacada. El renombrado se hace **aquí, en
-S2**, antes de que nada más dependa de él.
+cuadrado, es apaisado con una foto destacada. El renombrado se hace **aquí, en S2**,
+antes de que nada más dependa de él.
 
 ```ts
 export type LayoutId = 'classic' | 'wide' | 'spotlight';
 ```
 
-Alcance del renombrado: `context/PhotoBoothContext.tsx`, `pages/layoutPage/LayoutPage.tsx`,
-y este contrato. Nada más lo usa todavía — por eso es ahora y no después.
+Alcance del renombrado: `context/PhotoBoothContext.tsx`,
+`pages/layoutPage/LayoutPage.tsx`, `src/assets/frames/square/` → `spotlight/`, y este
+contrato. Nada más lo usa todavía — por eso es ahora y no después.
 
-## Geometría — fuente canónica
+## Geometría — la fuente es el ARTE
 
-De las tres pantallas Upload de Figma, que no son tres estados sino los tres
-layouts. Px de wireframe, relativos al frame contenedor.
+**Decidido el 2026-07-26.** Los números salen de los SVG de marco del repo, no del
+wireframe de Upload. Motivo: el marco se dibuja **encima** de las fotos, así que la única
+geometría que puede estar bien es la del propio dibujo que las va a rodear. Ver §
+*Cómo se leen* y § *Qué cambió*.
 
-### `classic` — nodo `91:1168`, frame `91:1196` · 217.07 × 637
+Fuente por layout — el marco rectangular simple de cada carpeta:
 
-| # | x | y | w | h |
-|---|---|---|---|---|
-| 1 | 22.54 | 20 | 172 | 120.99 |
-| 2 | 22.54 | 154.99 | 172 | 120.99 |
-| 3 | 22.54 | 289.99 | 172 | 120.99 |
-| 4 | 22.54 | 424.98 | 172 | 120.99 |
+| Layout | Fichero | Canvas (viewBox) |
+|---|---|---|
+| `classic` | `assets/frames/classic/Frame 7.svg` | 218 × 637 |
+| `wide` | `assets/frames/wide/Frame 7.svg` | 468 × 419 |
+| `spotlight` | `assets/frames/square/Frame 8.svg` | 468 × 419 |
 
-Tira vertical. Margen inferior grande (≈91 px) — es el pie del photostrip clásico.
-
-### `wide` — nodo `91:1202`, frame `91:1244` · 468 × 419
-
-| # | x | y | w | h |
-|---|---|---|---|---|
-| 1 | 24 | 20 | 203 | 143 |
-| 2 | 241 | 20 | 203 | 143 |
-| 3 | 24 | 177 | 203 | 143 |
-| 4 | 241 | 177 | 203 | 143 |
-
-### `spotlight` — nodo `91:1223`, frame `91:1277` · 468 × 419
+### `classic` — tira vertical de 4
 
 | # | x | y | w | h |
 |---|---|---|---|---|
-| 1 | 20 | 20 | 428 | 246 |
-| 2 | 20 | 286 | 134 | 95 |
-| 3 | 167 | 286 | 134 | 95 |
-| 4 | 314 | 286 | 134 | 95 |
+| 1 | 23 | 30 | 172 | 120.99 |
+| 2 | 23 | 164.99 | 172 | 120.99 |
+| 3 | 23 | 300 | 172 | 120.99 |
+| 4 | 23 | 434.99 | 172 | 120.99 |
 
-## ⚠️ Tercera fuente, y no cuadra — DECISIÓN PENDIENTE
+### `wide` — rejilla 2×2
 
-El 2026-07-26 apareció en el repo el arte de los marcos, que **también** contiene la
-geometría de los huecos: `src/assets/frames/<layout>/Frame 7.svg` (el marco de esquinas
-redondeadas, el más simple) dibuja la tira entera con sus cuatro huecos.
+| # | x | y | w | h |
+|---|---|---|---|---|
+| 1 | 23 | 30 | 203 | 143 |
+| 2 | 242 | 30 | 203 | 143 |
+| 3 | 23 | 189 | 203 | 143 |
+| 4 | 242 | 189 | 203 | 143 |
 
-Los rectángulos del SVG son **líneas centrales** de un trazo de `1.94px`, así que el
-hueco real es `x-0.97`, `w+1.94`. Descontado eso, para `classic`:
+### `spotlight` — una grande arriba, tres pequeñas debajo
 
-| Fuente | hueco 1 | hueco 2 | hueco 3 | hueco 4 | tamaño |
-|---|---|---|---|---|---|
-| Upload (tabla de arriba) | y=20 | y=154.99 | y=289.99 | y=424.98 | 172 × 120.99 |
-| `frames/classic/Frame 7.svg` | y=30 | y=165 | y=300 | y=435 | 172 × 121 |
+| # | x | y | w | h |
+|---|---|---|---|---|
+| 1 | 23 | 30 | 422 | 246 |
+| 2 | 23 | 294 | 134 | 95 |
+| 3 | 167 | 294 | 134 | 95 |
+| 4 | 311 | 294 | 134 | 95 |
 
-El paso entre huecos coincide (135), el tamaño coincide, y la `x` coincide dentro de
-medio píxel (23 frente a 22.54). **Lo que no coincide es el origen vertical: 10 px.**
-En `wide` pasa lo mismo (y=30 frente a 20; segunda fila y=189 frente a 177).
+### Cómo se leen del SVG, si hay que rehacerlo
 
-**Por qué importa y no es un detalle:** el marco se dibuja *encima* de las fotos. Si C2
-coloca las fotos con los números de Upload y superpone el SVG del marco, las fotos
-quedan 10 px descuadradas respecto a su propio marco. No hay forma de que las dos
-fuentes sean correctas a la vez.
-
-**Recomendación:** manda el arte. Es lo único que el usuario ve superpuesto a sus fotos,
-y el wireframe de Upload es una maqueta de la que ya sabíamos que discrepaba con otras
-pantallas. Es decir: derivar los cuatro huecos de `frames/<layout>/Frame 7.svg`.
-
-**Ojo:** `frames/square/Frame 7.svg` **no** tiene los huecos como `rect` — son `path`.
-Para `spotlight` hay que sacarlos de otro marco rectangular de esa carpeta, o medirlos.
-
-**Esto no lo decide S2 solo.** Hasta que se cierre, los números de arriba siguen siendo
-los oficiales, con la advertencia puesta.
+1. Los `<rect>` del SVG son **líneas centrales** de un trazo de `1.94px`. El hueco real
+   es `x-0.97`, `y-0.97`, `w+1.94`, `h+1.94`. Las tablas de arriba ya lo tienen aplicado.
+2. **El primer `<rect>` es el borde exterior**, no un hueco. Se descarta.
+3. **El orden de los `<rect>` en el fichero NO es el orden de los huecos.** En
+   `classic/Frame 7.svg` van 30, 300, 165, 436. Hay que ordenar por `y` y luego por `x`.
+4. El radio de esquina de los huecos es `rx="9.03"`; el del borde exterior, `16.62`.
 
 ## Escala de exportación
 
-Los números de arriba son de wireframe: demasiado pequeños para un PNG
+Los números de arriba están en unidades del viewBox: demasiado pequeños para un PNG
 descargable. Se multiplican por un factor único y se redondean a entero.
 
 ```
 EXPORT_SCALE = 3
 
-classic   →  651 × 1911
+classic   →  654 × 1911
 wide      → 1404 × 1257
 spotlight → 1404 × 1257
 ```
 
-El factor va **explícito en el módulo**, no aplicado a mano en las tablas. Así se
-cambia la resolución de salida en un sitio.
+El factor va **explícito en el módulo**, no aplicado a mano en las tablas. Así se cambia
+la resolución de salida en un sitio.
 
-## Dos incoherencias, ya resueltas
+## Qué cambió respecto al wireframe, y por qué da igual
 
-**1. Ratio SVG vs. Figma.** Los iconos de `assets/draws/` dan 1.33 para
-`wide`/`spotlight`; Figma da 468/419 = 1.12. **Manda Figma**: los SVG son iconos
-de la tarjeta de selección, no el marco de salida. No los toques por esto.
+La versión anterior de este contrato sacaba la geometría de las pantallas Upload de
+Figma. Coincidía en el tamaño de cada hueco y en el paso entre huecos, pero situaba el
+primero **10 px más arriba** (`classic` y=20 frente a y=30) y bailaba hasta 6 px en
+`spotlight`. Con esos números, las fotos habrían quedado descuadradas dentro de su propio
+marco.
 
-**2. `Selected pictures` dibuja otro classic.** El nodo `92:42` usa 278.99×621.36
-con huecos de 175.2×133.6. **Manda Upload**, que es donde están los tres layouts
-juntos y por tanto donde son coherentes entre sí.
+Dos señales de que manda el arte: los números del arte son **enteros limpios**, y son los
+que el usuario ve superpuestos a sus fotos.
+
+Los tres nodos de Upload (`91:1168`, `91:1202`, `91:1223`) siguen valiendo para el **CSS**
+de esa pantalla (nodo D4). Para geometría de canvas, ya no.
 
 ## Forma del módulo
 
@@ -134,26 +123,28 @@ export const LAYOUT_LIST: LayoutDef[];   // orden de presentación en LayoutPage
 
 ## Reglas
 
-1. **Exactamente 4 slots.** La tupla lo fuerza en tipos: si algún día hay un
-   layout de 2 o 6, es un cambio de contrato, no un descuido.
+1. **Exactamente 4 slots.** La tupla lo fuerza en tipos: si algún día hay un layout de 2
+   o 6, es un cambio de contrato, no un descuido.
 2. **Coordenadas absolutas en px** del canvas de *ese* layout, no porcentajes.
    `canvasUtils` dibuja directo, sin conversión.
-3. **Todo el texto en inglés**, incluidos los `alt`. Los actuales están en español
-   y además describen mal la disposición (deuda D2 y D4 de ARCHITECTURE).
-4. `LayoutPage.tsx` consume `LAYOUT_LIST` y deja de declarar `cardData` en el
-   cuerpo del componente (deuda D1).
+3. **Todo el texto en inglés**, incluidos los `alt`
+   (vertical strip of 4 / 2×2 grid / one large photo above three small).
+4. `LayoutPage.tsx` consume `LAYOUT_LIST` y deja de declarar `cardData` en el cuerpo del
+   componente (deuda D1).
 5. **Nadie más define geometría.** Si `canvasUtils` necesita un número, sale de aquí.
-6. **Las máscaras de recorte NO van aquí.** La forma de cada hueco la decide el *frame
-   set* elegido y vive en `constants/frames.ts` (X1). Este módulo dice **dónde** va cada
-   hueco; el otro, **con qué forma** se recorta. Ver
-   [state.md](state.md) y [../../specs/decoration.md](../../specs/decoration.md).
+6. **Las formas de recorte NO van aquí.** Este módulo dice **dónde** va cada hueco; el
+   marco elegido dice **con qué forma** se recorta, y vive en `constants/frames.ts` (X1).
+   Ver [assets.md](assets.md).
+7. **El ratio de los SVG de `assets/draws/` no manda.** Dan 1.33 para `wide`/`spotlight`;
+   el arte da 468/419 = 1.12. Son iconos de la tarjeta de selección, no el marco de
+   salida. No los toques por esto.
 
 ## Criterio de aceptación de S2
 
 - [ ] `LayoutId` es `'classic' | 'wide' | 'spotlight'`; `square` no aparece en `src/`
 - [ ] `constants/layouts.ts` exporta `EXPORT_SCALE`, `LAYOUTS` y `LAYOUT_LIST` tipados
 - [ ] Los 3 layouts tienen 4 slots y `canvas` propio, escalados por `EXPORT_SCALE`
+- [ ] Las coordenadas coinciden con las tablas de arriba, **verificadas contra el SVG**
 - [ ] Los `alt` están en inglés y describen la disposición real
-      (vertical strip of 4 / 2×2 grid / one large photo above three small)
 - [ ] `LayoutPage.tsx` consume `LAYOUT_LIST`; `cardData` ya no existe
 - [ ] `npm run build` limpio y `/layout` se ve igual que antes

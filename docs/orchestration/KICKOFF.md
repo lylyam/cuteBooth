@@ -63,8 +63,11 @@ No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
 | 10 | **En el menú de fondos la muestra NO enseña la imagen completa**: cuadrado de esquinas redondeadas, del tamaño de las muestras de Frames, con la imagen recortada |
 | 11 | **`/final` lleva copy propio**, no el de `/review`: `Here's your decorated strip!` · `Download it, or start over to make a new one.` Botones `Download` y `Retake` |
 | 12 | **`Retake` conserva la decoración.** Vacía las fotos y vuelve al origen (`CLEAR_PHOTOS`), no reinicia todo |
+| 13 | **La geometría de los huecos la manda el ARTE de los marcos**, no el wireframe de Upload. Los números están en [../contracts/layouts.md](../contracts/layouts.md), extraídos de los tres marcos rectangulares |
+| 14 | **La muestra del menú de Frames se genera del propio marco**, recortando su SVG al primer hueco. `assets/frames/icons for frames menu/` no se usa |
+| 15 | **Los IDs de marco están acotados a su layout** (`'classic/Frame 7'`). No hay correspondencia entre layouts, y no hace falta |
 
-Las decisiones 7-12 se cerraron el 2026-07-26, en la sesión que cerró DAG-0.
+Las decisiones 7-15 se cerraron el 2026-07-26, en la sesión que cerró DAG-0.
 
 El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.md) §9.
 
@@ -86,18 +89,21 @@ Con eso, **D5, U3 y C5 quedan desbloqueados** y el camino crítico vuelve a ser 
 Lo que trajo de nuevo esa pantalla está en las decisiones 7-12 de §4 y en
 [../../specs/decoration.md](../../specs/decoration.md).
 
-**Lo que sí queda pendiente, y ahora son dos datos:**
+**Y el arte llegó al repo.** 343 ficheros el 2026-07-26 —  24 marcos, 46 fondos, 273
+pegatinas. No hay que bajar nada de Figma. Trajo dos discrepancias, las dos ya cerradas
+como decisiones 13 y 14 de §4:
 
-1. **La geometría no cuadra.** El arte de los marcos sitúa el primer hueco 10 px más
-   abajo que el wireframe de Upload, del que salieron los números de
-   [../contracts/layouts.md](../contracts/layouts.md). Como el marco se dibuja encima de
-   las fotos, las dos fuentes no pueden ser correctas a la vez. **Bloquea S2**, que es la
-   raíz del camino crítico. Recomendación y números en ese contrato.
-2. **Falta el mapeo icono→marco.** Son 8 muestras de menú y 8 marcos por layout, con
-   numeración distinta en cada carpeta. No se deduce. Deja X1 a medias, no del todo.
+- La geometría de los huecos **no coincidía** entre el arte y el wireframe (10 px en
+  `classic`). Manda el arte, porque es lo que se dibuja encima de las fotos.
+- **Faltaba** saber qué muestra del menú era qué marco. Ya no hace falta: la muestra se
+  genera del propio marco.
 
-La regla sigue en pie: un agente **no** resuelve una laguna inventándose los números.
-Se pregunta.
+**No queda ninguna pregunta abierta.** La regla sigue en pie de todas formas: un agente
+**no** resuelve una laguna inventándose los números. Se pregunta.
+
+**Lo único pendiente es de ejecución, no de decisión:** `npm run format` sobre `src/`
+espera a que se commitee el trabajo en curso. Ver deuda D5 de
+[../ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ## 7. Por dónde se empieza
 

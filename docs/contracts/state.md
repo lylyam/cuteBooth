@@ -45,11 +45,13 @@ inventa su forma de mutarlos. **No** entra Zustand ni Redux: seis campos no lo p
 y no hay `revokeObjectURL` que olvidar. Cuesta ~33 % de tamaño y presiona la cuota de
 `sessionStorage` — eso lo absorbe C6, no el estado.
 
-**`frame` es UN id, no cuatro.** Verificado contra el arte real: un marco es **el
-dibujo completo de la tira para un layout** — rectángulo exterior más los cuatro huecos,
-en un solo SVG. El usuario elige el marco; el layout activo elige cuál de los tres SVG
-se usa. Las formas raras (nube, orejas de gato) van dentro de ese mismo fichero. Detalle
-en [assets.md](assets.md).
+**`frame` es UN id, no cuatro.** Verificado contra el arte real: un marco es **el dibujo
+completo de la tira para un layout** — rectángulo exterior más los cuatro huecos, en un
+solo SVG. Las formas raras (nube, orejas de gato) van dentro de ese mismo fichero.
+
+**Y el id está acotado a su layout**: `'classic/Frame 7'`. No hay correspondencia entre
+marcos de layouts distintos, y no hace falta — el layout se elige antes de decorar y no
+hay vuelta atrás. Detalle en [assets.md](assets.md).
 
 **Nada derivado vive en el estado.** La imagen compuesta no se guarda: la produce
 `useCanvas` a demanda. **El paso actual de `/decoration` tampoco**: es `useState` local
