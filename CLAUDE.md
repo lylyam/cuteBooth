@@ -46,10 +46,16 @@ photo layout, capture or upload 4 photos, review the strip, decorate it in three
 (frame, background, stickers), and download the composited image.
 
 **Six routes**, of which two are built. `/` and `/layout` work; `/camera`, `/upload`,
-`/review`, `/decoration` and `/final` are 0-byte stub files with their routes commented
-out in `src/App.tsx`. `hooks/`, `services/`, `utils/` and `constants/` are empty.
+`/decoration` and `/final` are 0-byte stub files with their routes commented out in
+`src/App.tsx`. **`/review` has no folder at all yet** — node U5 creates it.
+
 `src/assets/` is **not** empty: 343 art files landed on 2026-07-26 — see
 [docs/contracts/assets.md](docs/contracts/assets.md).
+
+`constants/` and `utils/` now hold one file each (`layouts.ts` from S2, `imageUtils.ts`
+from C1), and `types/` is new. **`hooks/` and `services/` do not exist** — they were
+untracked empty folders, so git never carried them. Whoever writes the first hook or
+service creates the folder; nothing is broken.
 
 **All user-facing text is in English**, including `alt` attributes. The project docs are
 in Spanish; the product is not.
@@ -70,17 +76,23 @@ npm run preview      # preview a production build
 `.claude/settings.json` runs it at the end of every turn. A `PostToolUse` hook runs
 `eslint --fix` on any `src/**/*.ts(x)` that gets written.
 
-**Prettier is configured but not yet applied.** `npm run format` would touch 17 files;
-it needs its own format-only commit. Until then, match the file you are editing.
+**`npm run lint` is NOT clean.** It reports one pre-existing
+`react-refresh/only-export-components` error in `context/PhotoBoothContext.tsx`, which
+`eslint --fix` cannot fix. It predates node S1 and breaks nothing at runtime — it is debt
+**D8** in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §7. Don't report "lint passes"
+without looking, and don't "fix" it as a side errand: it changes imports everywhere.
+
+**Prettier is applied.** The format-only pass landed on 2026-07-26 (41 files). Run
+`npm run format` on what you write.
 
 ## Stack notes
 
 - **Vite 8**, which bundles via Rolldown. The React Compiler is wired in manually as a Babel plugin rather than through `babel-plugin-react-compiler`'s usual Vite integration — see `vite.config.ts`: `babel({ presets: [reactCompilerPreset()] })` from `@rolldown/plugin-babel`. Don't "simplify" this to a standard `vite-plugin-react-compiler` setup without checking it still works with Rolldown.
 - **TypeScript** is project-referenced: root `tsconfig.json` references `tsconfig.app.json` (src, DOM libs) and `tsconfig.node.json` (vite.config.ts, node libs). `npm run build` runs `tsc -b` across both before `vite build`.
 - **React Router v7** (`react-router-dom`) with `BrowserRouter` — routes are declared directly in `src/App.tsx`.
-- No global state library — global state is **today** a single `useState` in Context, and
-  becomes a `useReducer` with 6 fields and 11 actions in node S1. The contract is already
-  written: [docs/contracts/state.md](docs/contracts/state.md).
+- No global state library — global state is a `useReducer` in Context with 6 fields and 11
+  actions, delivered in node S1. Contract:
+  [docs/contracts/state.md](docs/contracts/state.md).
 - CSS Modules per component/page (`X.module.css` next to `X.tsx`), no Tailwind/styled-components.
 
 ## Architecture
@@ -91,12 +103,18 @@ Layer-based structure under `src/`:
 - `components/ui/` — small generic/reusable pieces (`Button`, `Card`, `Modal`), each self-contained with its own `.module.css`.
 - `components/layouts/` — page chrome: `PageShell` (outer page wrapper + `AppFooter`) and `WebAppOldStyle` (the retro "window" chrome with a title bar/logo/close button used to frame page content — see `LayoutPage.tsx` for the pattern).
 - `context/PhotoBoothContext.tsx` — the one global state container, exposing
-  `usePhotoBooth()`. Today it holds only `selectedLayout` and its setter.
-  `LayoutId` is `'classic' | 'wide' | 'square'` and **`square` is renamed to `spotlight`
-  in S2** — that layout is landscape with one featured photo, not square. Extend this
-  context; never create a second one.
-- `hooks/`, `services/`, `utils/`, `constants/` exist and are **empty** — reserved for
-  camera access, canvas composition and the layout/frame/sticker/background manifests.
+  `usePhotoBooth()`, which returns `{ state, dispatch }` and throws outside the provider.
+  6 fields, 11 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
+  unhandled action. No convenience setters. Extend this context; never create a second one.
+- `types/photobooth.ts` — state shape and the `PhotoBoothAction` union. `FrameId`,
+  `StickerId` and `BackgroundId` are `string` with a `TODO(X1)` until the manifests land.
+- `constants/layouts.ts` — `LayoutId` (`'classic' | 'wide' | 'spotlight'`), slot geometry
+  and `LAYOUT_LIST`. **`LayoutId` lives here, not in the context.**
+- `utils/imageUtils.ts` — image primitives (cover-crop, `File` → data URL, data URL →
+  `Blob`). Target sizes always arrive as parameters, so it never imports geometry.
+- `hooks/` and `services/` don't exist yet — reserved for camera access, canvas
+  composition and persistence. `constants/{frames,stickers,backgrounds}.ts` are still
+  pending (node X1).
 - `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
   hooks and permissions (`settings.json`).
 

@@ -59,22 +59,35 @@ src/
 ├── index.css                  ← reset + 21 custom properties en :root
 ├── assets/
 │   ├── draws/                 ← layoutIcon1..3.svg, en uso
-│   ├── backgrounds/           ← VACÍA
-│   └── icons/{feltIcons,handDrawIcons}/  ← VACÍAS
+│   ├── frames/                ← 32 SVG (24 marcos + 8 iconos de menú sin usar)
+│   ├── backgrounds/           ← 46 PNG
+│   └── icons/                 ← 273 PNG (pegatinas · se renombra a stickers/ en X1)
 ├── components/
 │   ├── ui/                    ← Button, Card, Modal
 │   └── layouts/               ← PageShell, WebAppOldStyle, AppFooter
 ├── context/
-│   └── PhotoBoothContext.tsx  ← useState, SOLO selectedLayout
+│   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 11 acciones (S1)
+├── types/
+│   └── photobooth.ts          ← forma del estado + unión de acciones (S1)
+├── constants/
+│   └── layouts.ts             ← LayoutId + geometría + LAYOUT_LIST (S2)
+├── utils/
+│   └── imageUtils.ts          ← primitivas de imagen (C1)
 ├── pages/
 │   ├── homePage/              ← implementada
 │   ├── layoutPage/            ← implementada (referencia del patrón)
 │   └── {camera,upload,decoration,final}Page/  ← .tsx VACÍOS (0 bytes)
-├── hooks/                     ← VACÍA
-├── services/                  ← VACÍA
-├── utils/                     ← VACÍA
-└── constants/                 ← VACÍA
+└── (sin hooks/ ni services/ todavía · sin carpeta para /review)
 ```
+
+**Tres cosas que sorprenden al mirar el árbol:**
+
+1. **`hooks/` y `services/` no existen.** Eran carpetas vacías sin trackear, así que
+   git nunca las llevó. Las crea quien escriba el primer hook (S3 o C3). No está roto.
+2. **`/review` no tiene carpeta.** Entró en alcance con la decisión 2, y la crea U5.
+   Los stubs de 0 bytes son **cuatro**, no cinco.
+3. **`assets/icons/` son pegatinas, no iconos de UI.** Se renombra a `stickers/` en X1;
+   el nombre actual induce a error. Ver [contracts/assets.md](contracts/assets.md).
 
 ## 5. Patrón de composición de página
 
