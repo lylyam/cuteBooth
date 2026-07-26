@@ -182,10 +182,10 @@ feature y tiene 25 líneas. Centralizarlo elimina el único conflicto estructura
 ## 5. Qué se intercambian
 
 ```
-booth-state ──▶ CONTRATO DE ESTADO   (completo en contracts/state.md)
-  { state:   { selectedLayout, source, photos[], frameSet, background, stickers[] },
+booth-state ──▶ CONTRATO DE ESTADO   (entregado en S1 · completo en contracts/state.md)
+  { state:   { selectedLayout, source, photos[], frame, background, stickers[] },
     actions: ['SET_LAYOUT','SET_SOURCE','ADD_PHOTO','SET_PHOTOS','CLEAR_PHOTOS',
-              'SET_FRAME_SET','SET_BACKGROUND','ADD_STICKER','MOVE_STICKER',
+              'SET_FRAME','SET_BACKGROUND','ADD_STICKER','MOVE_STICKER',
               'REMOVE_STICKER','RESET'],
     guards:  [{ route:'/decoration', requires:['selectedLayout','photos.length===4'] }] }
 

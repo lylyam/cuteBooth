@@ -96,32 +96,40 @@ Léela antes de crear cualquier página.
 
 ## 6. Estado global
 
-### Actual
+### Actual — S1 y S2 cerrados el 2026-07-26
 
 ```ts
 // context/PhotoBoothContext.tsx
-type PhotoBoothContextValue = {
-  selectedLayout: LayoutId | null;
-  setSelectedLayout: (layout: LayoutId) => void;
-};
-type LayoutId = 'classic' | 'wide' | 'square'; // 'square' se renombra en S2
+const { state, dispatch } = usePhotoBooth();
+// state: { selectedLayout, source, photos[], frame, background, stickers[] }
+// dispatch: unión discriminada de 11 acciones · types/photobooth.ts
+
+// constants/layouts.ts (S2)
+type LayoutId = 'classic' | 'wide' | 'spotlight';
 ```
 
-Un `useState`. Nada más. `usePhotoBooth()` lanza si se usa fuera del provider
-(buena decisión, mantenerla).
+Un `useReducer` con los 6 campos del flujo completo y las 11 acciones del contrato.
+`usePhotoBooth()` sigue lanzando fuera del provider (buena decisión, mantenida), y no
+expone setters de conveniencia: cada uno sería una segunda forma de mutar lo mismo.
 
-### Objetivo
+`LayoutId` ya **no** se define aquí — vive en `constants/layouts.ts` con la geometría.
 
-Dos cambios, ambos propiedad de `booth-state`:
+Los tres alias de manifiesto (`FrameId`, `StickerId`, `BackgroundId`) son `string` con un
+`TODO(X1)`: X1 los estrecha a su unión real al aterrizar. Lo que no se hizo fue duplicar
+aquí las listas de IDs.
 
-1. **`square` → `spotlight`** (nodo S2). El nombre actual miente: ese layout es
-   apaisado con una foto destacada, no cuadrado. Se renombra **antes** de que nada
-   más dependa de él. Ver [contracts/layouts.md](contracts/layouts.md).
-2. **`useState` → `useReducer`** con los campos del flujo completo (nodo S1). El
-   contrato exacto está en [contracts/state.md](contracts/state.md). Motivo: `photos`,
-   `frame`, `background` y `stickers` se actualizan de forma relacionada y desde
-   páginas y pasos distintos; con `useState` sueltos, cada uno inventaría su forma de
-   mutarlos.
+### Lo que quedó hecho
+
+Dos cambios, ambos propiedad de `booth-state`, **los dos ya aplicados**:
+
+1. **`square` → `spotlight`** (nodo S2 ✅). El nombre viejo mentía: ese layout es
+   apaisado con una foto destacada, no cuadrado. Ver
+   [contracts/layouts.md](contracts/layouts.md). Queda el renombrado de
+   `assets/frames/square/`, que es de `asset-pipeline` y se cobra en X1.
+2. **`useState` → `useReducer`** (nodo S1 ✅). Contrato en
+   [contracts/state.md](contracts/state.md). Motivo: `photos`, `frame`, `background` y
+   `stickers` se actualizan de forma relacionada y desde páginas y pasos distintos; con
+   `useState` sueltos, cada uno inventaría su forma de mutarlos.
 
 **No** introducir Zustand ni Redux. Seis campos y once acciones no lo justifican.
 Contrato completo — forma, acciones, guards, persistencia — en
@@ -129,17 +137,32 @@ Contrato completo — forma, acciones, guards, persistencia — en
 
 ## 7. Deuda conocida
 
-Estado a 2026-07-25. Cada punto es candidato a nodo del DAG.
+Estado a 2026-07-26. Cada punto es candidato a nodo del DAG.
 
-| #   | Deuda                                                                                                         | Ubicación                               | Impacto                                                                                                             |
-| --- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| D1  | `cardData` se reconstruye en cada render y contiene datos de dominio                                          | `pages/layoutPage/LayoutPage.tsx:26`    | Debe vivir en `constants/layouts.ts`                                                                                |
-| D2  | **Resuelto.** Los `alt` describen mal los layouts y `square` no es cuadrado (es 4:3 apaisado con rejilla 1+3) | `LayoutPage.tsx:30-42`                  | Ver [contracts/layouts.md](contracts/layouts.md)                                                                    |
-| D3  | `Modal` sin focus trap, sin restaurar foco al cerrar, sin `aria-labelledby`                                   | `components/ui/Modal.tsx:34`            | Accesibilidad                                                                                                       |
-| D4  | Idioma mezclado: UI en inglés, `alt` en español                                                               | `HomePage.tsx`, `LayoutPage.tsx`        | El `alt` es texto de usuario; hay que elegir uno                                                                    |
-| D5  | Indentación con tabs en un fichero, 2 espacios en el resto                                                    | `components/layouts/WebAppOldStyle.tsx` | Prettier ya está configurado (P8). Falta ejecutar `npm run format` — 17 ficheros — en un commit **solo de formato** |
-| D6  | 4 páginas son ficheros de 0 bytes con imports comentados                                                      | `pages/*`, `App.tsx:5`                  | Es el trabajo pendiente                                                                                             |
-| D7  | Sin runner de tests                                                                                           | —                                       | La única puerta de calidad es `npm run build` + revisión                                                            |
+| #   | Deuda                                                                                                         | Ubicación                               | Impacto                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| D1  | **Resuelto** (S2). `cardData` se reconstruía en cada render y tenía datos de dominio                          | `pages/layoutPage/LayoutPage.tsx:26`    | Vive en `constants/layouts.ts` como `LAYOUT_LIST`                                           |
+| D2  | **Resuelto.** Los `alt` describen mal los layouts y `square` no es cuadrado (es 4:3 apaisado con rejilla 1+3) | `LayoutPage.tsx:30-42`                  | Ver [contracts/layouts.md](contracts/layouts.md)                                            |
+| D3  | `Modal` sin focus trap, sin restaurar foco al cerrar, sin `aria-labelledby`                                   | `components/ui/Modal.tsx:34`            | Accesibilidad                                                                               |
+| D4  | Idioma mezclado: UI en inglés, `alt` en español                                                               | `HomePage.tsx`, `LayoutPage.tsx`        | El `alt` es texto de usuario; hay que elegir uno                                            |
+| D5  | **Resuelto** (P8). Indentación con tabs en un fichero, 2 espacios en el resto                                 | `components/layouts/WebAppOldStyle.tsx` | Pasada de Prettier aplicada el 2026-07-26: 41 ficheros en un commit solo de formato         |
+| D6  | 4 páginas son ficheros de 0 bytes con imports comentados                                                      | `pages/*`, `App.tsx:5`                  | Es el trabajo pendiente                                                                     |
+| D7  | Sin runner de tests                                                                                           | —                                       | La única puerta de calidad es `npm run build` + revisión                                    |
+| D8  | `npm run lint` da **1 error preexistente**: `react-refresh/only-export-components`                            | `context/PhotoBoothContext.tsx`         | El fichero exporta el provider _y_ `usePhotoBooth`. `eslint --fix` no lo arregla. Ver abajo |
+
+**Sobre D8, porque va a confundir a alguien.** `npm run build` está limpio, pero
+`npm run lint` **no**: da un error, y daba el mismo antes de S1 (comprobado contra
+`HEAD` el 2026-07-26 — la única diferencia es el número de línea). No lo introdujo ningún
+nodo y no rompe nada en producción: `react-refresh` solo afecta al hot-reload en
+desarrollo.
+
+El arreglo canónico es mover `usePhotoBooth` a su propio fichero, y eso es de
+`booth-state` (`src/context/**`). No se ha hecho aquí porque no es el alcance de S1 y
+porque toca los imports de toda página que consuma el contexto: cuanto más tarde, más
+caro. Candidato a nodo propio antes de la primera `U*`.
+
+Lo que **no** hay que hacer es asumir que `npm run lint` está verde: hoy no lo está, y
+un agente que dé por bueno "el lint pasa" sin mirar se va a llevar una sorpresa.
 
 ## 8. Divergencias con `Analisis/arquitectura.md`
 
