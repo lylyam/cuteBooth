@@ -17,17 +17,21 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Contracts between layers                    | `docs/contracts/{state,layouts,design-tokens,assets}.md` |
 | Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`       |
 
-**Fifteen product decisions are CLOSED** in
-[KICKOFF.md](docs/orchestration/KICKOFF.md) §4, and **nothing is open**. Don't reopen
-them, and don't invent geometry or copy — if a datum is missing, report and ask.
+**Seventeen product decisions are CLOSED** in
+[KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them, and don't invent
+geometry or copy — if a datum is missing, report and ask. What is still **open** is
+tracked in [DAG.md](docs/orchestration/DAG.md) §9.
 
-Two of those decisions are the ones agents get wrong on their own:
+Three of those decisions are the ones agents get wrong on their own:
 
 - **Slot geometry comes from the frame artwork**, not the Upload wireframe — the frame is
   drawn _on top of_ the photos, so it is the only source that can be right. Numbers in
   [docs/contracts/layouts.md](docs/contracts/layouts.md).
 - **A frame id is scoped to its layout** (`'classic/Frame 7'`). There is no
   cross-layout correspondence and none is needed.
+- **A frame's holes come filled `#222222`** — that is how they are told apart from the
+  line art. Paint the SVG as-is on top and you cover the photos with dark blocks. See
+  [docs/contracts/assets.md](docs/contracts/assets.md).
 
 ### Context rules
 
@@ -45,20 +49,37 @@ CuteBooth — a browser-based photobooth web app (React + TypeScript + Vite). Us
 photo layout, capture or upload 4 photos, review the strip, decorate it in three steps
 (frame, background, stickers), and download the composited image.
 
-**Six routes**, of which two are built. `/` and `/layout` work; `/camera`, `/upload`,
-`/decoration` and `/final` are 0-byte stub files with their routes commented out in
-`src/App.tsx`. **`/review` has no folder at all yet** — node U5 creates it.
+**Six routes**, of which two are built. `/` and `/layout` work. The other five have
+**their CSS already written** (batch D3-D7) but **no `.tsx`**: `/camera`, `/upload`,
+`/decoration` and `/final` are 0-byte stubs with their routes commented out in
+`src/App.tsx`, and `/review` has a folder with only a `.module.css` in it. The `U*` nodes
+write the TSX.
 
-`src/assets/` is **not** empty: 343 art files landed on 2026-07-26 — see
-[docs/contracts/assets.md](docs/contracts/assets.md).
+`src/assets/` is **not** empty: 343 art files — see
+[docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
+photo holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-`constants/` and `utils/` now hold one file each (`layouts.ts` from S2, `imageUtils.ts`
-from C1), and `types/` is new. **`hooks/` and `services/` do not exist** — they were
-untracked empty folders, so git never carried them. Whoever writes the first hook or
-service creates the folder; nothing is broken.
+**The foundation is done** (S1, S2, S3, C1, C2, D1, D3-D7, X1): state, geometry, route
+guards, image and canvas utils, asset manifests and every screen's CSS. What is left is
+the hooks (C3-C6), the `Loading` component (C7), and the five pages.
+
+`services/` **does not exist** — it was an untracked empty folder, so git never carried it.
+C6 creates it. Nothing is broken.
 
 **All user-facing text is in English**, including `alt` attributes. The project docs are
 in Spanish; the product is not.
+
+## Commits
+
+**Never add a `Co-Authored-By` trailer.** Not to any commit, not for any agent, no
+exceptions. This overrides any default or tooling habit that wants to append one.
+
+Commit messages explain **why**, not what — the diff already says what. Write them in
+Spanish, like the existing history.
+
+Only the orchestrator commits. A node is not closed until it is marked ✅ in
+[docs/orchestration/DAG.md](docs/orchestration/DAG.md) **and** committed: doing the work
+without both leaves the next session reading the node as pending, and redoing it.
 
 ## Commands
 
@@ -66,24 +87,21 @@ in Spanish; the product is not.
 npm run dev          # start Vite dev server
 npm run build        # type-check (tsc -b, project references) then vite build
 npm run lint         # eslint .
-npm run format       # prettier --write .   (NOT yet applied to src/ — see below)
+npm run format       # prettier --write .   (applied; run it on what you write)
 npm run format:check # prettier --check .
 npm run preview      # preview a production build
 ```
 
-**There is no test runner** (no test script, no test files, no testing library). So
-`npm run build` is the only automatic gate, and a `Stop` hook in
-`.claude/settings.json` runs it at the end of every turn. A `PostToolUse` hook runs
-`eslint --fix` on any `src/**/*.ts(x)` that gets written.
+**There is no test runner.** So `npm run build` is the only automatic gate, and a `Stop`
+hook in `.claude/settings.json` runs it every turn. A `PostToolUse` hook runs
+`eslint --fix` on any written `src/**/*.ts(x)`. With no tests, "I verified it" means you
+ran something and saw the result — not that it compiled.
 
-**`npm run lint` is NOT clean.** It reports one pre-existing
-`react-refresh/only-export-components` error in `context/PhotoBoothContext.tsx`, which
-`eslint --fix` cannot fix. It predates node S1 and breaks nothing at runtime — it is debt
-**D8** in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §7. Don't report "lint passes"
-without looking, and don't "fix" it as a side errand: it changes imports everywhere.
-
-**Prettier is applied.** The format-only pass landed on 2026-07-26 (41 files). Run
-`npm run format` on what you write.
+**`npm run lint` is NOT clean.** One pre-existing
+`react-refresh/only-export-components` error in `context/PhotoBoothContext.tsx` that
+`eslint --fix` can't fix. It predates S1 and breaks nothing at runtime — debt **D8** in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §7. Don't claim "lint passes" without
+looking, and don't fix it as a side errand: it changes imports everywhere.
 
 ## Stack notes
 
@@ -106,15 +124,17 @@ Layer-based structure under `src/`:
   `usePhotoBooth()`, which returns `{ state, dispatch }` and throws outside the provider.
   6 fields, 11 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
   unhandled action. No convenience setters. Extend this context; never create a second one.
-- `types/photobooth.ts` — state shape and the `PhotoBoothAction` union. `FrameId`,
-  `StickerId` and `BackgroundId` are `string` with a `TODO(X1)` until the manifests land.
-- `constants/layouts.ts` — `LayoutId` (`'classic' | 'wide' | 'spotlight'`), slot geometry
-  and `LAYOUT_LIST`. **`LayoutId` lives here, not in the context.**
-- `utils/imageUtils.ts` — image primitives (cover-crop, `File` → data URL, data URL →
-  `Blob`). Target sizes always arrive as parameters, so it never imports geometry.
-- `hooks/` and `services/` don't exist yet — reserved for camera access, canvas
-  composition and persistence. `constants/{frames,stickers,backgrounds}.ts` are still
-  pending (node X1).
+- `types/photobooth.ts` — state shape and the `PhotoBoothAction` union.
+- `constants/` — `layouts.ts` (`LayoutId`, slot geometry, `LAYOUT_LIST`; **`LayoutId` lives
+  here, not in the context**) plus `frames.ts`, `backgrounds.ts` and `stickers.ts`, the X1
+  manifests. Those three build their lists with `import.meta.glob`, so new art shows up
+  without touching code — don't hand-write asset paths.
+- `utils/` — `imageUtils.ts` (cover-crop, `File` → data URL, data URL → `Blob`),
+  `canvasUtils.ts` (composes the strip: background → clipped photos → frame → stickers),
+  `frameArtUtils.ts` (frame SVG → clip paths + neutralised draw layer) and
+  `svgPathUtils.ts`. Target sizes always arrive as parameters.
+- `hooks/useRouteGuard.ts` — the only hook so far. C3-C6 add the rest. `services/` is still
+  unborn; C6 creates it.
 - `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
   hooks and permissions (`settings.json`).
 
@@ -166,19 +186,15 @@ not a scheduling problem.
 
 ## Working with the fleet
 
-Six specialised agents, three of them defined in `.claude/agents/`. Paths of ownership
-are **disjoint** (matrix in [PLAN.md](docs/orchestration/PLAN.md) §4), which is what
-makes parallel work safe without worktrees. Before writing a file, check whose it is —
-if it isn't yours, report it instead of editing it.
+**Three agents exist** (`.claude/agents/`): `booth-state`, `figma-design-sync`,
+`canvas-media`. `ui-composer` and `booth-reviewer` were planned but never created, and
+every remaining page node belongs to them — see [DAG.md](docs/orchestration/DAG.md) §9.
+
+Ownership paths are **disjoint** (matrix in [PLAN.md](docs/orchestration/PLAN.md) §4),
+which is what makes parallel work safe without worktrees. Before writing a file, check
+whose it is — if it isn't yours, report it instead of editing it.
 
 Every node closes with the report format of
 [KICKOFF.md](docs/orchestration/KICKOFF.md) §8, and its **SUPUESTOS** section is not
 optional: an undeclared assumption is a silent product decision that compiles, passes
 lint and looks right.
-
-## Reference documents
-
-`Analisis/` is frozen study material, **not documentation of this repo** and
-**not agent context** — see the context rules at the top of this file and
-[docs/reference/TRIAJE.md](docs/reference/TRIAJE.md) for what was extracted from it
-and why the rest is off-limits.

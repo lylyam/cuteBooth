@@ -27,7 +27,7 @@ rectángulos del wireframe son solo la referencia geométrica para el
 canvas real, no un simple placeholder de UI como en Upload.
 
 Las muestras del panel (Frame 32) también son imágenes reales generadas por
-`asset-pipeline` (ver `contracts/assets.md`), no formas CSS: el contenedor
+X1 (ver `contracts/assets.md`), no formas CSS: el contenedor
 `.swatch` solo las centra y les da hueco de click.
 
 ## Mapeo a tokens

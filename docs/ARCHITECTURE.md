@@ -17,7 +17,7 @@ en tres pasos (recorte, fondo, pegatinas) y descarga una imagen compuesta.
   preset de Babel en `vite.config.ts` vía `@rolldown/plugin-babel`. **No migrar** a
   la integración estándar sin comprobar que sigue funcionando con Rolldown.
 - **React Router v7**, `BrowserRouter`, rutas declaradas en `src/App.tsx`
-- **CSS Modules** (`X.module.css` junto a `X.tsx`) + custom properties en `:root`.
+- **CSS Modules** (`X.module.css` junto a `X.tsx`) + 23 custom properties en `:root`.
   Sin Tailwind, sin styled-components, sin librería de UI.
 - **Sin librería de estado global.** Context API.
 - **Sin runner de tests.** No hay Vitest, ni Jest, ni Testing Library.
@@ -54,9 +54,9 @@ Corolarios prácticos:
 
 ```
 src/
-├── App.tsx                    ← registro de rutas (2 activas, 4 comentadas)
+├── App.tsx                    ← registro de rutas (2 activas, 4 comentadas · /review sin dar de alta)
 ├── main.tsx
-├── index.css                  ← reset + 21 custom properties en :root
+├── index.css                  ← reset + 23 custom properties en :root
 ├── assets/
 │   ├── draws/                 ← layoutIcon1..3.svg, en uso
 │   ├── frames/{classic,wide,spotlight}/  ← 8 SVG cada uno + carpeta de menú sin usar
@@ -64,28 +64,37 @@ src/
 │   └── stickers/{3dStyle,drawStyle,feltStyle,pixelStyle}/  ← 273 PNG
 ├── components/
 │   ├── ui/                    ← Button, Card, Modal
-│   └── layouts/               ← PageShell, WebAppOldStyle, AppFooter
+│   ├── layouts/               ← PageShell, WebAppOldStyle, AppFooter
+│   └── result/                ← SOLO PhotoResult.module.css (D7) · el .tsx lo hace U5
 ├── context/
 │   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 11 acciones (S1)
 ├── types/
 │   └── photobooth.ts          ← forma del estado + unión de acciones (S1)
 ├── constants/
-│   └── layouts.ts             ← LayoutId + geometría + LAYOUT_LIST (S2)
+│   ├── layouts.ts             ← LayoutId + geometría + LAYOUT_LIST (S2)
+│   └── {frames,backgrounds,stickers}.ts  ← manifiestos por import.meta.glob (X1)
 ├── utils/
-│   └── imageUtils.ts          ← primitivas de imagen (C1)
-├── pages/
-│   ├── homePage/              ← implementada
-│   ├── layoutPage/            ← implementada (referencia del patrón)
-│   └── {camera,upload,decoration,final}Page/  ← .tsx VACÍOS (0 bytes)
-└── (sin hooks/ ni services/ todavía · sin carpeta para /review)
+│   ├── imageUtils.ts          ← primitivas de imagen (C1)
+│   ├── canvasUtils.ts         ← composición de la tira (C2)
+│   ├── frameArtUtils.ts       ← SVG del marco → recortes + capa neutralizada (C2)
+│   ├── svgPathUtils.ts        ← parseo de path-data, sin DOM (C2)
+│   └── assetManifest.ts       ← fontanería común de los manifiestos (X1)
+├── hooks/
+│   └── useRouteGuard.ts       ← guards de las 6 rutas (S3)
+└── pages/
+    ├── homePage/              ← implementada
+    ├── layoutPage/            ← implementada (referencia del patrón)
+    ├── reviewPage/            ← SOLO el .module.css (D7)
+    └── {camera,upload,decoration,final}Page/  ← .module.css escrito, .tsx de 0 bytes
 ```
 
 **Tres cosas que sorprenden al mirar el árbol:**
 
-1. **`hooks/` y `services/` no existen.** Eran carpetas vacías sin trackear, así que
-   git nunca las llevó. Las crea quien escriba el primer hook (S3 o C3). No está roto.
-2. **`/review` no tiene carpeta.** Entró en alcance con la decisión 2, y la crea U5.
-   Los stubs de 0 bytes son **cuatro**, no cinco.
+1. **Las cinco pantallas pendientes ya tienen su CSS**, escrito en el lote D3-D7. Lo que
+   falta es el `.tsx`. Si vas a montar una página, **no escribas CSS**: léelo, ya está,
+   y las clases que expone están en `docs/design/<pantalla>.md`.
+2. **`services/` no existe.** Era una carpeta vacía sin trackear y git nunca la llevó; la
+   crea C6. `hooks/` sí existe ya, desde S3.
 3. **Las pegatinas ya no se llaman `icons/`.** X1 las renombró a `stickers/`, porque no
    son iconos de UI y el nombre inducía a error. Ver [contracts/assets.md](contracts/assets.md).
 
@@ -127,9 +136,12 @@ expone setters de conveniencia: cada uno sería una segunda forma de mutar lo mi
 
 `LayoutId` ya **no** se define aquí — vive en `constants/layouts.ts` con la geometría.
 
-Los tres alias de manifiesto (`FrameId`, `StickerId`, `BackgroundId`) son `string` con un
-`TODO(X1)`: X1 los estrecha a su unión real al aterrizar. Lo que no se hizo fue duplicar
-aquí las listas de IDs.
+Los tres alias de manifiesto (`FrameId`, `StickerId`, `BackgroundId`) se declararon en S1
+como `string` con un `TODO(X1)`, a la espera de que X1 los estrechara.
+
+**X1 aterrizó y no los estrechó**: definió los suyos propios en `constants/`. Así que hoy
+hay **dos definiciones de cada uno** y el estado sigue usando la ancha, que es la deuda
+**D9** de §7. Es exactamente contra lo que avisa la regla 5 del contrato de estado.
 
 ### Lo que quedó hecho
 
@@ -150,7 +162,7 @@ Contrato completo — forma, acciones, guards, persistencia — en
 
 ## 7. Deuda conocida
 
-Estado a 2026-07-26. Cada punto es candidato a nodo del DAG.
+Estado a 2026-07-27. Cada punto es candidato a nodo del DAG.
 
 | #   | Deuda                                                                                                         | Ubicación                               | Impacto                                                                                     |
 | --- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -162,6 +174,7 @@ Estado a 2026-07-26. Cada punto es candidato a nodo del DAG.
 | D6  | 4 páginas son ficheros de 0 bytes con imports comentados                                                      | `pages/*`, `App.tsx:5`                  | Es el trabajo pendiente                                                                     |
 | D7  | Sin runner de tests                                                                                           | —                                       | La única puerta de calidad es `npm run build` + revisión                                    |
 | D8  | `npm run lint` da **1 error preexistente**: `react-refresh/only-export-components`                            | `context/PhotoBoothContext.tsx`         | El fichero exporta el provider _y_ `usePhotoBooth`. `eslint --fix` no lo arregla. Ver abajo |
+| D9  | **`FrameId`, `StickerId` y `BackgroundId` están definidos DOS veces**                                         | `types/photobooth.ts` y `constants/`    | El estado usa la versión ancha (`string`), así que nada impide guardar un id inválido       |
 
 **Sobre D8, porque va a confundir a alguien.** `npm run build` está limpio, pero
 `npm run lint` **no**: da un error, y daba el mismo antes de S1 (comprobado contra
@@ -176,6 +189,18 @@ caro. Candidato a nodo propio antes de la primera `U*`.
 
 Lo que **no** hay que hacer es asumir que `npm run lint` está verde: hoy no lo está, y
 un agente que dé por bueno "el lint pasa" sin mirar se va a llevar una sorpresa.
+
+**Sobre D9.** S1 declaró los tres alias como `string` con un `TODO(X1)` porque los
+manifiestos no existían, y el contrato decía que **X1 los estrecharía al llegar**. X1 llegó,
+pero definió los suyos en `constants/{frames,stickers,backgrounds}.ts` y no tocó
+`types/photobooth.ts`, que no es suyo. Nadie hizo nada mal; se cayó por la juntura entre dos
+nodos.
+
+Consecuencia real: `state.frame` es `string | null`, así que el compilador acepta
+`'no-existe/nada'`. Los getters del manifiesto ya devuelven `null` ante un id desconocido, y
+`canvasUtils` lo pinta como "sin marco", así que **no hay bug en tiempo de ejecución** — pero
+se pierde la red de seguridad que el contrato quería. El arreglo es que `types/photobooth.ts`
+reexporte los tipos de `constants/`, y es de `booth-state`.
 
 ## 8. Divergencias con `Analisis/arquitectura.md`
 

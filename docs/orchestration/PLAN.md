@@ -1,6 +1,6 @@
 # Plan de orquestación de agentes
 
-> Estado vivo. Revisado el 2026-07-26.
+> Estado vivo. Revisado el 2026-07-27.
 > El grafo de trabajo y su estado están en [DAG.md](DAG.md).
 > Los prerrequisitos del repositorio están en [SETUP.md](SETUP.md).
 
@@ -25,15 +25,15 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 
 ## 2. La flota
 
-| #   | Agente               | Rol                              | Modelo        | MCP                    | Fase    |
-| --- | -------------------- | -------------------------------- | ------------- | ---------------------- | ------- |
-| —   | **Sesión principal** | **Orquestador**                  | Opus          | —                      | siempre |
-| 1   | `booth-state`        | Estado, tipos, contratos         | Sonnet        | —                      | 1       |
-| 2   | `figma-design-sync`  | Diseño → CSS                     | Sonnet (high) | Figma (lectura)        | 1       |
-| 3   | `canvas-media`       | Cámara, canvas, hooks            | Opus          | —                      | 1       |
-| 4   | `booth-reviewer`     | Puerta de calidad (solo lectura) | Sonnet (high) | Figma `get_screenshot` | 2       |
-| 5   | `ui-composer`        | Páginas y componentes            | Sonnet        | —                      | 2       |
-| 6   | `asset-pipeline`     | Manifiestos de assets            | **Haiku**     | —                      | 3       |
+| #   | Agente               | Rol                              | Modelo        | MCP                    | Fase           |
+| --- | -------------------- | -------------------------------- | ------------- | ---------------------- | -------------- |
+| —   | **Sesión principal** | **Orquestador**                  | Opus          | —                      | siempre        |
+| 1   | `booth-state`        | Estado, tipos, contratos         | Sonnet        | —                      | 1              |
+| 2   | `figma-design-sync`  | Diseño → CSS                     | Sonnet (high) | Figma (lectura)        | 1              |
+| 3   | `canvas-media`       | Cámara, canvas, hooks            | Opus          | —                      | 1              |
+| 4   | `booth-reviewer`     | Puerta de calidad (solo lectura) | Sonnet (high) | Figma `get_screenshot` | 2              |
+| 5   | `ui-composer`        | Páginas y componentes            | Sonnet        | —                      | 2              |
+| 6   | ~~`asset-pipeline`~~ | ~~Manifiestos de assets~~        | —             | —                      | **no se creó** |
 
 ### 1 · `booth-state` — dueño del contrato de estado
 
@@ -56,7 +56,7 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 - ⚠️ **El fichero de Figma no tiene variables** (`get_variable_defs` → `{}`) y es
   de **wireframes**, no de alta fidelidad. Por tanto **el código es la fuente de
   verdad de los tokens**, no Figma. Este agente mapea valores crudos contra las 21
-  custom properties existentes y _propone_ tokens nuevos solo cuando ninguno
+  custom properties existentes (hoy **23**) y _propone_ tokens nuevos solo cuando ninguno
   encaja — nunca los crea a escondidas. Ver [../design/FIGMA.md](../design/FIGMA.md).
 - **Contexto.** `docs/design/FIGMA.md` (node IDs y reglas de uso),
   `docs/contracts/design-tokens.md`, `index.css`, los `.module.css` existentes.
@@ -105,17 +105,19 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
   de la pantalla.
 - **Entrega.** Ficheros creados y acciones del reducer cableadas.
 
-### 6 · `asset-pipeline` — mecánico, en Haiku
+### 6 · ~~`asset-pipeline`~~ — nunca se creó, y está bien así
 
-- **Responsabilidad.** Generar `constants/{frames,backgrounds,stickers}.ts` con IDs
-  tipados a partir del arte **que ya está en el repo**, y hacer los renombrados de
-  carpetas. Contrato en [../contracts/assets.md](../contracts/assets.md).
-- ⚠️ **Ya no necesita Figma.** El arte se subió al repo el 2026-07-26: 24 marcos SVG, 46
-  fondos PNG y 273 pegatinas PNG. `download_assets` deja de hacer falta.
-- **Herramientas.** `Read, Write, Glob, Bash`. Sin MCP.
-- **Por qué sigue separado de `figma-design-sync`** — no por dominio, por **precio**. Es
-  volumen sin criterio: en Haiku cuesta céntimos, en Sonnet no. El umbral de fusión eran
-  ~15 assets y hay **343**, así que el agente se queda.
+Estaba previsto en Haiku para generar los manifiestos y renombrar carpetas: volumen sin
+criterio, 343 ficheros, y en Sonnet no salía a cuenta.
+
+**No hizo falta.** Al llegar a X1 el agente no existía, se reasignó a `canvas-media`, y al
+implementarlo el nodo resultó ser pequeño: `import.meta.glob` construye las listas sola, así
+que fueron tres renombrados con `git mv` y ~30 líneas. El volumen que justificaba el agente
+lo absorbe el bundler.
+
+**La lección, que vale para `ui-composer` y `booth-reviewer`:** el tamaño aparente de un
+nodo no es su tamaño real hasta que alguien lo mira de cerca. Antes de crear un agente para
+algo que parece pesado, comprobar si una herramienta ya lo resuelve.
 
 ## 3. Quién orquesta
 
@@ -134,7 +136,7 @@ quieres conservar entre nodos del DAG.
         ┌──────────────┘    │    │    │    │    └──────────────┐
         ▼                   ▼    ▼    ▼    ▼                   ▼
  ┌─────────────┐  ┌──────────────┐  ┌────────────┐  ┌──────────────┐
- │ booth-state │  │ figma-design │  │canvas-media│  │asset-pipeline│
+ │ booth-state │  │ figma-design │  │canvas-media│  │ (ui-composer)│
  │  contrato   │  │    -sync     │  │   hooks    │  │   (Haiku)    │
  └──────┬──────┘  └──────┬───────┘  └──────┬─────┘  └──────┬───────┘
         └────────────────┴────────┬────────┴───────────────┘
@@ -162,19 +164,28 @@ su contexto y evita pagar la relectura.
 
 Esto es lo que hace seguro el paralelismo sin worktrees: **rutas disjuntas**.
 
-| Ruta                                                         | Dueño exclusivo     | Resto        |
-| ------------------------------------------------------------ | ------------------- | ------------ |
-| `src/context/**`, `src/constants/layouts.ts`, `src/types/**` | `booth-state`       | lectura      |
-| `src/index.css` (`:root`) y `*.module.css` con nodo Figma    | `figma-design-sync` | lectura      |
-| `src/assets/**`, `src/constants/{stickers,backgrounds}.ts`   | `asset-pipeline`    | lectura      |
-| `src/hooks/**`, `src/utils/**`, `src/services/**`            | `canvas-media`      | lectura      |
-| `src/pages/**/*.tsx`, `src/components/**/*.tsx`              | `ui-composer`       | lectura      |
-| `src/App.tsx`, `CLAUDE.md`, `docs/**`, `specs/**`            | **orquestador**     | —            |
-| — (nada)                                                     | `booth-reviewer`    | solo lectura |
+| Ruta                                                              | Dueño exclusivo     | Resto        |
+| ----------------------------------------------------------------- | ------------------- | ------------ |
+| `src/context/**`, `src/constants/layouts.ts`, `src/types/**`      | `booth-state`       | lectura      |
+| `src/index.css` (`:root`) y `*.module.css` con nodo Figma         | `figma-design-sync` | lectura      |
+| `src/assets/**`, `src/constants/{frames,stickers,backgrounds}.ts` | `canvas-media`      | lectura      |
+| `src/hooks/**`, `src/utils/**`, `src/services/**`                 | `canvas-media`      | lectura      |
+| `src/pages/**/*.tsx`, `src/components/**/*.tsx`                   | `ui-composer`       | lectura      |
+| `src/App.tsx`, `CLAUDE.md`, `docs/**`, `specs/**`                 | **orquestador**     | —            |
+| — (nada)                                                          | `booth-reviewer`    | solo lectura |
 
-`src/constants/` está **partido a propósito**: `layouts.ts` es de `booth-state`,
-`stickers.ts` y `backgrounds.ts` de `asset-pipeline`. Así S2 y X1 corren a la vez
-sin tocarse.
+`src/constants/` está **partido a propósito**: `layouts.ts` es de `booth-state`, y los
+tres manifiestos de quien ejecute X1. Así S2 y X1 corren a la vez sin tocarse.
+
+**Dos reasignaciones reales, el 2026-07-26**, las dos porque el agente dueño no existía:
+
+| Qué                              | De               | A              | Por qué                                          |
+| -------------------------------- | ---------------- | -------------- | ------------------------------------------------ |
+| Nodo **X1** y `src/assets/**`    | `asset-pipeline` | `canvas-media` | Nunca se creó, y `canvas-media` es quien consume |
+| `Button.tsx` (solo el className) | `ui-composer`    | `booth-state`  | Nunca se creó; arreglo puntual de una línea      |
+
+La segunda fue **un solo cambio autorizado**, no un traspaso: `components/**/*.tsx` sigue
+siendo de `ui-composer` el día que exista.
 
 `App.tsx` se queda con el orquestador porque es el registro de rutas: lo toca cada
 feature y tiene 25 líneas. Centralizarlo elimina el único conflicto estructural.
@@ -198,7 +209,7 @@ canvas-media ──▶ FIRMAS DE HOOKS
   useCanvas(ref): { draw(state), exportAsBlob() }
   useStickers(ref): { onPointerDown, onPointerMove, onPointerUp }
 
-asset-pipeline ──▶ MANIFIESTO
+X1 (canvas-media) ──▶ MANIFIESTO
   { manifestPath, ids[], count, skipped[] }
 
 booth-reviewer ──▶ HALLAZGOS
@@ -214,7 +225,7 @@ Cada flujo se corresponde con un tramo del [DAG](DAG.md).
 Arranca el orquestador. `booth-state` cierra el reducer **completo** antes de que
 nadie construya páginas; si no, `CameraPage` y `UploadPage` inventan cada una su
 forma de guardar fotos. En paralelo, `figma-design-sync` fija los tokens y
-`asset-pipeline` llena las carpetas de assets: ficheros disjuntos, cero conflicto.
+X1 llena los manifiestos de assets: ficheros disjuntos, cero conflicto.
 
 ### F2 · Nueva pantalla _(×5 — el bucle principal)_
 
@@ -236,9 +247,9 @@ color arrastra al agente de canvas, la separación de capas está rota.
 
 ### F4 · Nuevos stickers o fondos
 
-`asset-pipeline` → manifiesto → **fin**. `DecorationPage` los recoge sola porque lee
-el manifiesto. Cero cambios de código: ese es el rendimiento del patrón de
-manifiesto, y la razón de crearlo aunque hoy haya pocos stickers.
+**Nada.** Se dejan en `src/assets/stickers/` y aparecen solos: los manifiestos se
+construyen con `import.meta.glob`, así que `DecorationPage` los recoge sin tocar código.
+Ese es el rendimiento del patrón, y salió más barato de lo previsto.
 
 ### F5 · Refactor
 
@@ -274,7 +285,7 @@ crítico, y decisión tuya — no un agente permanente.
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `design-sync` y `ui-composer` escriben CSS               | **Si hay nodo Figma → design-sync. Si no → ui-composer.** Sin excepciones                                                        |
 | `canvas-media` y `ui-composer` tocan DecorationPage      | Costura por capa: **hooks/utils vs. components/pages**                                                                           |
-| `design-sync` y `asset-pipeline` llaman a Figma          | asset-pipeline **solo** descarga y genera manifiestos; jamás escribe CSS                                                         |
+| Quién toca `src/assets/**`                               | Solo el nodo X1 (hoy `canvas-media`). Genera manifiestos y renombra; **jamás escribe CSS**                                       |
 | `booth-reviewer` vs. `/code-review`, `/simplify`, ESLint | El revisor solo mira lo que las herramientas no ven: capas, a11y, fidelidad visual, idioma. Los bugs genéricos, a `/code-review` |
 
 ## 9. Coste
@@ -317,12 +328,12 @@ salen disjuntas por construcción, y el DAG de trabajo hereda la aciclicidad.
 
 ## 11. Adopción por fases
 
-| Fase                   | Agentes                                            | Cuándo                                                        |
-| ---------------------- | -------------------------------------------------- | ------------------------------------------------------------- |
-| **1 — mínimo honesto** | `booth-state`, `figma-design-sync`, `canvas-media` | Al cerrar DAG-0. Cubren los cimientos y el camino crítico     |
-| **2**                  | `+ booth-reviewer`, `+ ui-composer`                | Al llegar al primer nodo `U*`                                 |
-| **3**                  | `+ asset-pipeline`                                 | Al pasar de ~15 assets. Con menos, fusionar con `design-sync` |
-| **Diferido**           | `booth-tester`                                     | Solo tras instalar Vitest                                     |
+| Fase                   | Agentes                                            | Cuándo                                                          |
+| ---------------------- | -------------------------------------------------- | --------------------------------------------------------------- |
+| **1 — mínimo honesto** | `booth-state`, `figma-design-sync`, `canvas-media` | Al cerrar DAG-0. Cubren los cimientos y el camino crítico       |
+| **2**                  | `+ booth-reviewer`, `+ ui-composer`                | Al llegar al primer nodo `U*`                                   |
+| ~~**3**~~              | ~~`+ asset-pipeline`~~                             | **Descartada.** X1 resultó ser pequeño y lo hizo `canvas-media` |
+| **Diferido**           | `booth-tester`                                     | Solo tras instalar Vitest                                       |
 
 ## 12. Plantilla de agente
 

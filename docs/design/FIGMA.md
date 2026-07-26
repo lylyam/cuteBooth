@@ -102,7 +102,7 @@ y se construyen con esta plantilla. Alcance y copy en
 **El arte no hay que bajarlo de aquí.** Se subió al repo el 2026-07-26:
 `src/assets/{frames,backgrounds,icons}`, 343 ficheros. Ver
 [../contracts/assets.md](../contracts/assets.md). Es la razón por la que
-`asset-pipeline` se queda sin herramientas de Figma.
+X1 se hizo sin ninguna herramienta de Figma.
 
 ## 4. Geometría de los layouts — fuente canónica
 

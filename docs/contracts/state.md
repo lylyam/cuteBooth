@@ -145,14 +145,25 @@ no `localStorage`: una sesión de photobooth no sobrevive al cierre de la pesta�
 
 ## Criterio de aceptación de S1
 
-- [ ] `types/photobooth.ts` exporta `Photo`, `StickerInstance`, `PhotoSource`,
+- [x] `types/photobooth.ts` exporta `Photo`, `StickerInstance`, `PhotoSource`,
       `PhotoBoothState` y `PhotoBoothAction`
-- [ ] El reducer maneja las **11** acciones, con `switch` exhaustivo y sin `default`
-- [ ] `ADD_PHOTO` con 4 fotos ya presentes no cambia el estado
-- [ ] `CLEAR_PHOTOS` deja intacto todo menos `photos`
-- [ ] `usePhotoBooth()` devuelve `{ state, dispatch }` y lanza fuera del provider
-- [ ] `LayoutPage` funciona igual que antes y ya no importa `LayoutId` del contexto
-- [ ] `npm run build` limpio
+- [x] El reducer maneja las **11** acciones, con `switch` exhaustivo y sin `default`
+- [x] `ADD_PHOTO` con 4 fotos ya presentes no cambia el estado
+- [x] `CLEAR_PHOTOS` deja intacto todo menos `photos`
+- [x] `usePhotoBooth()` devuelve `{ state, dispatch }` y lanza fuera del provider
+- [x] `LayoutPage` funciona igual que antes y ya no importa `LayoutId` del contexto
+- [x] `npm run build` limpio
+
+**Verificado por el orquestador**, no solo reportado: el `switch` no tiene `default` y el
+tipo de retorno está anotado, así que `tsc` marca el fallthrough (TS2366) si alguien añade
+una acción y olvida manejarla. `ADD_PHOTO` con 4 fotos devuelve el **mismo objeto**, no un
+clon.
+
+**Pendiente de S1, y es la deuda D9:** los tres alias `FrameId`/`StickerId`/`BackgroundId`
+siguen siendo `string` con su `TODO(X1)`. X1 ya aterrizó y definió los suyos en
+`constants/`, así que hoy hay **dos definiciones de cada uno** y el estado usa la ancha —
+justo lo que la regla 5 de este contrato dice que no se haga. El arreglo es reexportar los
+de `constants/` desde `types/photobooth.ts`.
 
 ## Criterio de aceptación de S3
 

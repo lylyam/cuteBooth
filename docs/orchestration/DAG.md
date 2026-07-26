@@ -1,7 +1,8 @@
 # DAG de trabajo
 
 > Estado vivo. Se actualiza al cerrar cada nodo.
-> Última revisión: 2026-07-26.
+> Última revisión: 2026-07-27. **Doce nodos cerrados**: S1, S2, S3, C1, C2, D1, D3-D7, X1.
+> Lo que queda abierto está en §9.
 
 ## 1. Por qué un DAG y no una lista de tareas
 
@@ -66,8 +67,7 @@ manda el arte de los marcos ([../contracts/layouts.md](../contracts/layouts.md))
 muestras del menú se generan del propio marco
 ([../contracts/assets.md](../contracts/assets.md)).
 
-**No queda nada bloqueado.** El primer nodo es **S2**, con la geometría ya escrita y
-verificada contra los SVG. La ola 1 es S2 + D1.
+**DAG-0 no dejó nada bloqueado**, y DAG-1 arrancó por S2 como estaba previsto.
 
 ## 4. DAG-1 · Construcción del producto
 
@@ -169,13 +169,14 @@ Dos correcciones del grafo, que se editan porque cambió la realidad, no la inte
 - **Por tanto §7 tenía las olas mal ordenadas**: proponía C2 en la ola 3 y X1 en la 7,
   que es imposible. X1 sube a la ola 3, delante de C2.
 
-**Y X1 no tiene agente.** `asset-pipeline` es de fase 3 ([PLAN.md](PLAN.md) §11) y no
-existe en `.claude/agents/` — solo están los tres de fase 1. Su umbral de creación eran
-~15 assets y hay **343**, así que la fase 3 ya venció. Hasta que exista, el camino
-crítico está parado en X1 y solo avanzan las ramas laterales.
+**Y X1 no tenía agente.** `asset-pipeline` es de fase 3 ([PLAN.md](PLAN.md) §11) y nunca
+llegó a existir. **Resuelto el mismo día reasignando X1 a `canvas-media`**, que es quien
+consume los manifiestos para dibujar. Al implementarlo se vio que el nodo era mucho más
+pequeño de lo que parecía —`import.meta.glob` genera las listas— así que el agente
+dedicado nunca hizo falta.
 
 **Un punto de la checklist de S2 no es de S2.** `frames/square/` → `frames/spotlight/`
-está en `src/assets/**`, que es de `asset-pipeline`: `booth-state` hizo bien en no
+está en `src/assets/**`, que no era de `booth-state`: hizo bien en no
 tocarlo. El renombrado ya figura en §Renombrados de
 [../contracts/assets.md](../contracts/assets.md), así que se cobra en **X1**, no aquí.
 Ningún `.ts`, `.tsx` ni `.css` menciona `square`: no hay nada roto mientras tanto.
@@ -301,3 +302,43 @@ opción real, pero **no para este tamaño**: 20 nodos con un revisor humano de a
 de banda 2 no justifican perder el control manual entre nodos. Reevaluar solo si el
 proyecto crece mucho o si hay que repetir el grafo entero (por ejemplo, migrar
 todas las páginas a un patrón nuevo).
+
+## 9. Lo que está abierto
+
+> Actualizado el 2026-07-27. Esta sección es la respuesta a "¿qué falta por decidir?".
+> Un hueco aquí es mejor que un supuesto silencioso dentro de un nodo.
+
+### Decisiones de producto pendientes
+
+| #   | Pregunta                                                                                                                                                                                                                                      | Bloquea                                     |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| A1  | **Los fondos de `classic` se ven muy ampliados.** Son de 440×550 para un lienzo de 654×1911: `cover` coge la franja central y la escala ×3,5. ¿Se **repite** el patrón a escala natural o se deja estirado? Son ~4 líneas en `canvasUtils.ts` | Nada, pero afecta a cómo se ve el resultado |
+| A2  | **Tamaño de las pegatinas**: hoy 22 % del lado corto del lienzo, cifra inventada en C2 por no haber dato de diseño (`STICKER_SIZE_RATIO`). Visualmente funciona                                                                               | Nada. Es una constante                      |
+| A3  | **Sin fondo elegido, la tira se descarga con transparencia.** Es lo más honesto y conserva la opción; si se prefiere blanco, es una línea                                                                                                     | Nada                                        |
+
+### Deuda técnica encontrada, con dueño
+
+| #   | Qué                                                                                                                             | Dueño         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D8  | `npm run lint` no está verde: `react-refresh` en `PhotoBoothContext.tsx`. Preexistente, no rompe nada en runtime                | `booth-state` |
+| D9  | `FrameId`/`StickerId`/`BackgroundId` definidos dos veces. El estado usa la versión ancha, así que acepta ids inválidos          | `booth-state` |
+| —   | Los 25 fondos de `classic` son **JPEG con extensión `.png`**. Funciona porque el navegador olfatea el contenido                 | decisión suya |
+| —   | Tres pares de arte **byte-idénticos**: `drawStyle/10`=`62`, `feltStyle/31`=`53`, fondo `9`=`10`. El panel repetirá la miniatura | decisión suya |
+
+Los dos últimos no son bugs: son cosas del arte que conviene saber antes de que alguien
+las descubra pensando que se ha roto algo.
+
+### El muro de la fase 2
+
+**Detrás de los hooks no hay nadie.** Las cinco páginas (`U1`-`U5`), el componente
+`Loading` (`C7`) y toda la revisión (`R*`) pertenecen a `ui-composer` y `booth-reviewer`,
+y **ninguno de los dos existe** en `.claude/agents/` — son de fase 2 ([PLAN.md](PLAN.md)
+§11).
+
+Ya pasó una vez con `asset-pipeline` en X1, y se resolvió reasignando el nodo a quien lo
+consumía. Conviene decidirlo **antes** de cerrar C3-C6, no al llegar:
+
+- crear los dos agentes de fase 2, o
+- reasignar como se hizo con X1, sabiendo que `booth-reviewer` es el único que no se puede
+  reasignar sin perder su razón de ser: **juzga código que no ha escrito**. Si lo revisa
+  quien lo escribió, no es una revisión.

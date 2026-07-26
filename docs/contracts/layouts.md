@@ -1,7 +1,7 @@
 # Contrato · Layouts
 
 > Dueño: `booth-state` (nodo **S2**).
-> Consumidores: `canvas-media` (C2, C4), `ui-composer` (U1-U5), `asset-pipeline`.
+> Consumidores: `canvas-media` (C2, C4), `ui-composer` (U1-U5).
 > **S2 es la raíz del camino crítico.** Cerrarlo desbloquea el 60 % del proyecto.
 
 ## Los tres layouts
@@ -156,10 +156,16 @@ export const LAYOUT_LIST: LayoutDef[]; // orden de presentación en LayoutPage
 
 ## Criterio de aceptación de S2
 
-- [ ] `LayoutId` es `'classic' | 'wide' | 'spotlight'`; `square` no aparece en `src/`
-- [ ] `constants/layouts.ts` exporta `EXPORT_SCALE`, `LAYOUTS` y `LAYOUT_LIST` tipados
-- [ ] Los 3 layouts tienen 4 slots y `canvas` propio, escalados por `EXPORT_SCALE`
-- [ ] Las coordenadas coinciden con las tablas de arriba, **verificadas contra el SVG**
-- [ ] Los `alt` están en inglés y describen la disposición real
-- [ ] `LayoutPage.tsx` consume `LAYOUT_LIST`; `cardData` ya no existe
-- [ ] `npm run build` limpio y `/layout` se ve igual que antes
+- [x] `LayoutId` es `'classic' | 'wide' | 'spotlight'`; `square` no aparece en `src/`
+      (el renombrado de `assets/frames/square/` se cobró en X1, no en S2)
+- [x] `constants/layouts.ts` exporta `EXPORT_SCALE`, `LAYOUTS` y `LAYOUT_LIST` tipados
+- [x] Los 3 layouts tienen 4 slots y `canvas` propio, escalados por `EXPORT_SCALE`
+- [x] Las coordenadas coinciden con las tablas de arriba, **verificadas contra el SVG**
+- [x] Los `alt` están en inglés y describen la disposición real
+- [x] `LayoutPage.tsx` consume `LAYOUT_LIST`; `cardData` ya no existe
+- [x] `npm run build` limpio y `/layout` se ve igual que antes
+
+**Reverificado el 2026-07-27 contra el arte definitivo.** Los 24 marcos reexportados se
+midieron hueco a hueco: `classic/Frame 7`, `wide/Frame 7` y `spotlight/Frame 8` —los tres
+rectangulares que dan estas tablas— tienen **deriva 0,00**. Los números de S2 siguen siendo
+los del arte.

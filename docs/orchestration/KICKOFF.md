@@ -2,7 +2,9 @@
 
 > **Empieza aquí.** Punto de entrada para cualquier agente o persona que retome
 > CuteBooth. Autosuficiente.
-> Estado a 2026-07-26. Nada de `src/` ha sido modificado todavía.
+> Estado a 2026-07-27. **Los cimientos están construidos**: estado, geometría, guards,
+> utilidades de imagen y canvas, manifiestos de assets y el CSS de las cinco pantallas.
+> Falta la cámara, los hooks que envuelven el canvas, y las cinco páginas `.tsx`.
 
 ## 1. Qué es CuteBooth
 
@@ -10,9 +12,13 @@ Photobooth en navegador, 100 % cliente, sin backend. El usuario elige un layout,
 consigue 4 fotos (cámara o subida), las revisa, las decora con fondo y stickers, y
 descarga la imagen compuesta. React 19 + TypeScript + Vite 8 + CSS Modules.
 
-**Estado real:** funcionan `/` y `/layout`. Las demás páginas son ficheros de
-**0 bytes** con las rutas comentadas en `src/App.tsx`. `hooks/`, `services/`,
-`utils/` y `constants/` existen y están **vacías**.
+**Estado real:** funcionan `/` y `/layout`. Las otras cinco pantallas **ya tienen su
+CSS** (lote D3-D7) pero **no su `.tsx`**: cuatro son ficheros de 0 bytes con la ruta
+comentada en `src/App.tsx`, y `/review` es una carpeta con solo un `.module.css`.
+
+Por debajo, en cambio, está casi todo: reducer de 6 campos y 11 acciones, geometría de
+los 3 layouts, guards de ruta, primitivas de imagen, **composición sobre canvas con
+recorte por la forma del hueco**, y los manifiestos de los 343 ficheros de arte.
 
 ## 2. Orden de lectura
 
@@ -60,7 +66,7 @@ No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
 | 7   | **`/decoration` son TRES PASOS en una sola ruta**, no tres rutas: Frames → Backgrounds → Icons. El paso es estado local de la página                                                                          |
 | 8   | **Un marco es un conjunto temático de 4 recortes**, uno por hueco. El usuario elige el tema, no la forma de cada hueco. Añade `frame` al estado                                                               |
 | 9   | **En `/upload` cada hueco es un botón** que abre el selector de archivos. `Continue` está siempre visible y deshabilitado hasta las 4 fotos                                                                   |
-| 10  | **En el menú de fondos la muestra NO enseña la imagen completa**: cuadrado de esquinas redondeadas, del tamaño de las muestras de Frames, con la imagen recortada                                             |
+| 10  | **En el menú de fondos la muestra NO enseña la imagen completa**: esquinas redondeadas y la imagen recortada. Su tamaño lo **matiza la decisión 17**                                                          |
 | 11  | **`/final` lleva copy propio**, no el de `/review`: `Here's your decorated strip!` · `Download it, or start over to make a new one.` Botones `Download` y `Retake`                                            |
 | 12  | **`Retake` conserva la decoración.** Vacía las fotos y vuelve al origen (`CLEAR_PHOTOS`), no reinicia todo                                                                                                    |
 | 13  | **La geometría de los huecos la manda el ARTE de los marcos**, no el wireframe de Upload. Los números están en [../contracts/layouts.md](../contracts/layouts.md), extraídos de los tres marcos rectangulares |
