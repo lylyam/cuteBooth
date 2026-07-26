@@ -12,11 +12,11 @@ import styles from './LayoutPage.module.css';
 
 function LayoutPage() {
   const navigate = useNavigate();
-  const { setSelectedLayout } = usePhotoBooth();
+  const { dispatch } = usePhotoBooth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSelectLayout = (layout: LayoutId) => {
-    setSelectedLayout(layout);
+    dispatch({ type: 'SET_LAYOUT', layout });
     setIsModalOpen(true);
   };
 
