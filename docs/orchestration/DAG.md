@@ -55,7 +55,7 @@ graph LR
 | P2 | Triaje de `Analisis/` | orquestador | — | ✅ hecho |
 | P3 | `docs/contracts/{state,layouts,design-tokens}.md` | orquestador | P1 | ✅ hecho |
 | P4 | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3 | ✅ hecho |
-| P5 | `.claude/agents/*.md` (3 de fase 1) | orquestador | P3, P4 | ⬜ |
+| P5 | `.claude/agents/*.md` (3 de fase 1) | orquestador | P3, P4 | ✅ hecho |
 | P6 | `.claude/skills/nueva-pagina/` | orquestador | P1 | ⬜ |
 | P7 | `.claude/settings.json` (hooks + permisos) | orquestador | — | ⬜ |
 | P8 | Prettier + `.editorconfig` | orquestador | — | ⬜ |
