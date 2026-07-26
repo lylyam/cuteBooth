@@ -1,7 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-
-export type LayoutId = 'classic' | 'wide' | 'square';
+import type { LayoutId } from '../constants/layouts';
 
 type PhotoBoothContextValue = {
   selectedLayout: LayoutId | null;
