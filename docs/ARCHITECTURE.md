@@ -21,8 +21,8 @@ en tres pasos (recorte, fondo, pegatinas) y descarga una imagen compuesta.
   Sin Tailwind, sin styled-components, sin librería de UI.
 - **Sin librería de estado global.** Context API.
 - **Sin runner de tests.** No hay Vitest, ni Jest, ni Testing Library.
-- **Prettier configurado** (`.prettierrc.json`, `.editorconfig`, `npm run format`), pero
-  **sin aplicar todavía**: la pasada sobre `src/` toca 17 ficheros y espera autorización.
+- **Prettier aplicado** (`.prettierrc.json`, `.editorconfig`, `npm run format`). El
+  formato del repo es uniforme desde el 2026-07-26.
 
 ## 3. Capas y regla de dependencia
 

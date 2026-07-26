@@ -49,17 +49,17 @@ graph LR
   P5 --> P9
 ```
 
-| ID  | Nodo                                               | Dueño       | Necesita   | Estado                                                                                                                                    |
-| --- | -------------------------------------------------- | ----------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| P1  | `docs/ARCHITECTURE.md`                             | orquestador | —          | ✅ hecho                                                                                                                                  |
-| P2  | Triaje de `Analisis/`                              | orquestador | —          | ✅ hecho                                                                                                                                  |
-| P3  | `docs/contracts/{state,layouts,design-tokens}.md`  | orquestador | P1         | ✅ hecho · más `assets.md`, que no estaba previsto                                                                                        |
-| P4  | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3     | ✅ hecho                                                                                                                                  |
-| P5  | `.claude/agents/*.md` (3 de fase 1)                | orquestador | P3, P4     | ✅ hecho                                                                                                                                  |
-| P6  | `.claude/skills/nueva-pagina/`                     | orquestador | P1         | ✅ hecho                                                                                                                                  |
-| P7  | `.claude/settings.json` (hooks + permisos)         | orquestador | —          | ✅ hecho                                                                                                                                  |
-| P8  | Prettier + `.editorconfig`                         | orquestador | —          | ✅ configurado · **la pasada sobre `src/` está pendiente de autorización**: toca 17 ficheros que ahora mismo tienen cambios sin commitear |
-| P9  | `CLAUDE.md` como índice                            | orquestador | P1, P3, P5 | ✅ hecho                                                                                                                                  |
+| ID  | Nodo                                               | Dueño       | Necesita   | Estado                                                                             |
+| --- | -------------------------------------------------- | ----------- | ---------- | ---------------------------------------------------------------------------------- |
+| P1  | `docs/ARCHITECTURE.md`                             | orquestador | —          | ✅ hecho                                                                           |
+| P2  | Triaje de `Analisis/`                              | orquestador | —          | ✅ hecho                                                                           |
+| P3  | `docs/contracts/{state,layouts,design-tokens}.md`  | orquestador | P1         | ✅ hecho · más `assets.md`, que no estaba previsto                                 |
+| P4  | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3     | ✅ hecho                                                                           |
+| P5  | `.claude/agents/*.md` (3 de fase 1)                | orquestador | P3, P4     | ✅ hecho                                                                           |
+| P6  | `.claude/skills/nueva-pagina/`                     | orquestador | P1         | ✅ hecho                                                                           |
+| P7  | `.claude/settings.json` (hooks + permisos)         | orquestador | —          | ✅ hecho                                                                           |
+| P8  | Prettier + `.editorconfig`                         | orquestador | —          | ✅ hecho · pasada aplicada el 2026-07-26: 41 ficheros en un commit solo de formato |
+| P9  | `CLAUDE.md` como índice                            | orquestador | P1, P3, P5 | ✅ hecho                                                                           |
 
 **DAG-0 cerrado el 2026-07-26**, y con él las dos dudas que quedaban: la geometría la
 manda el arte de los marcos ([../contracts/layouts.md](../contracts/layouts.md)) y las

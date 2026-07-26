@@ -101,9 +101,8 @@ como decisiones 13 y 14 de §4:
 **No queda ninguna pregunta abierta.** La regla sigue en pie de todas formas: un agente
 **no** resuelve una laguna inventándose los números. Se pregunta.
 
-**Lo único pendiente es de ejecución, no de decisión:** `npm run format` sobre `src/`
-espera a que se commitee el trabajo en curso. Ver deuda D5 de
-[../ARCHITECTURE.md](../ARCHITECTURE.md).
+**Y DAG-0 no deja nada pendiente.** La pasada de Prettier se aplicó el 2026-07-26 y con
+ella cayó la deuda D5. El siguiente paso es el primer nodo de producto: **S2**.
 
 ## 7. Por dónde se empieza
 
