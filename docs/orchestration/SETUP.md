@@ -20,8 +20,8 @@ seis agentes reutilizan en vez de reinventar cada uno a su manera.
 |---|---|---|---|
 | 1 | **`docs/ARCHITECTURE.md`** | Sin esto, cada agente deduce la arquitectura de los ficheros que le toquen. Cinco agentes = cinco arquitecturas. | P1 ✅ |
 | 2 | **Triaje de `Analisis/`** | 171 KB de notas sobre otros proyectos, en `.jsx`, con estructura de carpetas falsa. Un agente que las lea construirá contra un proyecto que no existe. | P2 ✅ |
-| 3 | **`docs/contracts/`** | Es lo que los agentes se intercambian. Sin contrato escrito, la interfaz entre `canvas-media` y `ui-composer` se negocia en cada invocación, y cambia cada vez. | P3 |
-| 4 | **`specs/` por pantalla** | Un spec es la definición del nodo del DAG: alcance, criterio de aceptación, qué NO entra. Es lo que convierte "haz la CameraPage" en algo verificable. | P4 |
+| 3 | **`docs/contracts/`** ✅ | Es lo que los agentes se intercambian. Sin contrato escrito, la interfaz entre `canvas-media` y `ui-composer` se negocia en cada invocación, y cambia cada vez. | P3 |
+| 4 | **`specs/` por pantalla** ✅ | Un spec es la definición del nodo del DAG: alcance, criterio de aceptación, qué NO entra. Es lo que convierte "haz la CameraPage" en algo verificable. | P4 |
 | 5 | **`CLAUDE.md` corregido** | Se inyecta en **todos** los agentes. Hoy afirma cosas ciertas, pero no apunta a `docs/` ni prohíbe `Analisis/`. | P9 |
 
 ## 2. Muy recomendable, y barato
@@ -56,10 +56,10 @@ seis agentes reutilizan en vez de reinventar cada uno a su manera.
 docs/
 ├── README.md                  ✅ índice + reglas de carga de contexto
 ├── ARCHITECTURE.md            ✅ arquitectura real
-├── contracts/                 ⬜ P3 — lo que los agentes se intercambian
-│   ├── state.md
-│   ├── layouts.md
-│   └── design-tokens.md
+├── contracts/                 ✅ P3 — lo que los agentes se intercambian
+│   ├── state.md               ✅ 6 campos, 11 acciones, guards, persistencia
+│   ├── layouts.md             ✅ geometría de los 3 layouts
+│   └── design-tokens.md       ✅ 21 tokens, reglas de mapeo, deuda T1-T8
 ├── design/                    ⬜ caché de specs de Figma (una por pantalla)
 ├── orchestration/
 │   ├── PLAN.md                ✅ flota de agentes
@@ -68,9 +68,10 @@ docs/
 └── reference/
     └── TRIAJE.md              ✅ veredicto sobre Analisis/
 
-specs/                         ⬜ P4 — una por pantalla pendiente
+specs/                         ✅ P4 — una por pantalla pendiente
 ├── camera.md
 ├── upload.md
+├── review.md                  ← nueva: /review entró en alcance
 ├── decoration.md
 └── final.md
 

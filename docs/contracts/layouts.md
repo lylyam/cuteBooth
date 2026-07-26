@@ -110,6 +110,10 @@ export const LAYOUT_LIST: LayoutDef[];   // orden de presentación en LayoutPage
 4. `LayoutPage.tsx` consume `LAYOUT_LIST` y deja de declarar `cardData` en el
    cuerpo del componente (deuda D1).
 5. **Nadie más define geometría.** Si `canvasUtils` necesita un número, sale de aquí.
+6. **Las máscaras de recorte NO van aquí.** La forma de cada hueco la decide el *frame
+   set* elegido y vive en `constants/frames.ts` (X1). Este módulo dice **dónde** va cada
+   hueco; el otro, **con qué forma** se recorta. Ver
+   [state.md](state.md) y [../../specs/decoration.md](../../specs/decoration.md).
 
 ## Criterio de aceptación de S2
 

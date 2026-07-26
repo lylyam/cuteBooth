@@ -1,14 +1,14 @@
 # Arquitectura real de CuteBooth
 
 > Este documento describe **lo que hay**, no lo que se planeó. Verificado contra
-> `src/` el 2026-07-25. Si el código y este documento discrepan, el código gana y
+> `src/` el 2026-07-26. Si el código y este documento discrepan, el código gana y
 > este documento se corrige.
 
 ## 1. Qué es
 
 Photobooth en navegador, 100 % cliente. Sin backend, sin base de datos, sin auth.
-El usuario elige un layout, consigue 4 fotos (cámara o subida), las decora con
-fondo y stickers, y descarga una imagen compuesta.
+El usuario elige un layout, consigue 4 fotos (cámara o subida), las revisa, las decora
+en tres pasos (recorte, fondo, pegatinas) y descarga una imagen compuesta.
 
 ## 2. Stack y restricciones
 
@@ -116,11 +116,12 @@ Dos cambios, ambos propiedad de `booth-state`:
    apaisado con una foto destacada, no cuadrado. Se renombra **antes** de que nada
    más dependa de él. Ver [contracts/layouts.md](contracts/layouts.md).
 2. **`useState` → `useReducer`** con los campos del flujo completo (nodo S1). El
-   contrato exacto está en [contracts/state.md](contracts/state.md). Motivo: `photos`, `stickers`
-   y `background` se actualizan de forma relacionada y desde páginas distintas;
-   con `useState` sueltos, cada página inventaría su forma de mutarlos.
+   contrato exacto está en [contracts/state.md](contracts/state.md). Motivo: `photos`,
+   `frameSet`, `background` y `stickers` se actualizan de forma relacionada y desde
+   páginas y pasos distintos; con `useState` sueltos, cada uno inventaría su forma de
+   mutarlos.
 
-**No** introducir Zustand ni Redux. Cinco campos y diez acciones no lo justifican.
+**No** introducir Zustand ni Redux. Seis campos y once acciones no lo justifican.
 Contrato completo — forma, acciones, guards, persistencia — en
 [contracts/state.md](contracts/state.md).
 
@@ -177,10 +178,14 @@ UploadPage       /upload  ──┤  4 fotos desde archivo
                             ↓
 SelectedPicturesPage /review   revisar el strip: seguir o repetir
    ↓
-DecorationPage   /decoration   fondo + stickers
+DecorationPage   /decoration   TRES pasos: frames → fondos → iconos
    ↓
 FinalPage        /final        resultado + descargar + rehacer
 ```
+
+**`/decoration` es una ruta con tres pasos internos**, no tres rutas. El paso vive en
+`useState` local de la página: no va al estado global, no se persiste, y no aparece en
+la URL. Por eso siguen siendo seis rutas y no ocho.
 
 **Seis rutas.** `/review` es nueva respecto al plan original y entra en alcance.
 
@@ -196,9 +201,12 @@ parametrizado por copy y acciones sirve a ambas. No son dos trabajos.
 **Idioma: todo el texto de usuario en inglés**, incluidos los `alt`. Hoy la UI
 está en inglés y los `alt` en español (deuda D4); se corrige al tocar cada página.
 
-### Lo que sigue sin resolver
+### El concepto que faltaba: *frame set*
 
-**No hay pantalla Decoration diseñada.** Los nodos `102:319` y `103:382` se
-llaman "Selected pictures" pero contienen un panel "Frames" con 8 formas, que es
-un selector de decoración. Y no hay panel de fondos ni de stickers en ninguna
-parte del fichero. Registrado en [orchestration/KICKOFF.md](orchestration/KICKOFF.md) §6.
+Un **frame set** es un conjunto temático de cuatro recortes — uno por hueco, distintos
+entre sí pero de la misma temática. El usuario elige el tema; el reparto de las cuatro
+máscaras es fijo. Eso añade un sexto campo al estado (`frameSet`) y una acción
+(`SET_FRAME_SET`), aplica las máscaras en `canvasUtils` y añade `constants/frames.ts` al
+manifiesto de assets. No estaba en el plan original porque la pantalla que lo introduce
+estaba sin nombrar en Figma. Ver [contracts/state.md](contracts/state.md) y
+[../specs/decoration.md](../specs/decoration.md).

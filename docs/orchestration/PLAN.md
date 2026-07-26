@@ -1,6 +1,6 @@
 # Plan de orquestación de agentes
 
-> Estado vivo. Revisado el 2026-07-25.
+> Estado vivo. Revisado el 2026-07-26.
 > El grafo de trabajo y su estado están en [DAG.md](DAG.md).
 > Los prerrequisitos del repositorio están en [SETUP.md](SETUP.md).
 
@@ -38,8 +38,9 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 ### 1 · `booth-state` — dueño del contrato de estado
 
 - **Responsabilidad.** Única fuente de verdad de `PhotoBoothContext`, los tipos y la
-  geometría de layouts. Migra `useState` → `useReducer`, define las acciones, los
-  guards, y saca `cardData` de `LayoutPage.tsx` a `constants/layouts.ts`.
+  geometría de layouts. Migra `useState` → `useReducer` (6 campos, 11 acciones), define
+  los guards de las 6 rutas, y saca `cardData` de `LayoutPage.tsx` a
+  `constants/layouts.ts`.
 - **Contexto.** `CLAUDE.md`, `docs/contracts/state.md`, `docs/contracts/layouts.md`.
 - **Herramientas.** `Read, Write, Edit, Grep, Glob, Bash(npx tsc -b)`. Sin MCP.
 - **Entrega.** El contrato de estado: tipos, acciones, reglas de guard.
@@ -181,10 +182,11 @@ feature y tiene 25 líneas. Centralizarlo elimina el único conflicto estructura
 ## 5. Qué se intercambian
 
 ```
-booth-state ──▶ CONTRATO DE ESTADO
-  { state:   { selectedLayout, photos[], background, stickers[], source },
-    actions: ['SET_LAYOUT','SET_SOURCE','ADD_PHOTO','SET_PHOTOS','SET_BACKGROUND',
-              'ADD_STICKER','MOVE_STICKER','REMOVE_STICKER','RESET'],
+booth-state ──▶ CONTRATO DE ESTADO   (completo en contracts/state.md)
+  { state:   { selectedLayout, source, photos[], frameSet, background, stickers[] },
+    actions: ['SET_LAYOUT','SET_SOURCE','ADD_PHOTO','SET_PHOTOS','CLEAR_PHOTOS',
+              'SET_FRAME_SET','SET_BACKGROUND','ADD_STICKER','MOVE_STICKER',
+              'REMOVE_STICKER','RESET'],
     guards:  [{ route:'/decoration', requires:['selectedLayout','photos.length===4'] }] }
 
 figma-design-sync ──▶ SPEC DE PANTALLA
@@ -213,7 +215,7 @@ nadie construya páginas; si no, `CameraPage` y `UploadPage` inventan cada una s
 forma de guardar fotos. En paralelo, `figma-design-sync` fija los tokens y
 `asset-pipeline` llena las carpetas de assets: ficheros disjuntos, cero conflicto.
 
-### F2 · Nueva pantalla *(×4 — el bucle principal)*
+### F2 · Nueva pantalla *(×5 — el bucle principal)*
 ```
 1. orquestador   entrega el spec + los contratos
 2. canvas-media  produce el hook que falta        (el CSS YA existe, del lote D3-D6)
@@ -250,7 +252,7 @@ crítico, y decisión tuya — no un agente permanente.
 
 | # | Cuello | Mitigación |
 |---|---|---|
-| 0 | **Falta la pantalla Decoration en Figma** — bloquea D5, U3 y C5 | Las otras 5 decisiones ya están cerradas ([KICKOFF.md](KICKOFF.md) §4). Esta sigue abierta (§6): hay camino transitable hasta `/final` sin ella, así que no para el proyecto |
+| 0 | ~~Falta la pantalla Decoration~~ **Resuelto el 2026-07-26**: existía sin nombrar (`102:319`). D5, U3 y C5 desbloqueados | Queda un dato menor y sin bloqueo: los node IDs del arte que X1 tiene que descargar ([KICKOFF.md](KICKOFF.md) §6) |
 | 1 | **`constants/layouts.ts` es la raíz del camino crítico** | Primer nodo del proyecto. Ver [DAG.md](DAG.md) §5 |
 | 2 | **`PhotoBoothContext` serializa todo.** Camera y Upload necesitan las mismas acciones | Reducer completo en F1, antes de cualquier página |
 | 3 | **`canvas-media` es el 60 % del camino crítico** | Máxima prioridad de programación, mejor modelo, nunca en segundo plano |

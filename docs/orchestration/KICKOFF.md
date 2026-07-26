@@ -23,7 +23,8 @@ descarga la imagen compuesta. React 19 + TypeScript + Vite 8 + CSS Modules.
 | 3 | [DAG.md](DAG.md) | Qué hacer ahora y qué bloquea a qué |
 | 4 | [PLAN.md](PLAN.md) | Qué agente es dueño de qué |
 | 5 | `../contracts/*.md` | Solo el contrato que te toque |
-| 6 | [../design/FIGMA.md](../design/FIGMA.md) | Solo si tocas diseño |
+| 6 | `../../specs/*.md` | Solo el spec de tu pantalla: copy literal, aceptación, supuestos |
+| 7 | [../design/FIGMA.md](../design/FIGMA.md) | Solo si tocas diseño |
 
 No leas `Analisis/`. Ver regla 3.
 
@@ -56,6 +57,14 @@ No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
 | 4 | **`/final` existe en Figma** (`2074:52`) y es una copia de `/review` con otro copy y la foto ya decorada. **Comparten el componente `PhotoResult`** |
 | 5 | **Todo el texto de usuario en inglés**, incluidos los `alt` |
 | 6 | **No se crean variables en Figma.** Los tokens son code-first: `index.css` manda |
+| 7 | **`/decoration` son TRES PASOS en una sola ruta**, no tres rutas: Frames → Backgrounds → Icons. El paso es estado local de la página |
+| 8 | **Un *frame set* es un conjunto temático de 4 recortes**, uno por hueco. El usuario elige el tema, no la forma de cada hueco. Añade `frameSet` al estado |
+| 9 | **En `/upload` cada hueco es un botón** que abre el selector de archivos. `Continue` está siempre visible y deshabilitado hasta las 4 fotos |
+| 10 | **En el menú de fondos la muestra NO enseña la imagen completa**: cuadrado de esquinas redondeadas, del tamaño de las muestras de Frames, con la imagen recortada |
+| 11 | **`/final` lleva copy propio**, no el de `/review`: `Here's your decorated strip!` · `Download it, or start over to make a new one.` Botones `Download` y `Retake` |
+| 12 | **`Retake` conserva la decoración.** Vacía las fotos y vuelve al origen (`CLEAR_PHOTOS`), no reinicia todo |
+
+Las decisiones 7-12 se cerraron el 2026-07-26, en la sesión que cerró DAG-0.
 
 El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.md) §9.
 
@@ -67,24 +76,30 @@ El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.
 - **Ningún otro MCP.** Descartados con motivo en [PLAN.md](PLAN.md) §9.
 - **No hay tests.** No instales un runner sin acordarlo: es cambio de alcance.
 
-## 6. Lo único que sigue abierto
+## 6. Lo que estaba abierto y ya no
 
-**No hay pantalla Decoration en Figma.** Desapareció al borrarse la zona en sucio.
-Los nodos `102:319` y `103:382` se llaman "Selected pictures" pero contienen un
-panel titulado **"Frames"** con 8 formas — eso es un selector de decoración, no
-una revisión. Y no hay panel de fondos ni de stickers en ninguna parte del fichero.
+**La pantalla Decoration existe.** Estaba sin nombrar, y por eso no se encontraba: es
+`102:319`, hoy llamado "Decorarion" (con typo). `103:382` ("Decoration 2") es un
+**duplicado exacto** — conviene borrarlo antes de que alguien lo tome por otro estado.
 
-**Bloquea:** D5, U3 y, de rebote, C5 (`useStickers`, cuyo único consumidor es U3).
+Con eso, **D5, U3 y C5 quedan desbloqueados** y el camino crítico vuelve a ser uno.
+Lo que trajo de nuevo esa pantalla está en las decisiones 7-12 de §4 y en
+[../../specs/decoration.md](../../specs/decoration.md).
 
-**Mientras tanto no pares:** hay camino transitable hasta `/final` sin tocar la
-decoración. Ver el orden de olas en [DAG.md](DAG.md) §7.
+**Lo único que queda pendiente de un dato**, y no bloquea nada todavía: el arte de
+frames, fondos e iconos está subido a Figma, pero **faltan los node IDs de sus
+contenedores**. `asset-pipeline` los pide al arrancar X1 — o los lee de la selección
+actual del editor, que `get_metadata` devuelve en un bloque *"Currently selected
+nodes"*. No hace falta enumerar la página `0:1`, que está prohibido.
 
-Un agente **no** resuelve esto inventándose la pantalla. Se pregunta.
+La regla sigue en pie: un agente **no** resuelve una laguna inventándose la pantalla.
+Se pregunta.
 
 ## 7. Por dónde se empieza
 
-DAG-0 (preparación): P1 ✅ P2 ✅ P3 🟡 (`layouts.md` hecho; faltan `state.md` y
-`design-tokens.md`) P9 🟡. Pendientes P4-P8.
+DAG-0 (preparación): **cerrado el 2026-07-26** — P1-P9 ✅. Los contratos están en
+`docs/contracts/`, los specs de las cinco pantallas en `specs/`, y la flota de fase 1
+en `.claude/agents/`.
 
 **El primer nodo de producto es S2: `src/constants/layouts.ts`.**
 

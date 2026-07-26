@@ -15,8 +15,9 @@ agente necesita saber para trabajar aquí está en `docs/` o en `CLAUDE.md`.
 | [design/FIGMA.md](design/FIGMA.md) | Mapa del fichero de Figma: fileKey, node IDs, hallazgos, reglas de uso | `figma-design-sync` |
 | [reference/TRIAJE.md](reference/TRIAJE.md) | Veredicto sobre `Analisis/`: qué se salva y qué se prohíbe | Orquestador |
 | [contracts/layouts.md](contracts/layouts.md) | Geometría de los 3 layouts (extraída de Figma) | `booth-state`, `canvas-media` |
-| [contracts/state.md](contracts/state.md) | Forma del estado, las 10 acciones, guards de ruta, persistencia | `booth-state`, `ui-composer`, `canvas-media` |
+| [contracts/state.md](contracts/state.md) | Forma del estado, las 11 acciones, guards de ruta, persistencia | `booth-state`, `ui-composer`, `canvas-media` |
 | [contracts/design-tokens.md](contracts/design-tokens.md) | Las 21 custom properties, reglas de mapeo, deuda T1-T8 | `figma-design-sync`, `ui-composer` |
+| `../specs/*.md` | Alcance, copy literal, criterio de aceptación y **supuestos** de cada pantalla | `ui-composer`, `booth-reviewer` |
 
 ## Reglas de carga de contexto
 

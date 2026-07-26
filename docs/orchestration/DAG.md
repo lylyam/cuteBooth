@@ -1,7 +1,7 @@
 # DAG de trabajo
 
 > Estado vivo. Se actualiza al cerrar cada nodo.
-> Última revisión: 2026-07-25.
+> Última revisión: 2026-07-26.
 
 ## 1. Por qué un DAG y no una lista de tareas
 
@@ -54,7 +54,7 @@ graph LR
 | P1 | `docs/ARCHITECTURE.md` | orquestador | — | ✅ hecho |
 | P2 | Triaje de `Analisis/` | orquestador | — | ✅ hecho |
 | P3 | `docs/contracts/{state,layouts,design-tokens}.md` | orquestador | P1 | ✅ hecho |
-| P4 | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3 | ⬜ |
+| P4 | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3 | ✅ hecho |
 | P5 | `.claude/agents/*.md` (3 de fase 1) | orquestador | P3, P4 | ⬜ |
 | P6 | `.claude/skills/nueva-pagina/` | orquestador | P1 | ⬜ |
 | P7 | `.claude/settings.json` (hooks + permisos) | orquestador | — | ⬜ |
@@ -80,7 +80,7 @@ graph LR
   S1 --> C5
   S1 --> C6[C6 storageService]
   D1 --> D2[D2 Code Connect]
-  D1 --> DC[D3-D6 CSS de las 4 pantallas]
+  D1 --> DC[D3-D7 CSS de las 5 pantallas]
 
   C3 --> U1[U1 CameraPage]
   DC --> U1
@@ -108,10 +108,10 @@ graph LR
 | ID | Nodo | Dueño | Necesita | Produce | Aceptación | Estado |
 |---|---|---|---|---|---|---|
 | **S2** | Geometría y labels de los 3 layouts | `booth-state` | — | `constants/layouts.ts` | Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md) | ⬜ |
-| **S1** | Reducer completo + tipos | `booth-state` | — | `context/PhotoBoothContext.tsx`, `types/` | **10** acciones (`CLEAR_PHOTOS` es la nueva, para el "repetir" de `/review`) y checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
+| **S1** | Reducer completo + tipos | `booth-state` | — | `context/PhotoBoothContext.tsx`, `types/` | 6 campos y **11** acciones (`SET_FRAME_SET` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
 | **S3** | Guards de ruta | `booth-state` | S1 | `hooks/useRouteGuard.ts` | Tabla de guards y checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
 | **C1** | Utilidades de imagen | `canvas-media` | — | `utils/imageUtils.ts` | resize, dataURL↔Blob, sin fugas | ⬜ |
-| **C2** | Composición sobre canvas | `canvas-media` | S2, C1 | `utils/canvasUtils.ts` | Dibuja los 3 layouts a 600×1800 nítido en pantalla retina | ⬜ |
+| **C2** | Composición sobre canvas | `canvas-media` | S2, C1 | `utils/canvasUtils.ts` | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, y **recorta cada hueco con la máscara del frame set** (X1) | ⬜ |
 | **C3** | Hook de cámara | `canvas-media` | C1 | `hooks/useCamera.ts` | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado | ⬜ |
 | **C4** | Hook de canvas | `canvas-media` | C2 | `hooks/useCanvas.ts` | `draw(state)` + `exportAsBlob()` | ⬜ |
 | **C5** | Hook de stickers | `canvas-media` | S1, C4 | `hooks/useStickers.ts` | Arrastre correcto con escalado px-CSS ↔ px-canvas | ⬜ |
@@ -120,16 +120,16 @@ graph LR
 | **D2** | Code Connect de los 5 componentes | `figma-design-sync` | D1 | `*.figma.ts` | `get_design_context` devuelve `<Button>`, no `<div>` | ⬜ |
 | **D3** | CSS CameraPage · nodo `91:954` | `figma-design-sync` | D1 | `CameraPage.module.css` | **Lote único D3-D7**, ver §6 | ⬜ |
 | **D4** | CSS UploadPage · nodos `91:1168`, `91:1202`, `91:1223` | `figma-design-sync` | D1 | `UploadPage.module.css` | No son 3 estados: son los 3 layouts | ⬜ |
-| **D5** | CSS DecorationPage · nodos `102:319`, `103:382` | `figma-design-sync` | D1 | `DecorationPage.module.css` | 🔴 **BLOQUEADO**: falta confirmar que esos nodos son Decoration, y no hay panel de fondos ni stickers | 🔴 |
+| **D5** | CSS DecorationPage · nodo `102:319` | `figma-design-sync` | D1 | `DecorationPage.module.css` | **Desbloqueado el 2026-07-26.** `103:382` es duplicado exacto: ignorarlo. Un solo panel + preview + botones sirve a los **tres pasos**; los pasos 2 y 3 no están dibujados y usan esa plantilla. Ver [../../specs/decoration.md](../../specs/decoration.md) | ⬜ |
 | **D6** | CSS FinalPage · nodo `2074:52` | `figma-design-sync` | D1, D7 | `FinalPage.module.css` | Idéntica a D7: reutilizar, no rehacer | ⬜ |
 | **D7** | CSS SelectedPicturesPage · nodo `91:1346` | `figma-design-sync` | D1 | `PhotoResult.module.css`, `ReviewPage.module.css` | El CSS del bloque de resultado es **compartido** con D6 | ⬜ |
 | **C7** | Componente `Loading` · nodo `91:1283` | `ui-composer` | D1 | `components/ui/Loading.tsx` | Spinner, no ruta. Lo usan las páginas que esperan | ⬜ |
-| **X1** | Assets + manifiestos | `asset-pipeline` | — | `assets/**`, `constants/{stickers,backgrounds}.ts` | IDs tipados, carpetas vacías llenas | ⬜ |
-| **U1** | CameraPage `/camera` | `ui-composer` | S1,S3,C3,C7,D3 | página + `components/camera/` | 4 fotos → `/review` | ⬜ |
-| **U2** | UploadPage `/upload` | `ui-composer` | S1,S3,C1,C7,D4 | página + `components/upload/` | Valida tipo y cantidad → `/review` | ⬜ |
-| **U5** | **SelectedPicturesPage `/review`** | `ui-composer` | S1,S3,C4,D7 | página + `components/result/PhotoResult.tsx` | Muestra el strip; seguir → `/decoration`, repetir → volver al origen. **`PhotoResult` es compartido con U4** | ⬜ |
-| **U3** | DecorationPage `/decoration` | `ui-composer` | S1,S3,C4,C5,D5,X1 | página + `components/decoration/` | 🔴 bloqueado por D5 | 🔴 |
-| **U4** | FinalPage `/final` | `ui-composer` | S1,S3,C4,D6,**U5** | página | Reutiliza `PhotoResult` de U5. Descarga PNG + rehacer | ⬜ |
+| **X1** | Assets + manifiestos | `asset-pipeline` | — | `assets/**`, `constants/{frames,stickers,backgrounds}.ts` | IDs tipados, carpetas vacías llenas. **`frames.ts` mapea cada set a sus 4 máscaras**, una por hueco. El arte ya está subido a Figma; faltan los node IDs de los contenedores — pedirlos al arrancar | ⬜ |
+| **U1** | CameraPage `/camera` | `ui-composer` | S1,S3,C3,C7,D3 | página + `components/camera/` | Checklist en [../../specs/camera.md](../../specs/camera.md) | ⬜ |
+| **U2** | UploadPage `/upload` | `ui-composer` | S1,S3,C1,C7,D4 | página + `components/upload/` | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md) | ⬜ |
+| **U5** | **SelectedPicturesPage `/review`** | `ui-composer` | S1,S3,C4,D7 | página + `components/result/PhotoResult.tsx` | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md) | ⬜ |
+| **U3** | DecorationPage `/decoration` | `ui-composer` | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/` | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md) | ⬜ |
+| **U4** | FinalPage `/final` | `ui-composer` | S1,S3,C4,D6,**U5** | página | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md) | ⬜ |
 | **R\*** | Revisión por pantalla | `booth-reviewer` | U* correspondiente | hallazgos | Build, lint, capas, a11y, fidelidad estructural | ⬜ |
 | **O\*** | Alta de ruta + commit | orquestador | R* correspondiente | `App.tsx` | Sin imports muertos | ⬜ |
 
@@ -147,8 +147,14 @@ Detalle en [../design/FIGMA.md](../design/FIGMA.md).
 - **C7 es nuevo.** `Loading` es un componente, no una ruta.
 - **S2 ya tiene geometría real** — de las pantallas Upload. Ver
   [../contracts/layouts.md](../contracts/layouts.md).
-- **D5 y U3 bloqueados.** No hay pantalla Decoration en el fichero. Ver
-  [KICKOFF.md](KICKOFF.md) §6.
+- **D5 y U3 DESBLOQUEADOS el 2026-07-26.** La pantalla existía sin nombrar: es
+  `102:319`, hoy "Decorarion". Y no es una pantalla, son **tres pasos en una sola
+  ruta** — Frames → Backgrounds → Icons. Los pasos 2 y 3 no están dibujados y se
+  construyen con la plantilla del 1. Detalle en
+  [../../specs/decoration.md](../../specs/decoration.md).
+- **Los frames son un campo de estado nuevo.** Un *frame set* es un conjunto temático
+  de 4 recortes, uno por hueco. Añade `frameSet` al estado y `SET_FRAME_SET` a las
+  acciones: once en total. Ver [../contracts/state.md](../contracts/state.md).
 - **El fichero es de wireframes.** El CSS que salga de D3-D7 es estructura, no
   acabado. `booth-reviewer` no puede exigir fidelidad de píxel contra un
   wireframe, ni nada fuera de los 1440 px de los artboards.
@@ -156,13 +162,13 @@ Detalle en [../design/FIGMA.md](../design/FIGMA.md).
 ## 5. Camino crítico
 
 ```
-nominal    S2 → C2 → C4 → C5 → U3 → R → O      (7 niveles, BLOQUEADO en U3)
-efectivo   S2 → C2 → C4 → U5 → U4 → R → O      (7 niveles, transitable)
+S2 → C2 → C4 → C5 → U3 → R → O      (7 niveles, transitable de punta a punta)
 ```
 
-Mientras D5/U3 sigan bloqueados por la Decoration que falta, **C5 (`useStickers`)
-sale del camino crítico**: su único consumidor es U3. Bájalo de prioridad y no
-gastes el agente Opus en él hasta que la pantalla exista.
+Desde que Decoration se desbloqueó (2026-07-26) hay **un solo** camino crítico y
+`C5` (`useStickers`) vuelve a estar dentro: su consumidor U3 ya existe. La rama
+`C4 → U5 → U4` tiene la misma longitud y comparte los tres primeros nodos, así que
+no compite: se resuelve sola por el camino.
 
 **Dos consecuencias que no son obvias sin dibujar el grafo:**
 
@@ -179,7 +185,7 @@ porque es el único agente con rate limit (plan Figma student).
 
 ## 6. Regla de lote para Figma
 
-El CSS de las pantallas **D3, D4 y D5** (D6 está bloqueado) se produce **en una
+El CSS de las pantallas **D3-D7** se produce **en una
 sola sesión** de `figma-design-sync`, justo después de D1, y se cachea en
 `docs/design/<pantalla>.md`. Son 6 node IDs contando los estados de Upload y las
 dos vistas de Decoration — todos listados en [../design/FIGMA.md](../design/FIGMA.md).
@@ -220,9 +226,9 @@ verdad. La ola 1 tiene 5 nodos listos a la vez y no debes lanzar 5.
 | 4 | **C4** + C3 | |
 | 5 | **U5** + C7 | `/review` desbloquea `PhotoResult`, que U4 reutiliza |
 | 6 | **U4** + U1 | |
-| 7 | U2 + X1 | X1 puede colarse antes en cualquier hueco |
-| 8 | R* → O* | Revisión y alta de rutas |
-| — | C5, D5, U3 | 🔴 En cuanto se resuelva la Decoration que falta |
+| 7 | X1 + **C5** | X1 antes de U3, que lee los tres manifiestos |
+| 8 | **U3** + U2 | |
+| 9 | R* → O* | Revisión y alta de rutas |
 
 En **negrita**, el camino crítico. Si un día solo puedes atender a un agente, que
 sea el del camino crítico.

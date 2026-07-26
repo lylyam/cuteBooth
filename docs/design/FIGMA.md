@@ -31,8 +31,8 @@ Todas 1440×1024. Ordenadas por posición en el lienzo.
 | **Upload · spotlight** | `91:1223` | `/upload` | D4 → U2 · **y geometría para S2** |
 | Loading | `91:1283` | ❌ **no es ruta, es componente** | C7 |
 | **Selected pictures** | `91:1346` | `/review` | D7 → U5 |
-| ¿Decoration? | `102:319` | `/decoration` | ⚠️ ver §3 |
-| ¿Decoration? (duplicado) | `103:382` | `/decoration` | ⚠️ ver §3 |
+| **Decoration · paso 1 Frames** | `102:319` | `/decoration` | D5 → U3 · **canónico** |
+| Decoration (duplicado exacto) | `103:382` | — | ⚠️ borrar, ver §3 |
 | **Final** | `2074:52` | `/final` | D6 → U4 |
 
 ## 1. El diseño confirma la arquitectura de componentes
@@ -62,30 +62,47 @@ botones (140/150 frente a 98/81).
 **Consecuencia de arquitectura:** un único componente `PhotoResult` sirve a las
 dos páginas, parametrizado por copy y por acciones. No son dos trabajos.
 
-⚠️ El copy de `2074:52` en Figma **todavía no está actualizado** — sigue diciendo
-lo mismo que la pantalla de revisión. El texto real de `/final` hay que definirlo
-al escribir `specs/final.md`.
+⚠️ El copy de `2074:52` en Figma **sigue sin actualizar**: repite el de la pantalla
+de revisión. El texto real de `/final` está decidido y **manda
+[../../specs/final.md](../../specs/final.md)**, no Figma. Los botones sí son buenos:
+`Download` y `Retake`.
 
-## 3. ⚠️ No hay pantalla Decoration — pregunta abierta
+Copy verificado por captura el 2026-07-26:
 
-No existe ningún frame llamado Decoration. Lo más parecido son `102:319` y
-`103:382` (duplicados entre sí), que **se llaman "Selected pictures"** pero
-contienen algo que no es una revisión:
+| Pantalla | `h1` | Subtítulo | Botones |
+|---|---|---|---|
+| `/review` `91:1346` | `Here's your photo strip!` | `Happy with it or want to try again?` | `Retake photos` · `Start decorating` |
+| `/final` `2074:52` | *(desactualizado)* | *(desactualizado)* | `Download` · `Retake` |
+| `/camera` `91:954` | — | — | `Start taking photos!!` |
+| `/decoration` `102:319` | — | panel `Frames` | `← Previous step` · `Next step →` |
+| `/upload` `91:1168` | — | — | **ninguno dibujado** |
+
+## 3. Decoration: resuelto el 2026-07-26
+
+El frame **existía sin nombrar**, y por eso el inventario anterior no lo encontraba.
+Hoy `102:319` se llama **"Decorarion"** (con typo) y `103:382`, **"Decoration 2"**.
+
+Los dos son **estructuralmente idénticos** — mismo panel, mismas 8 formas, mismo
+preview, mismos botones. `103:382` es un duplicado: **el canónico es `102:319`**, y
+borrar el otro evita que alguien lo tome por un segundo estado.
 
 ```
-Frame 29 ─ Frame 31 → texto "Frames"            ← etiqueta de panel
-         └ Frame 32 → 8 formas (rounded-rect, Ellipse, Subtract, Union…)
-Frame 7           → los 4 huecos de foto
-Frame 44          → 2 botones (uno a cada extremo)
+Frame 45 (943×543)
+├─ Frame 29 (425×543)  panel: texto "Frames" + rejilla de 2 columnas con scroll
+│                      8 formas de 172×121 (rounded-rect, Ellipse, Subtract, Union…)
+└─ Frame 7  (217×637)  preview de la tira classic, 4 huecos
+Frame 44 (1192×34)     [← Previous step]  ·········  [Next step →]
 ```
 
-Un panel titulado "Frames" con 8 formas es un **selector de decoración**, no una
-pantalla de revisión. Todo apunta a que son la Decoration.
+**No es una pantalla, es el paso 1 de tres.** `/decoration` es una sola ruta con
+pasos internos: Frames → Backgrounds → Icons. Los pasos 2 y 3 **no están dibujados**
+y se construyen con esta plantilla. Alcance y copy en
+[../../specs/decoration.md](../../specs/decoration.md).
 
-**Lo que falta en cualquier caso:** no hay panel de fondos ni de stickers en
-ninguna parte del fichero. `/decoration` necesita ambos según el flujo.
-
-**Ningún agente decide esto.** Ver [../orchestration/KICKOFF.md](../orchestration/KICKOFF.md) §6.
+**Pendiente, y no bloquea:** el arte de frames, fondos e iconos está subido al
+fichero, pero faltan los node IDs de sus contenedores. `asset-pipeline` los pide al
+arrancar X1, o los lee de la selección actual del editor — `get_metadata` la devuelve
+en un bloque *"Currently selected nodes"*. **Nunca** enumerando `0:1`.
 
 ## 4. Geometría de los layouts — fuente canónica
 
