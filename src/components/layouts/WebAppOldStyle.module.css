@@ -1,8 +1,7 @@
 .wrapper {
 	width: min(1292px, 100%);
-	border: 1.94px solid var(--dark-secondary);
-	border-radius: 17.59px;
-	background-color: var(--primary-color);
+	border: var(--border-width) solid var(--dark-secondary);
+	border-radius: var(--border-radius-lg);
 	overflow: hidden;
 }
 
@@ -12,7 +11,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 10px 15px;
-	border-bottom: 1.94px solid var(--dark-secondary);
+	border-bottom: var(--border-width) solid var(--dark-secondary);
 }
 
 .logo {
@@ -25,39 +24,25 @@
 .closeButton {
 	width: 27px;
 	height: 25px;
-	border: 1.94px solid var(--dark-secondary);
-	border-radius: 999px;
+	border: var(--border-width) solid var(--dark-secondary);
+	border-radius: var(--border-radius-pill);
 	background-color: transparent;
 	color: var(--dark-secondary);
-	font-family: inherit;
-	font-size: 14px;
-	line-height: 1;
-	cursor: pointer;
 }
 
 .content {
-	min-height: 718px;
-	padding: 50px 10px 80px;
+	flex: 1;
+	min-height: 0;
+	padding: clamp(1.5rem, 4vh, 50px) 10px clamp(2rem, 5vh, 80px);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-}
-
-@media (max-width: 992px) {
-	.content {
-		min-height: 560px;
-		padding: 40px 12px 56px;
-	}
+	overflow-y: auto;
 }
 
 @media (max-width: 640px) {
 	.topBar {
 		padding: 8px 10px;
-	}
-
-	.content {
-		min-height: 420px;
-		padding: 28px 10px 40px;
 	}
 }

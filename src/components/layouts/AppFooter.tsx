@@ -5,12 +5,8 @@ function AppFooter() {
   return (
     <footer className={styles.footer}>
       <div className={styles.links}>
-        <Link to="/about" className={styles.link}>
-          About Lym
-        </Link>
-        <Link to="/privacy" className={styles.link}>
-          Privacy Policy
-        </Link>
+        <Link to="/about">About Lym</Link>
+        <Link to="/privacy">Privacy Policy</Link>
       </div>
       <span className={styles.text}>A Lym&apos;s project</span>
     </footer>

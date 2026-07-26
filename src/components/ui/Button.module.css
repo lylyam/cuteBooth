@@ -4,10 +4,9 @@
     justify-content: center;
     align-items: center;
     gap: 10.514px;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     background-color: var(--background-color);
     border: 2px solid var(--dark-secondary);
-    font-family: inherit; 
 }
 
 .button:hover{
