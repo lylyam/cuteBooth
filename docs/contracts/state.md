@@ -156,8 +156,25 @@ no `localStorage`: una sesión de photobooth no sobrevive al cierre de la pesta�
 
 ## Criterio de aceptación de S3
 
-- [ ] Entrar en frío a `/camera`, `/upload`, `/review`, `/decoration` o `/final`
+- [x] Entrar en frío a `/camera`, `/upload`, `/review`, `/decoration` o `/final`
       redirige a `/`
-- [ ] Con layout elegido, `/camera` y `/upload` se abren sin redirección
-- [ ] Con layout y 4 fotos, las tres últimas se abren sin redirección
-- [ ] La redirección usa `replace`: el botón atrás no crea un bucle
+- [x] Con layout elegido, `/camera` y `/upload` se abren sin redirección
+- [x] Con layout y 4 fotos, las tres últimas se abren sin redirección
+- [x] La redirección usa `replace`: el botón atrás no crea un bucle
+
+**Verificado por inspección, no por render.** Las cinco páginas siguen siendo ficheros de
+0 bytes, así que no hay dónde montar el hook todavía. La comprobación de verdad —entrar en
+frío a `/decoration` y acabar en `/`— se hace en la primera `U*` que lo consuma, y hasta
+entonces esto es una promesa de tipos, no un hecho observado.
+
+Firma, que es lo que copian las cinco pantallas:
+
+```tsx
+const redirect = useRouteGuard('layout'); // /camera, /upload
+const redirect = useRouteGuard('layoutAndPhotos'); // /review, /decoration, /final
+if (redirect) return redirect;
+```
+
+`/` y `/layout` no llaman al hook. Devuelve un `<Navigate to="/" replace />` construido con
+`createElement` (el fichero es `.ts`, no `.tsx`) para que la página lo devuelva **desde su
+render**, nunca desde un efecto.
