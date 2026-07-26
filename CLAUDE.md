@@ -14,12 +14,22 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Which agent owns what, workflows, MCP usage | [docs/orchestration/PLAN.md](docs/orchestration/PLAN.md) |
 | What to work on next, what's blocking what | [docs/orchestration/DAG.md](docs/orchestration/DAG.md) |
 | Figma file key, node IDs, usage rules | [docs/design/FIGMA.md](docs/design/FIGMA.md) |
-| Contracts between layers | `docs/contracts/*.md` |
-| Per-screen scope and acceptance criteria | `specs/*.md` (pending, node P4) |
+| Contracts between layers | `docs/contracts/{state,layouts,design-tokens,assets}.md` |
+| Per-screen scope, literal copy, acceptance | `specs/{camera,upload,review,decoration,final}.md` |
 
-**Never decide these alone** — six open product decisions are listed in
-[KICKOFF.md](docs/orchestration/KICKOFF.md) §6 (no Final screen designed, two
-undecided screens, the `square` misnomer, UI language). Report and ask.
+**Twelve product decisions are CLOSED** in
+[KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them.
+
+**Two things are still open, and no agent decides them alone** —
+[KICKOFF.md](docs/orchestration/KICKOFF.md) §6:
+
+1. **Slot geometry disagrees by 10 px** between the Upload wireframe and the frame
+   artwork. **This blocks S2**, the root of the critical path. See
+   [docs/contracts/layouts.md](docs/contracts/layouts.md).
+2. **The menu-icon → frame mapping is missing.** Leaves X1 partial. See
+   [docs/contracts/assets.md](docs/contracts/assets.md).
+
+Report and ask. Never invent geometry or copy.
 
 ### Context rules
 
@@ -33,25 +43,46 @@ undecided screens, the `square` misnomer, UI language). Report and ask.
 
 ## Project
 
-CuteBooth — a browser-based photobooth web app (React + TypeScript + Vite). Users pick a photo layout, capture or upload 4 photos, decorate them with backgrounds/stickers, and get a final composited image to download. The project is early-stage: routing and layout selection are implemented; camera capture, upload, decoration, and final-result pages exist only as empty stub files (`src/pages/{cameraPage,uploadPage,decorationPage,finalPage}`) and are commented out in `src/App.tsx` pending implementation.
+CuteBooth — a browser-based photobooth web app (React + TypeScript + Vite). Users pick a
+photo layout, capture or upload 4 photos, review the strip, decorate it in three steps
+(frame, background, stickers), and download the composited image.
+
+**Six routes**, of which two are built. `/` and `/layout` work; `/camera`, `/upload`,
+`/review`, `/decoration` and `/final` are 0-byte stub files with their routes commented
+out in `src/App.tsx`. `hooks/`, `services/`, `utils/` and `constants/` are empty.
+`src/assets/` is **not** empty: 343 art files landed on 2026-07-26 — see
+[docs/contracts/assets.md](docs/contracts/assets.md).
+
+**All user-facing text is in English**, including `alt` attributes. The project docs are
+in Spanish; the product is not.
 
 ## Commands
 
 ```bash
-npm run dev       # start Vite dev server
-npm run build     # type-check (tsc -b, project references) then vite build
-npm run lint      # eslint .
-npm run preview   # preview a production build
+npm run dev          # start Vite dev server
+npm run build        # type-check (tsc -b, project references) then vite build
+npm run lint         # eslint .
+npm run format       # prettier --write .   (NOT yet applied to src/ — see below)
+npm run format:check # prettier --check .
+npm run preview      # preview a production build
 ```
 
-There is no test runner configured in this repo (no test script, no test files, no testing library dependency).
+**There is no test runner** (no test script, no test files, no testing library). So
+`npm run build` is the only automatic gate, and a `Stop` hook in
+`.claude/settings.json` runs it at the end of every turn. A `PostToolUse` hook runs
+`eslint --fix` on any `src/**/*.ts(x)` that gets written.
+
+**Prettier is configured but not yet applied.** `npm run format` would touch 17 files;
+it needs its own format-only commit. Until then, match the file you are editing.
 
 ## Stack notes
 
 - **Vite 8**, which bundles via Rolldown. The React Compiler is wired in manually as a Babel plugin rather than through `babel-plugin-react-compiler`'s usual Vite integration — see `vite.config.ts`: `babel({ presets: [reactCompilerPreset()] })` from `@rolldown/plugin-babel`. Don't "simplify" this to a standard `vite-plugin-react-compiler` setup without checking it still works with Rolldown.
 - **TypeScript** is project-referenced: root `tsconfig.json` references `tsconfig.app.json` (src, DOM libs) and `tsconfig.node.json` (vite.config.ts, node libs). `npm run build` runs `tsc -b` across both before `vite build`.
 - **React Router v7** (`react-router-dom`) with `BrowserRouter` — routes are declared directly in `src/App.tsx`.
-- No global state library — global state is a single `useState` in Context (see below), not `useReducer`.
+- No global state library — global state is **today** a single `useState` in Context, and
+  becomes a `useReducer` with 6 fields and 11 actions in node S1. The contract is already
+  written: [docs/contracts/state.md](docs/contracts/state.md).
 - CSS Modules per component/page (`X.module.css` next to `X.tsx`), no Tailwind/styled-components.
 
 ## Architecture
@@ -61,8 +92,15 @@ Layer-based structure under `src/`:
 - `pages/<name>Page/` — one folder per route/screen, each with `<Name>Page.tsx` + `<Name>Page.module.css`.
 - `components/ui/` — small generic/reusable pieces (`Button`, `Card`, `Modal`), each self-contained with its own `.module.css`.
 - `components/layouts/` — page chrome: `PageShell` (outer page wrapper + `AppFooter`) and `WebAppOldStyle` (the retro "window" chrome with a title bar/logo/close button used to frame page content — see `LayoutPage.tsx` for the pattern).
-- `context/PhotoBoothContext.tsx` — the one global state container, exposing `usePhotoBooth()`. Currently holds only `selectedLayout` (`LayoutId = 'classic' | 'wide' | 'square'`) and its setter. `PhotoBoothProvider` wraps the whole `<Routes>` tree in `App.tsx`. When adding photos/background/stickers state (per the planned flow below), extend this context rather than creating a second one.
-- `hooks/`, `services/`, `utils/`, `constants/` exist as top-level folders but are currently empty — reserved for camera access, canvas composition, and layout/sticker/background definitions as those features get built.
+- `context/PhotoBoothContext.tsx` — the one global state container, exposing
+  `usePhotoBooth()`. Today it holds only `selectedLayout` and its setter.
+  `LayoutId` is `'classic' | 'wide' | 'square'` and **`square` is renamed to `spotlight`
+  in S2** — that layout is landscape with one featured photo, not square. Extend this
+  context; never create a second one.
+- `hooks/`, `services/`, `utils/`, `constants/` exist and are **empty** — reserved for
+  camera access, canvas composition and the layout/frame/sticker/background manifests.
+- `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
+  hooks and permissions (`settings.json`).
 
 ### Page composition pattern
 
@@ -84,11 +122,19 @@ Look at `src/pages/layoutPage/LayoutPage.tsx` as the reference implementation of
 ```
 HomePage (/) → LayoutPage (/layout, pick 1 of 3 layouts)
   → modal choice: CameraPage (/camera) or UploadPage (/upload), each producing 4 photos
-  → DecorationPage (/decoration): apply background + drag stickers onto the chosen layout
-  → FinalPage (/final): render composited result, download or restart
+  → SelectedPicturesPage (/review): keep the strip, or retake the four photos
+  → DecorationPage (/decoration): THREE steps in one route — frame, background, stickers
+  → FinalPage (/final): download the PNG, or retake
 ```
 
-`/camera`, `/upload`, `/decoration`, `/final` routes are commented out in `App.tsx` until their pages are implemented — uncomment as each is built, don't leave dead imports.
+`/review` and `/final` share one `PhotoResult` component: in Figma the two screens are
+structurally identical and only the copy and buttons change.
+
+`/decoration` is **one route with an internal step**, not three routes. The step is local
+`useState`; it never goes into global state or the URL.
+
+The four commented-out routes in `App.tsx` get uncommented as each page is built — and
+**only the orchestrator edits `App.tsx`**. Don't leave dead imports.
 
 ### Layer dependency rule
 
@@ -101,6 +147,18 @@ Arrows point **down only**. A component never calls `getUserMedia`,
 `utils/`, or `services/`. A hook never imports a component. This rule is what
 makes the work DAG acyclic; if you ever need an upward edge, it's a design error,
 not a scheduling problem.
+
+## Working with the fleet
+
+Six specialised agents, three of them defined in `.claude/agents/`. Paths of ownership
+are **disjoint** (matrix in [PLAN.md](docs/orchestration/PLAN.md) §4), which is what
+makes parallel work safe without worktrees. Before writing a file, check whose it is —
+if it isn't yours, report it instead of editing it.
+
+Every node closes with the report format of
+[KICKOFF.md](docs/orchestration/KICKOFF.md) §8, and its **SUPUESTOS** section is not
+optional: an undeclared assumption is a silent product decision that compiles, passes
+lint and looks right.
 
 ## Reference documents
 
