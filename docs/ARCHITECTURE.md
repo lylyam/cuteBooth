@@ -59,9 +59,9 @@ src/
 ├── index.css                  ← reset + 21 custom properties en :root
 ├── assets/
 │   ├── draws/                 ← layoutIcon1..3.svg, en uso
-│   ├── frames/                ← 32 SVG (24 marcos + 8 iconos de menú sin usar)
-│   ├── backgrounds/           ← 46 PNG
-│   └── icons/                 ← 273 PNG (pegatinas · se renombra a stickers/ en X1)
+│   ├── frames/{classic,wide,spotlight}/  ← 8 SVG cada uno + carpeta de menú sin usar
+│   ├── backgrounds/{classic,wide-and-spotlight}/  ← 25 + 21 PNG
+│   └── stickers/{3dStyle,drawStyle,feltStyle,pixelStyle}/  ← 273 PNG
 ├── components/
 │   ├── ui/                    ← Button, Card, Modal
 │   └── layouts/               ← PageShell, WebAppOldStyle, AppFooter
@@ -86,8 +86,8 @@ src/
    git nunca las llevó. Las crea quien escriba el primer hook (S3 o C3). No está roto.
 2. **`/review` no tiene carpeta.** Entró en alcance con la decisión 2, y la crea U5.
    Los stubs de 0 bytes son **cuatro**, no cinco.
-3. **`assets/icons/` son pegatinas, no iconos de UI.** Se renombra a `stickers/` en X1;
-   el nombre actual induce a error. Ver [contracts/assets.md](contracts/assets.md).
+3. **Las pegatinas ya no se llaman `icons/`.** X1 las renombró a `stickers/`, porque no
+   son iconos de UI y el nombre inducía a error. Ver [contracts/assets.md](contracts/assets.md).
 
 ## 5. Patrón de composición de página
 
@@ -138,7 +138,7 @@ Dos cambios, ambos propiedad de `booth-state`, **los dos ya aplicados**:
 1. **`square` → `spotlight`** (nodo S2 ✅). El nombre viejo mentía: ese layout es
    apaisado con una foto destacada, no cuadrado. Ver
    [contracts/layouts.md](contracts/layouts.md). Queda el renombrado de
-   `assets/frames/square/`, que es de `asset-pipeline` y se cobra en X1.
+   `assets/frames/square/` → `spotlight/`, hecho en X1.
 2. **`useState` → `useReducer`** (nodo S1 ✅). Contrato en
    [contracts/state.md](contracts/state.md). Motivo: `photos`, `frame`, `background` y
    `stickers` se actualizan de forma relacionada y desde páginas y pasos distintos; con

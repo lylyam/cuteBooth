@@ -79,9 +79,10 @@ entera encajada dentro.
 ### 3 · Icons
 
 Hay **273 pegatinas en cuatro estilos** — `3dStyle` (102), `drawStyle` (75),
-`feltStyle` (75), `pixelStyle` (21). Son 38 MB, así que van por URL desde `public/` y
-**no** por el bundler. Cómo se agrupan los cuatro estilos en el panel (pestañas, secciones
-o una lista sola) **no está dibujado**: ver supuesto 5.
+`feltStyle` (75), `pixelStyle` (21). Son 38 MB, así que se consumen **por URL** desde
+`constants/stickers.ts` (`import.meta.glob` con `?url&no-inline`): salen a `dist/` como
+ficheros y **no** entran dentro del JS. Cómo se agrupan los cuatro estilos en el panel
+(pestañas, secciones o una lista sola) **no está dibujado**: ver supuesto 5.
 
 Clic en una pegatina la añade al centro de la tira (`ADD_STICKER`). Arrastrarla sobre el
 preview la mueve (`MOVE_STICKER`), con la conversión px-CSS ↔ px-canvas de `useStickers`

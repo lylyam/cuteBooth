@@ -84,29 +84,60 @@ Cada punto es un hallazgo real del CSS actual, no una hipótesis.
 | T7  | Espaciados sueltos sin escala: `8 10 12 15 16 20 24 30 32 37 40 70` px | todos los `.module.css`        | **No inventar la escala ahora.** Ver §4                                                       |
 | T8  | Breakpoints literales: `640px`, `768px`, `900px`                       | 5 ficheros                     | Dejarlos literales (regla 6), pero **usar solo esos tres**                                    |
 
-## 4. Delta de tokens — la rellena D1
+## 4. Delta de tokens — rellenada por el lote D3-D7 (2026-07-26)
 
-Esta sección está **vacía a propósito**. Se completa en el lote D3-D7, cuando haya
-cinco pantallas de evidencia y no antes: una escala de espaciado inventada con dos
-pantallas a la vista se rehace con la tercera.
-
-`figma-design-sync` añade aquí, por cada token nuevo que proponga:
+Tres tokens nuevos y una baja. Se decidieron con las **cinco pantallas a la vista**, que es
+la condición que esta sección exigía.
 
 ```
---nombre-token : valor
-  motivo   : qué valor crudo de Figma no encajaba en ninguno de los 21
-  usos     : fichero.module.css → .clase (uno por línea)
-  reemplaza: qué literal se borra al introducirlo
+--border-radius-md : 10px
+  motivo   : hueco/panel interior repetido en Upload (los 3 layouts), Decoration
+             (panel + muestras) y la tira escalada de Review/Final. No encaja en
+             --border-radius-sm (8px, diff 2px) ni en --border-radius-lg (17.59px)
+  usos     : UploadPage.module.css → .slot
+             DecorationPage.module.css → .panel, .swatch, .backgroundSwatch
+  reemplaza: el rounded-[10px] repetido en 91:1170/1204/1225 y 102:321
+
+--font-size-lg : 40px
+  motivo   : subtítulo de PhotoResult, el componente compartido por /review y /final.
+             --font-size-md (22px) se queda a 18px; --font-size-title solo llega a 40
+             en el máximo de su clamp
+  usos     : components/result/PhotoResult.module.css → .subtitle
+  reemplaza: text-[40px] de 91:1402 y 2074:58
+
+--font-size-label : 17px
+  motivo   : título de sección del panel en los tres pasos de Decoration
+             (Frames/Backgrounds/Icons). diff 5px con --font-size-md, 3px con --sm
+  usos     : DecorationPage.module.css → .panelTitle
+  reemplaza: text-[17px] de 102:351
 ```
 
-Y una línea por cada punto de §3 que quede resuelto.
+**T3 resuelto: `--primary-color` (`#C2C2C2`) se borra.** Con las cinco pantallas revisadas,
+**ningún hueco vacío ni ninguna forma lleva relleno** — son contornos de 1.94px sobre el
+fondo de página. `get_design_context` no devolvió `bg-[#c2c2c2]` en ningún nodo. Tenía 0
+consumidores antes y 0 después, así que la baja es segura. Si algún día hace falta un gris
+de "hueco vacío", se reintroduce con evidencia; mantenerlo huérfano solo invitaba a usarlo
+por error.
+
+Con esto `:root` pasa de **21 a 23** custom properties (−1 +3).
+
+**T4-T8 siguen abiertas, y con motivo escrito:**
+
+| #   | Por qué sigue abierta                                                                                                                                            |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T4  | `--shadow-hard`: el fichero es un wireframe estático y **no dibuja estados hover**. D3-D7 no repiten la sombra, así que no hay evidencia para promoverla a token |
+| T5  | `z-index`: D3-D7 no añaden ninguna capa flotante que compita con el `Modal` — la capa de stickers se apila por orden de DOM, sin `z-index` explícito             |
+| T6  | `--window-max-width`: ninguno de los 6 ficheros nuevos escribe 1292px. Sigue siendo cosa de `WebAppOldStyle` y `LayoutPage`                                      |
+| T7  | Escala de espaciado: **deliberadamente sin inventar.** El lote añadió más valores sueltos (14, 20, 25, 30, 40, 50…). Es más evidencia, no una escala             |
+| T8  | Breakpoints: el lote usó solo `640px` y `768px`. Ninguno fuera de la lista                                                                                       |
 
 ## 5. Criterio de aceptación de D1
 
-- [ ] §1 sigue cuadrando con `index.css` (mismo número de tokens, mismos valores)
-- [ ] T1 y T2 resueltos: `Button.module.css` sin `2px` ni `10.514px`
-- [ ] T3 decidido: `--primary-color` usado o borrado, con motivo escrito
-- [ ] Cada token nuevo tiene entrada en §4 con motivo y sitios de uso
-- [ ] Ningún `.module.css` nuevo con color, radio o grosor de borde literal
-- [ ] Ningún breakpoint fuera de `640px`, `768px`, `900px`
-- [ ] `npm run build` limpio y las páginas ya implementadas se ven igual
+- [x] §1 verificada en D1. Tras el lote, `:root` tiene **23** tokens: ver §4
+- [x] T1 y T2 resueltos: `Button.module.css` sin `2px` ni `10.514px`
+- [x] T3 decidido en el lote D3-D7: **borrado**, con motivo escrito en §4
+- [x] Cada token nuevo tiene entrada en §4 con motivo y sitios de uso
+- [x] Ningún `.module.css` nuevo con color, radio o grosor de borde literal (verificado
+      por el orquestador: 0 literales en los 6 ficheros del lote)
+- [x] Ningún breakpoint fuera de `640px`, `768px`, `900px` (el lote usó 640 y 768)
+- [x] `npm run build` limpio (ejecutado por el orquestador, no por el agente)

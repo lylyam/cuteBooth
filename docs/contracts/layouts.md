@@ -15,7 +15,7 @@ export type LayoutId = 'classic' | 'wide' | 'spotlight';
 ```
 
 Alcance del renombrado: `context/PhotoBoothContext.tsx`,
-`pages/layoutPage/LayoutPage.tsx`, `src/assets/frames/square/` → `spotlight/`, y este
+`pages/layoutPage/LayoutPage.tsx`, `src/assets/frames/spotlight/` (renombrado en X1), y este
 contrato. Nada más lo usa todavía — por eso es ahora y no después.
 
 ## Geometría — la fuente es el ARTE
@@ -27,11 +27,11 @@ _Cómo se leen_ y § _Qué cambió_.
 
 Fuente por layout — el marco rectangular simple de cada carpeta:
 
-| Layout      | Fichero                             | Canvas (viewBox) |
-| ----------- | ----------------------------------- | ---------------- |
-| `classic`   | `assets/frames/classic/Frame 7.svg` | 218 × 637        |
-| `wide`      | `assets/frames/wide/Frame 7.svg`    | 468 × 419        |
-| `spotlight` | `assets/frames/square/Frame 8.svg`  | 468 × 419        |
+| Layout      | Fichero                               | Canvas (viewBox) |
+| ----------- | ------------------------------------- | ---------------- |
+| `classic`   | `assets/frames/classic/Frame 7.svg`   | 218 × 637        |
+| `wide`      | `assets/frames/wide/Frame 7.svg`      | 468 × 419        |
+| `spotlight` | `assets/frames/spotlight/Frame 8.svg` | 468 × 419        |
 
 ### `classic` — tira vertical de 4
 
