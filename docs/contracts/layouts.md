@@ -135,6 +135,21 @@ export const LAYOUT_LIST: LayoutDef[]; // orden de presentación en LayoutPage
 6. **Las formas de recorte NO van aquí.** Este módulo dice **dónde** va cada hueco; el
    marco elegido dice **con qué forma** se recorta, y vive en `constants/frames.ts` (X1).
    Ver [assets.md](assets.md).
+
+   **Ampliado el 2026-07-26, con el arte definitivo delante.** Cada marco trae ahora sus 4
+   huecos como forma cerrada, así que en los marcos **con forma** la caja real del hueco es
+   algo menor que el rectángulo de las tablas de arriba — hasta 6,2 px en
+   `classic/Frame 10`. Eso **no es un error de estas tablas**: una nube inscrita en un hueco
+   ocupa menos que el hueco. Reparto de responsabilidades:
+
+   | Para qué                                    | Manda                             |
+   | ------------------------------------------- | --------------------------------- |
+   | Tamaño del canvas de salida                 | **estas tablas** × `EXPORT_SCALE` |
+   | Encajar la foto en un marco **rectangular** | **estas tablas**                  |
+   | Encajar la foto en un marco **con forma**   | la caja del hueco del propio SVG  |
+   | Recortar la foto                            | el `path` del hueco del SVG       |
+   | Ventana de la muestra del menú              | **estas tablas** (`slots[0]`)     |
+
 7. **El ratio de los SVG de `assets/draws/` no manda.** Dan 1.33 para `wide`/`spotlight`;
    el arte da 468/419 = 1.12. Son iconos de la tarjeta de selección, no el marco de
    salida. No los toques por esto.

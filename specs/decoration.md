@@ -72,9 +72,16 @@ Los fondos son **por familia de layout**: 25 para `classic`, 21 para `wide` y
 `spotlight`, que los comparten. Un id de fondo no vale para la otra familia.
 
 **Requisito explícito de la propietaria:** la muestra de fondo **no** enseña la imagen
-completa. Es un cuadrado de esquinas redondeadas, del mismo tamaño que las muestras de
-Frames, **rellenado con la imagen recortada** (`object-fit: cover`). Nunca la foto
-entera encajada dentro.
+completa. Ocupa **el mismo hueco que una muestra de marco** y se ve como un rectángulo de
+esquinas redondeadas **rellenado con la imagen recortada** (`object-fit: cover`). Nunca la
+imagen entera encajada dentro.
+
+**Aclarado el 2026-07-26 (decisión 17).** La redacción anterior decía "un cuadrado … del
+mismo tamaño que las muestras de Frames", y eso se contradecía: las muestras de Frames no
+son cuadradas (`classic` da 172×121). Lo que quería decir era **"que ocupe el mismo espacio
+en pantalla"**, no que fuera 1:1. Así que **no** se fuerza `aspect-ratio: 1`: manda la caja
+de la muestra de marco, y "cuadrado o rectángulo con bordes redondeados" describe el
+aspecto, no una proporción exacta.
 
 ### 3 · Icons
 
@@ -104,8 +111,9 @@ pintado: la última añadida va encima.
 - [ ] `← Previous step` en el paso 1 vuelve a `/review`; `Next step →` en el 3 va a `/final`
 - [ ] Elegir un marco dibuja el SVG del marco **del layout activo** encajado con las fotos
 - [ ] Los marcos no rectangulares recortan la foto con la forma de su hueco
-- [ ] Las muestras de fondo son cuadrados redondeados con la imagen **recortada**, del
-      tamaño de las muestras de Frames — nunca la imagen completa
+- [ ] Las muestras de fondo ocupan el mismo hueco que las de Frames y llevan la imagen
+      **recortada** (`cover`) con esquinas redondeadas — nunca la imagen completa, y **sin**
+      forzar `aspect-ratio: 1` (decisión 17)
 - [ ] Un sticker arrastrado se queda donde se suelta, también con la ventana redimensionada
 - [ ] Cruzar los tres pasos sin elegir nada llega a `/final` sin errores
 - [ ] El preview refleja cada cambio al momento, sin recargar

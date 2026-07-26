@@ -27,6 +27,68 @@ implementarlo resultó ser un nodo pequeño: `import.meta.glob` genera las lista
 todo el nodo fueron los renombrados más ~30 líneas. Lo ejecutó `canvas-media`, que es quien
 las consume para dibujar.
 
+## Por qué SVG, y no PNG
+
+**Decisión 16, cerrada el 2026-07-26.** La pregunta era razonable: si el marco solo se
+dibuja encima, ¿no sería más simple un PNG con los huecos recortados? No, y el motivo es
+que **el fondo elegido se ve a través del marco**.
+
+El marco es solo línea (trazo `#222`, sin relleno en el área de papel), así que el fondo
+rellena la tira y las fotos se asoman por los huecos. Con un PNG hay dos opciones y las dos
+fallan:
+
+| PNG                                   | Qué pasa                                               |
+| ------------------------------------- | ------------------------------------------------------ |
+| Huecos transparentes, **papel opaco** | La foto encaja, pero el papel **tapa el fondo**        |
+| Huecos y papel **transparentes**      | El fondo se ve, pero nada tapa las esquinas de la foto |
+
+Con el fondo detrás **hay que recortar la foto con la forma del hueco**, y para recortar
+hace falta la forma — información que el SVG tiene y el PNG no. Súmale que la tira se
+exporta a 3× (`classic` sale a 654×1911): el vector aguanta, un PNG habría que exportarlo
+ya a ese tamaño.
+
+## Los huecos son formas cerradas dentro del propio marco
+
+**Así llegó el arte definitivo el 2026-07-26**, y así se consume. Cada uno de los 24 SVG
+trae sus **4 huecos como `<path>` cerrado y con relleno**, aplanados desde el grupo
+booleano original. Eso da las dos cosas que hacen falta, del mismo fichero:
+
+1. **Recorte exacto**: `new Path2D(d)` + `ctx.clip()`. Sin parsear máscaras, sin
+   reconstruir nada a mano, y escala a cualquier resolución.
+2. **El dibujo de encima**: el mismo fichero, renderizado como imagen.
+
+### El relleno hay que neutralizarlo al dibujar
+
+**Esto es la trampa del nodo C2, y no es opcional.** Los huecos vienen con
+`fill="#222222"`, que es lo que permite distinguirlos del arte (que es solo trazo). Si el
+SVG se pinta encima **tal cual**, esos rellenos tapan las 4 fotos con bloques oscuros.
+
+Así que C2, del mismo texto SVG que ya descarga, deriva **dos** cosas:
+
+- los `d` de los huecos → `Path2D` para recortar,
+- una copia con el relleno de esos huecos puesto a `none` → la capa que se dibuja encima.
+
+Un fichero, dos usos derivados, cero desincronización. Mismo argumento que ganó en la
+muestra del menú.
+
+### Identificar un hueco
+
+**Relleno distinto de `none` = hueco. Solo trazo = arte.** El export de Figma no incluyó
+los `id`, así que el nombre del grupo `holes` no está en el fichero — y no hace falta: la
+distinción relleno/trazo es suficiente y se verificó en los 24.
+
+### Dos cosas verificadas que hay que conocer
+
+- **`spotlight/Frame 18.svg` trae los 4 huecos DUPLICADOS** (8 formas rellenas, dos copias
+  exactas de cada hueco). Es un artefacto del aplanado. La geometría es correcta, así que
+  **se deduplica en código** por `d` idéntico: no se le pide a nadie reexportar por esto.
+- **En los marcos con forma, la caja del hueco NO coincide con el rectángulo de
+  [layouts.md](layouts.md)**, y eso es correcto: una nube inscrita en el hueco tiene una
+  caja algo menor. Medido, la desviación llega a 6,2 px en `classic/Frame 10`. **No es
+  error, es la forma.** Consecuencia: la foto se ajusta a la caja **del hueco**, no al
+  rectángulo del layout. Los rectángulos de `layouts.ts` siguen mandando para el tamaño del
+  canvas, para los marcos rectangulares y para la ventana de la muestra.
+
 ## Un marco no son cuatro máscaras
 
 Corrige la primera versión de este contrato. Un fichero de marco es **el dibujo
