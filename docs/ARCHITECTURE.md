@@ -21,7 +21,8 @@ en tres pasos (recorte, fondo, pegatinas) y descarga una imagen compuesta.
   Sin Tailwind, sin styled-components, sin librería de UI.
 - **Sin librería de estado global.** Context API.
 - **Sin runner de tests.** No hay Vitest, ni Jest, ni Testing Library.
-- **Sin Prettier.** El formateo es inconsistente (ver §7).
+- **Prettier configurado** (`.prettierrc.json`, `.editorconfig`, `npm run format`), pero
+  **sin aplicar todavía**: la pasada sobre `src/` toca 17 ficheros y espera autorización.
 
 ## 3. Capas y regla de dependencia
 
@@ -135,7 +136,7 @@ Estado a 2026-07-25. Cada punto es candidato a nodo del DAG.
 | D2 | **Resuelto.** Los `alt` describen mal los layouts y `square` no es cuadrado (es 4:3 apaisado con rejilla 1+3) | `LayoutPage.tsx:30-42` | Ver [contracts/layouts.md](contracts/layouts.md) |
 | D3 | `Modal` sin focus trap, sin restaurar foco al cerrar, sin `aria-labelledby` | `components/ui/Modal.tsx:34` | Accesibilidad |
 | D4 | Idioma mezclado: UI en inglés, `alt` en español | `HomePage.tsx`, `LayoutPage.tsx` | El `alt` es texto de usuario; hay que elegir uno |
-| D5 | Indentación con tabs en un fichero, 2 espacios en el resto | `components/layouts/WebAppOldStyle.tsx` | Se resuelve con Prettier, no a mano |
+| D5 | Indentación con tabs en un fichero, 2 espacios en el resto | `components/layouts/WebAppOldStyle.tsx` | Prettier ya está configurado (P8). Falta ejecutar `npm run format` — 17 ficheros — en un commit **solo de formato** |
 | D6 | 4 páginas son ficheros de 0 bytes con imports comentados | `pages/*`, `App.tsx:5` | Es el trabajo pendiente |
 | D7 | Sin runner de tests | — | La única puerta de calidad es `npm run build` + revisión |
 

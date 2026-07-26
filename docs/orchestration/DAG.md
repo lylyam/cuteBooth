@@ -58,7 +58,7 @@ graph LR
 | P5 | `.claude/agents/*.md` (3 de fase 1) | orquestador | P3, P4 | ✅ hecho |
 | P6 | `.claude/skills/nueva-pagina/` | orquestador | P1 | ✅ hecho |
 | P7 | `.claude/settings.json` (hooks + permisos) | orquestador | — | ✅ hecho |
-| P8 | Prettier + `.editorconfig` | orquestador | — | ⬜ |
+| P8 | Prettier + `.editorconfig` | orquestador | — | ✅ configurado · **la pasada sobre `src/` está pendiente de autorización**: toca 17 ficheros que ahora mismo tienen cambios sin commitear |
 | P9 | `CLAUDE.md` como índice | orquestador | P1, P3, P5 | 🟡 parcial |
 
 ## 4. DAG-1 · Construcción del producto
