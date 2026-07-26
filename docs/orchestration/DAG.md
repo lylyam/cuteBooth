@@ -82,6 +82,7 @@ graph LR
   S1 --> S3[S3 guards de ruta]
   S2 --> C2[C2 canvasUtils]:::crit
   C1 --> C2
+  X1 --> C2
   C1 --> C3[C3 useCamera]
   C2 --> C4[C4 useCanvas]:::crit
   C4 --> C5[C5 useStickers]:::crit
@@ -115,10 +116,10 @@ graph LR
 
 | ID      | Nodo                                                   | Dueño               | Necesita             | Produce                                                                  | Aceptación                                                                                                                                                                                                                                                       | Estado |
 | ------- | ------------------------------------------------------ | ------------------- | -------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| **S2**  | Geometría y labels de los 3 layouts                    | `booth-state`       | —                    | `constants/layouts.ts`                                                   | Geometría ya extraída del arte. Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md)                                                                                                                                                       | ⬜     |
+| **S2**  | Geometría y labels de los 3 layouts                    | `booth-state`       | —                    | `constants/layouts.ts`                                                   | Geometría ya extraída del arte. Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md)                                                                                                                                                       | ✅     |
 | **S1**  | Reducer completo + tipos                               | `booth-state`       | —                    | `context/PhotoBoothContext.tsx`, `types/`                                | 6 campos y **11** acciones (`SET_FRAME` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md)                                                                                                                           | ⬜     |
 | **S3**  | Guards de ruta                                         | `booth-state`       | S1                   | `hooks/useRouteGuard.ts`                                                 | Tabla de guards y checklist de [../contracts/state.md](../contracts/state.md)                                                                                                                                                                                    | ⬜     |
-| **C1**  | Utilidades de imagen                                   | `canvas-media`      | —                    | `utils/imageUtils.ts`                                                    | resize, dataURL↔Blob, sin fugas                                                                                                                                                                                                                                  | ⬜     |
+| **C1**  | Utilidades de imagen                                   | `canvas-media`      | —                    | `utils/imageUtils.ts`                                                    | resize, dataURL↔Blob, sin fugas                                                                                                                                                                                                                                  | ✅     |
 | **C2**  | Composición sobre canvas                               | `canvas-media`      | S2, C1, **X1**       | `utils/canvasUtils.ts`                                                   | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares                                                                                                                      | ⬜     |
 | **C3**  | Hook de cámara                                         | `canvas-media`      | C1                   | `hooks/useCamera.ts`                                                     | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado                                                                                                                                                                                     | ⬜     |
 | **C4**  | Hook de canvas                                         | `canvas-media`      | C2                   | `hooks/useCanvas.ts`                                                     | `draw(state)` + `exportAsBlob()`                                                                                                                                                                                                                                 | ⬜     |
@@ -141,7 +142,32 @@ graph LR
 | **R\*** | Revisión por pantalla                                  | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural                                                                                                                                                                                                                  | ⬜     |
 | **O\*** | Alta de ruta + commit                                  | orquestador         | R* correspondiente   | `App.tsx`                                                                | Sin imports muertos                                                                                                                                                                                                                                              | ⬜     |
 
-### 4.1 · Estado tras el reinventariado de Figma (2026-07-26)
+### 4.1 · Ola 1-2 cerrada, y el camino crítico se para en X1 (2026-07-26)
+
+**S2 y C1 verificados y cerrados.** La geometría de `constants/layouts.ts` se comprobó
+contra `classic/Frame 7.svg` rect a rect (regla `x-0.97`, `w+1.94`, ordenado por `y`) y
+coincide con las tablas de [../contracts/layouts.md](../contracts/layouts.md).
+
+Dos correcciones del grafo, que se editan porque cambió la realidad, no la intención:
+
+- **`X1 --> C2` faltaba en el mermaid.** La tabla de nodos siempre dijo que C2 necesita
+  X1; el diagrama dibujaba X1 aislado. Con la arista, **X1 entra en el camino crítico**:
+  el arte de los marcos es el que C2 dibuja encima de las fotos.
+- **Por tanto §7 tenía las olas mal ordenadas**: proponía C2 en la ola 3 y X1 en la 7,
+  que es imposible. X1 sube a la ola 3, delante de C2.
+
+**Y X1 no tiene agente.** `asset-pipeline` es de fase 3 ([PLAN.md](PLAN.md) §11) y no
+existe en `.claude/agents/` — solo están los tres de fase 1. Su umbral de creación eran
+~15 assets y hay **343**, así que la fase 3 ya venció. Hasta que exista, el camino
+crítico está parado en X1 y solo avanzan las ramas laterales.
+
+**Un punto de la checklist de S2 no es de S2.** `frames/square/` → `frames/spotlight/`
+está en `src/assets/**`, que es de `asset-pipeline`: `booth-state` hizo bien en no
+tocarlo. El renombrado ya figura en §Renombrados de
+[../contracts/assets.md](../contracts/assets.md), así que se cobra en **X1**, no aquí.
+Ningún `.ts`, `.tsx` ni `.css` menciona `square`: no hay nada roto mientras tanto.
+
+### 4.2 · Estado tras el reinventariado de Figma (2026-07-26)
 
 Detalle en [../design/FIGMA.md](../design/FIGMA.md).
 
@@ -226,17 +252,21 @@ verdad. La ola 1 tiene 5 nodos listos a la vez y no debes lanzar 5.
 
 **Orden sugerido con ese límite:**
 
-| Ola | Lanzar                | Por qué                                                              |
-| --- | --------------------- | -------------------------------------------------------------------- |
-| 1   | **S2** + D1           | S2 abre el camino crítico; D1 no depende de nada y libera todo Figma |
-| 2   | S1 + C1               | Ambos raíz, ambos desbloquean mucho                                  |
-| 3   | **C2** + D3-D7 (lote) | C2 es camino crítico; Figma en lote y ya no vuelve a molestar        |
-| 4   | **C4** + C3           |                                                                      |
-| 5   | **U5** + C7           | `/review` desbloquea `PhotoResult`, que U4 reutiliza                 |
-| 6   | **U4** + U1           |                                                                      |
-| 7   | X1 + **C5**           | X1 antes de U3, que lee los tres manifiestos                         |
-| 8   | **U3** + U2           |                                                                      |
-| 9   | R* → O*               | Revisión y alta de rutas                                             |
+| Ola | Lanzar                | Por qué                                                                        |
+| --- | --------------------- | ------------------------------------------------------------------------------ |
+| 1   | **S2** ✅ + D1        | S2 abre el camino crítico; D1 no depende de nada y libera todo Figma           |
+| 2   | S1 + C1 ✅            | Ambos raíz, ambos desbloquean mucho                                            |
+| 3   | **X1** + D3-D7 (lote) | **X1 subió aquí**: es la dependencia que le falta a C2. Figma en lote, y listo |
+| 4   | **C2** + C3           | C2 es camino crítico en cuanto X1 aterrice                                     |
+| 5   | **C4** + C7           |                                                                                |
+| 6   | **C5** + U5           | `/review` desbloquea `PhotoResult`, que U4 reutiliza                           |
+| 7   | **U3** + U4           |                                                                                |
+| 8   | U1 + U2               | Las dos hojas: nadie espera por ellas                                          |
+| 9   | R* → O*               | Revisión y alta de rutas                                                       |
+
+S3 y C6 no tienen ola propia: son cortos y van en el hueco del mismo agente que ya
+tiene un nodo en la ola (`booth-state` y `canvas-media` respectivamente). S3 debe estar
+antes de la primera `U*`, porque las cinco páginas lo llaman.
 
 En **negrita**, el camino crítico. Si un día solo puedes atender a un agente, que
 sea el del camino crítico.
