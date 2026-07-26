@@ -9,7 +9,7 @@
 ```ts
 // src/types/photobooth.ts
 import type { LayoutId } from '../constants/layouts';
-import type { FrameSetId } from '../constants/frames';         // X1
+import type { FrameId } from '../constants/frames';            // X1
 import type { StickerId } from '../constants/stickers';        // X1
 import type { BackgroundId } from '../constants/backgrounds';  // X1
 
@@ -31,7 +31,7 @@ export type PhotoBoothState = {
   selectedLayout: LayoutId | null;
   source: PhotoSource | null;
   photos: Photo[];                  // 0..4 · el índice ES el número de hueco
-  frameSet: FrameSetId | null;      // /decoration paso 1
+  frame: FrameId | null;         // /decoration paso 1 · un marco, no 4 máscaras
   background: BackgroundId | null;  // /decoration paso 2
   stickers: StickerInstance[];      // /decoration paso 3
 };
@@ -45,11 +45,11 @@ inventa su forma de mutarlos. **No** entra Zustand ni Redux: seis campos no lo p
 y no hay `revokeObjectURL` que olvidar. Cuesta ~33 % de tamaño y presiona la cuota de
 `sessionStorage` — eso lo absorbe C6, no el estado.
 
-**`frameSet` es UN id, no cuatro.** Un *frame set* es un conjunto temático de cuatro
-recortes predefinidos — uno por hueco, distintos entre sí pero de la misma temática
-(corazones, nubes, orejas de gato…). El usuario elige la temática; el reparto de las
-cuatro máscaras es fijo, vive en `constants/frames.ts` (X1) y lo aplica `canvasUtils`
-(C2). No hay tupla de cuatro porque no hay nada que elegir por hueco.
+**`frame` es UN id, no cuatro.** Verificado contra el arte real: un marco es **el
+dibujo completo de la tira para un layout** — rectángulo exterior más los cuatro huecos,
+en un solo SVG. El usuario elige el marco; el layout activo elige cuál de los tres SVG
+se usa. Las formas raras (nube, orejas de gato) van dentro de ese mismo fichero. Detalle
+en [assets.md](assets.md).
 
 **Nada derivado vive en el estado.** La imagen compuesta no se guarda: la produce
 `useCanvas` a demanda. **El paso actual de `/decoration` tampoco**: es `useState` local
@@ -68,14 +68,14 @@ declaran como `string` con un `TODO` que nombre X1, y X1 los estrecha al llegar.
 | `ADD_PHOTO` | `{ photo: Photo }` | `/camera` | **No-op si ya hay 4** |
 | `SET_PHOTOS` | `{ photos: Photo[] }` | `/upload` | Reemplaza el lote. Trunca a 4 |
 | `CLEAR_PHOTOS` | — | `/review`, `/final` | Vacía `photos`. **Conserva todo lo demás** |
-| `SET_FRAME_SET` | `{ frameSet: FrameSetId \| null }` | `/decoration` 1 | `null` = sin recorte |
+| `SET_FRAME` | `{ frame: FrameId \| null }` | `/decoration` 1 | `null` = sin marco |
 | `SET_BACKGROUND` | `{ background: BackgroundId \| null }` | `/decoration` 2 | `null` = sin fondo |
 | `ADD_STICKER` | `{ sticker: StickerInstance }` | `/decoration` 3 | |
 | `MOVE_STICKER` | `{ instanceId: string; x: number; y: number }` | `/decoration` 3 | Posición absoluta, no delta |
 | `REMOVE_STICKER` | `{ instanceId: string }` | `/decoration` 3 | |
 | `RESET` | — | ninguno hoy | Vuelve a `initialState` |
 
-**Dos acciones nuevas respecto al plan de nueve.** `SET_FRAME_SET`, porque los frames no
+**Dos acciones nuevas respecto al plan de nueve.** `SET_FRAME`, porque los frames no
 estaban en el flujo cuando se escribió. Y `CLEAR_PHOTOS`, que exigen el "repetir" de
 `/review` y el "Retake" de `/final`: el usuario quiere otras fotos, no otro layout ni
 volver a decorar. `RESET` lo mandaría al principio; esto lo devuelve a `/camera` o
@@ -109,7 +109,7 @@ mantiene.
 | `/camera`, `/upload` | `selectedLayout !== null` |
 | `/review`, `/decoration`, `/final` | `selectedLayout !== null && photos.length === 4` |
 
-`/final` **no** exige `frameSet`, `background` ni `stickers`: decorar es opcional y se
+`/final` **no** exige `frame`, `background` ni `stickers`: decorar es opcional y se
 puede cruzar `/decoration` sin elegir nada. El guard no es donde se fuerza el gusto.
 
 Es un hook y no un componente envolvente: la página decide dónde llamarlo y no se añade
@@ -132,8 +132,9 @@ no `localStorage`: una sesión de photobooth no sobrevive al cierre de la pesta�
 2. **`photos.length` nunca pasa de 4.** Lo garantiza el reducer, no la página.
 3. **Las coordenadas de sticker son px del canvas** del layout activo. La conversión
    px-CSS ↔ px-canvas es de `useStickers` (C5) y no llega al estado.
-4. **Un `frameSet` o un `background` desconocido al rehidratar se trata como `null`.**
-   El manifiesto puede cambiar; el estado guardado no manda sobre él.
+4. **Un `frame` o un `background` desconocido al rehidratar se trata como `null`.**
+   El manifiesto puede cambiar; el estado guardado no manda sobre él. Y los fondos son
+   **por familia de layout**: el juego de `classic` no vale para `wide`/`spotlight`.
 5. **`LayoutId` se define en `constants/layouts.ts`.** `PhotoBoothContext` deja de
    exportarlo: dos definiciones del mismo tipo es una divergencia esperando su turno.
 6. **Excepción de propiedad.** S1 y S2 pueden editar `pages/layoutPage/LayoutPage.tsx`

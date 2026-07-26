@@ -108,10 +108,10 @@ graph LR
 | ID | Nodo | Dueño | Necesita | Produce | Aceptación | Estado |
 |---|---|---|---|---|---|---|
 | **S2** | Geometría y labels de los 3 layouts | `booth-state` | — | `constants/layouts.ts` | Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md) | ⬜ |
-| **S1** | Reducer completo + tipos | `booth-state` | — | `context/PhotoBoothContext.tsx`, `types/` | 6 campos y **11** acciones (`SET_FRAME_SET` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
+| **S1** | Reducer completo + tipos | `booth-state` | — | `context/PhotoBoothContext.tsx`, `types/` | 6 campos y **11** acciones (`SET_FRAME` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
 | **S3** | Guards de ruta | `booth-state` | S1 | `hooks/useRouteGuard.ts` | Tabla de guards y checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
 | **C1** | Utilidades de imagen | `canvas-media` | — | `utils/imageUtils.ts` | resize, dataURL↔Blob, sin fugas | ⬜ |
-| **C2** | Composición sobre canvas | `canvas-media` | S2, C1 | `utils/canvasUtils.ts` | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, y **recorta cada hueco con la máscara del frame set** (X1) | ⬜ |
+| **C2** | Composición sobre canvas | `canvas-media` | S2, C1, **X1** | `utils/canvasUtils.ts` | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares. ⚠️ Antes hay que cerrar la discrepancia de geometría de [../contracts/layouts.md](../contracts/layouts.md) | ⬜ |
 | **C3** | Hook de cámara | `canvas-media` | C1 | `hooks/useCamera.ts` | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado | ⬜ |
 | **C4** | Hook de canvas | `canvas-media` | C2 | `hooks/useCanvas.ts` | `draw(state)` + `exportAsBlob()` | ⬜ |
 | **C5** | Hook de stickers | `canvas-media` | S1, C4 | `hooks/useStickers.ts` | Arrastre correcto con escalado px-CSS ↔ px-canvas | ⬜ |
@@ -124,7 +124,7 @@ graph LR
 | **D6** | CSS FinalPage · nodo `2074:52` | `figma-design-sync` | D1, D7 | `FinalPage.module.css` | Idéntica a D7: reutilizar, no rehacer | ⬜ |
 | **D7** | CSS SelectedPicturesPage · nodo `91:1346` | `figma-design-sync` | D1 | `PhotoResult.module.css`, `ReviewPage.module.css` | El CSS del bloque de resultado es **compartido** con D6 | ⬜ |
 | **C7** | Componente `Loading` · nodo `91:1283` | `ui-composer` | D1 | `components/ui/Loading.tsx` | Spinner, no ruta. Lo usan las páginas que esperan | ⬜ |
-| **X1** | Assets + manifiestos | `asset-pipeline` | — | `assets/**`, `constants/{frames,stickers,backgrounds}.ts` | IDs tipados, carpetas vacías llenas. **`frames.ts` mapea cada set a sus 4 máscaras**, una por hueco. El arte ya está subido a Figma; faltan los node IDs de los contenedores — pedirlos al arrancar | ⬜ |
+| **X1** | Manifiestos de assets | `asset-pipeline` | — | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md). 🟡 **Parcial**: falta el mapeo icono→marco por layout | 🟡 |
 | **U1** | CameraPage `/camera` | `ui-composer` | S1,S3,C3,C7,D3 | página + `components/camera/` | Checklist en [../../specs/camera.md](../../specs/camera.md) | ⬜ |
 | **U2** | UploadPage `/upload` | `ui-composer` | S1,S3,C1,C7,D4 | página + `components/upload/` | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md) | ⬜ |
 | **U5** | **SelectedPicturesPage `/review`** | `ui-composer` | S1,S3,C4,D7 | página + `components/result/PhotoResult.tsx` | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md) | ⬜ |
@@ -152,8 +152,8 @@ Detalle en [../design/FIGMA.md](../design/FIGMA.md).
   ruta** — Frames → Backgrounds → Icons. Los pasos 2 y 3 no están dibujados y se
   construyen con la plantilla del 1. Detalle en
   [../../specs/decoration.md](../../specs/decoration.md).
-- **Los frames son un campo de estado nuevo.** Un *frame set* es un conjunto temático
-  de 4 recortes, uno por hueco. Añade `frameSet` al estado y `SET_FRAME_SET` a las
+- **Los frames son un campo de estado nuevo.** Un marco es un conjunto temático
+  de 4 recortes, uno por hueco. Añade `frame` al estado y `SET_FRAME` a las
   acciones: once en total. Ver [../contracts/state.md](../contracts/state.md).
 - **El fichero es de wireframes.** El CSS que salga de D3-D7 es estructura, no
   acabado. `booth-reviewer` no puede exigir fidelidad de píxel contra un

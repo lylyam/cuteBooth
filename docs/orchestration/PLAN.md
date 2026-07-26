@@ -33,7 +33,7 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 | 3 | `canvas-media` | Cámara, canvas, hooks | Opus | — | 1 |
 | 4 | `booth-reviewer` | Puerta de calidad (solo lectura) | Sonnet (high) | Figma `get_screenshot` | 2 |
 | 5 | `ui-composer` | Páginas y componentes | Sonnet | — | 2 |
-| 6 | `asset-pipeline` | Assets y manifiestos | **Haiku** | Figma `download_assets` | 3 |
+| 6 | `asset-pipeline` | Manifiestos de assets | **Haiku** | — | 3 |
 
 ### 1 · `booth-state` — dueño del contrato de estado
 
@@ -107,15 +107,15 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 
 ### 6 · `asset-pipeline` — mecánico, en Haiku
 
-- **Responsabilidad.** Descargar stickers, fondos e iconos de Figma; nombrarlos por
-  convención; generar `constants/stickers.ts` y `constants/backgrounds.ts` con IDs
-  tipados. Hoy `assets/backgrounds/`, `assets/icons/feltIcons/` y
-  `assets/icons/handDrawIcons/` están vacías.
-- **Herramientas.** `get_metadata`, `download_assets`, `Read, Write, Bash`.
-- **Por qué separado de `figma-design-sync`** — no por dominio, por **precio**. Es
-  volumen sin criterio: en Haiku cuesta céntimos, en Sonnet no.
-  **Si al final hay menos de ~15 assets, fusiónalo con `figma-design-sync`** y
-  ahórrate el agente.
+- **Responsabilidad.** Generar `constants/{frames,backgrounds,stickers}.ts` con IDs
+  tipados a partir del arte **que ya está en el repo**, y hacer los renombrados de
+  carpetas. Contrato en [../contracts/assets.md](../contracts/assets.md).
+- ⚠️ **Ya no necesita Figma.** El arte se subió al repo el 2026-07-26: 24 marcos SVG, 46
+  fondos PNG y 273 pegatinas PNG. `download_assets` deja de hacer falta.
+- **Herramientas.** `Read, Write, Glob, Bash`. Sin MCP.
+- **Por qué sigue separado de `figma-design-sync`** — no por dominio, por **precio**. Es
+  volumen sin criterio: en Haiku cuesta céntimos, en Sonnet no. El umbral de fusión eran
+  ~15 assets y hay **343**, así que el agente se queda.
 
 ## 3. Quién orquesta
 

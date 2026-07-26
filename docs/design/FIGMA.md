@@ -99,10 +99,10 @@ pasos internos: Frames → Backgrounds → Icons. Los pasos 2 y 3 **no están di
 y se construyen con esta plantilla. Alcance y copy en
 [../../specs/decoration.md](../../specs/decoration.md).
 
-**Pendiente, y no bloquea:** el arte de frames, fondos e iconos está subido al
-fichero, pero faltan los node IDs de sus contenedores. `asset-pipeline` los pide al
-arrancar X1, o los lee de la selección actual del editor — `get_metadata` la devuelve
-en un bloque *"Currently selected nodes"*. **Nunca** enumerando `0:1`.
+**El arte no hay que bajarlo de aquí.** Se subió al repo el 2026-07-26:
+`src/assets/{frames,backgrounds,icons}`, 343 ficheros. Ver
+[../contracts/assets.md](../contracts/assets.md). Es la razón por la que
+`asset-pipeline` se queda sin herramientas de Figma.
 
 ## 4. Geometría de los layouts — fuente canónica
 

@@ -44,7 +44,7 @@ se prefiere `Download it, or retake your photos.`, es un cambio de una línea.
 (`651×1911` para `classic`, `1404×1257` para `wide` y `spotlight`), con frame, fondo y
 pegatinas incluidos.
 
-**`Retake`** dispara `CLEAR_PHOTOS` y navega al origen. Conserva layout, frame set, fondo
+**`Retake`** dispara `CLEAR_PHOTOS` y navega al origen. Conserva layout, marco, fondo
 y stickers: el usuario quería otras cuatro fotos, no volver a decorar. Es la misma
 semántica que el `Retake photos` de `/review`, y por eso comparten acción.
 

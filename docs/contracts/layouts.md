@@ -51,6 +51,39 @@ Tira vertical. Margen inferior grande (≈91 px) — es el pie del photostrip cl
 | 3 | 167 | 286 | 134 | 95 |
 | 4 | 314 | 286 | 134 | 95 |
 
+## ⚠️ Tercera fuente, y no cuadra — DECISIÓN PENDIENTE
+
+El 2026-07-26 apareció en el repo el arte de los marcos, que **también** contiene la
+geometría de los huecos: `src/assets/frames/<layout>/Frame 7.svg` (el marco de esquinas
+redondeadas, el más simple) dibuja la tira entera con sus cuatro huecos.
+
+Los rectángulos del SVG son **líneas centrales** de un trazo de `1.94px`, así que el
+hueco real es `x-0.97`, `w+1.94`. Descontado eso, para `classic`:
+
+| Fuente | hueco 1 | hueco 2 | hueco 3 | hueco 4 | tamaño |
+|---|---|---|---|---|---|
+| Upload (tabla de arriba) | y=20 | y=154.99 | y=289.99 | y=424.98 | 172 × 120.99 |
+| `frames/classic/Frame 7.svg` | y=30 | y=165 | y=300 | y=435 | 172 × 121 |
+
+El paso entre huecos coincide (135), el tamaño coincide, y la `x` coincide dentro de
+medio píxel (23 frente a 22.54). **Lo que no coincide es el origen vertical: 10 px.**
+En `wide` pasa lo mismo (y=30 frente a 20; segunda fila y=189 frente a 177).
+
+**Por qué importa y no es un detalle:** el marco se dibuja *encima* de las fotos. Si C2
+coloca las fotos con los números de Upload y superpone el SVG del marco, las fotos
+quedan 10 px descuadradas respecto a su propio marco. No hay forma de que las dos
+fuentes sean correctas a la vez.
+
+**Recomendación:** manda el arte. Es lo único que el usuario ve superpuesto a sus fotos,
+y el wireframe de Upload es una maqueta de la que ya sabíamos que discrepaba con otras
+pantallas. Es decir: derivar los cuatro huecos de `frames/<layout>/Frame 7.svg`.
+
+**Ojo:** `frames/square/Frame 7.svg` **no** tiene los huecos como `rect` — son `path`.
+Para `spotlight` hay que sacarlos de otro marco rectangular de esa carpeta, o medirlos.
+
+**Esto no lo decide S2 solo.** Hasta que se cierre, los números de arriba siguen siendo
+los oficiales, con la advertencia puesta.
+
 ## Escala de exportación
 
 Los números de arriba son de wireframe: demasiado pequeños para un PNG

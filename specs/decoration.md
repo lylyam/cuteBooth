@@ -25,7 +25,7 @@ dice [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) §9.
 
 | # | Paso | Panel | Escribe |
 |---|---|---|---|
-| 1 | Frames | rejilla de recortes | `SET_FRAME_SET` |
+| 1 | Frames | rejilla de recortes | `SET_FRAME` |
 | 2 | Backgrounds | rejilla de fondos | `SET_BACKGROUND` |
 | 3 | Icons | rejilla de pegatinas | `ADD_STICKER`, `MOVE_STICKER`, `REMOVE_STICKER` |
 
@@ -57,13 +57,17 @@ contenido de la rejilla. Un solo componente de panel parametrizado, no tres.
 
 ### 1 · Frames
 
-La rejilla muestra **una muestra por conjunto temático**, del tamaño de un hueco de foto
-(172×121 en px de wireframe). Elegir una muestra escribe **un** `frameSet`, y ese id
-implica los **cuatro** recortes: uno por hueco, distintos entre sí pero de la misma
-temática. El usuario elige el tema, no la forma de cada hueco. El reparto vive en
-`constants/frames.ts` (X1) y lo aplica `canvasUtils` (C2).
+La rejilla muestra los 8 marcos, con las muestras de
+`assets/frames/menu-icons/`. Elegir una escribe **un** `frame`, y el layout activo
+decide cuál de los tres SVG se dibuja: hay un fichero por marco **y por layout**
+(`assets/frames/{classic,wide,spotlight}/`). Cada SVG es la tira entera — borde exterior
+y cuatro huecos — y `canvasUtils` (C2) lo pinta encima, escalado del viewBox al canvas.
+Detalle en [../docs/contracts/assets.md](../docs/contracts/assets.md).
 
 ### 2 · Backgrounds
+
+Los fondos son **por familia de layout**: 25 para `classic`, 21 para `wide` y
+`spotlight`, que los comparten. Un id de fondo no vale para la otra familia.
 
 **Requisito explícito de la propietaria:** la muestra de fondo **no** enseña la imagen
 completa. Es un cuadrado de esquinas redondeadas, del mismo tamaño que las muestras de
@@ -72,6 +76,11 @@ entera encajada dentro.
 
 ### 3 · Icons
 
+Hay **273 pegatinas en cuatro estilos** — `3dStyle` (102), `drawStyle` (75),
+`feltStyle` (75), `pixelStyle` (21). Son 38 MB, así que van por URL desde `public/` y
+**no** por el bundler. Cómo se agrupan los cuatro estilos en el panel (pestañas, secciones
+o una lista sola) **no está dibujado**: ver supuesto 5.
+
 Clic en una pegatina la añade al centro de la tira (`ADD_STICKER`). Arrastrarla sobre el
 preview la mueve (`MOVE_STICKER`), con la conversión px-CSS ↔ px-canvas de `useStickers`
 (C5) — la página **no** hace esa aritmética. El orden del array `stickers` es el orden de
@@ -79,7 +88,7 @@ pintado: la última añadida va encima.
 
 ## Dependencias
 
-- **Estado:** S1 (`SET_FRAME_SET` y los tres de sticker), guard S3.
+- **Estado:** S1 (`SET_FRAME` y los tres de sticker), guard S3.
 - **Hooks:** `useCanvas` (C4) para el preview, `useStickers` (C5) para el arrastre.
 - **CSS:** `DecorationPage.module.css` (D5).
 - **Assets:** `constants/{frames,backgrounds,stickers}.ts` (X1).
@@ -90,7 +99,8 @@ pintado: la última añadida va encima.
 - [ ] Una sola ruta `/decoration`; el paso no aparece en la URL ni en el estado global
 - [ ] Los tres pasos comparten panel y botones: mismo componente, distinto contenido
 - [ ] `← Previous step` en el paso 1 vuelve a `/review`; `Next step →` en el 3 va a `/final`
-- [ ] Elegir un frame set recorta **los cuatro** huecos, cada uno con su forma del set
+- [ ] Elegir un marco dibuja el SVG del marco **del layout activo** encajado con las fotos
+- [ ] Los marcos no rectangulares recortan la foto con la forma de su hueco
 - [ ] Las muestras de fondo son cuadrados redondeados con la imagen **recortada**, del
       tamaño de las muestras de Frames — nunca la imagen completa
 - [ ] Un sticker arrastrado se queda donde se suelta, también con la ventana redimensionada
@@ -114,6 +124,9 @@ Elegir un recorte distinto por hueco. Volver a `/decoration` desde `/final`.
 3. **La rejilla es de 2 columnas con scroll vertical**, como en el wireframe, donde está
    recortada por abajo.
 4. **El preview del wireframe es `classic`.** `wide` y `spotlight` usan su geometría.
+5. **Los cuatro estilos de pegatina se presentan como pestañas** dentro del panel del
+   paso 3. Con 273 en una sola lista, encontrar algo es imposible; y el wireframe no
+   dibuja el panel de iconos, así que hay que decidirlo.
 
 ## Nodos Figma
 
@@ -124,7 +137,7 @@ Elegir un recorte distinto por hueco. Volver a `/decoration` desde `/final`.
 
 Los pasos 2 y 3 **no están dibujados**: se construyen con la plantilla del paso 1.
 
-**Pendiente para X1:** el arte de frames, fondos e iconos ya está subido a Figma, pero
-faltan los node IDs de sus contenedores. `asset-pipeline` los pide al arrancar, o los
-lee de la selección actual — `get_metadata` devuelve un bloque *"Currently selected
-nodes"* con lo que haya seleccionado en el editor.
+**El arte ya está en el repo** (`src/assets/{frames,backgrounds,icons}`), subido el
+2026-07-26. No hay que bajar nada de Figma. Inventario, renombrados pendientes y el
+**dato que falta** — qué icono del menú corresponde a qué marco en cada layout — en
+[../docs/contracts/assets.md](../docs/contracts/assets.md).

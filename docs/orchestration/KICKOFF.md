@@ -58,7 +58,7 @@ No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
 | 5 | **Todo el texto de usuario en inglés**, incluidos los `alt` |
 | 6 | **No se crean variables en Figma.** Los tokens son code-first: `index.css` manda |
 | 7 | **`/decoration` son TRES PASOS en una sola ruta**, no tres rutas: Frames → Backgrounds → Icons. El paso es estado local de la página |
-| 8 | **Un *frame set* es un conjunto temático de 4 recortes**, uno por hueco. El usuario elige el tema, no la forma de cada hueco. Añade `frameSet` al estado |
+| 8 | **Un marco es un conjunto temático de 4 recortes**, uno por hueco. El usuario elige el tema, no la forma de cada hueco. Añade `frame` al estado |
 | 9 | **En `/upload` cada hueco es un botón** que abre el selector de archivos. `Continue` está siempre visible y deshabilitado hasta las 4 fotos |
 | 10 | **En el menú de fondos la muestra NO enseña la imagen completa**: cuadrado de esquinas redondeadas, del tamaño de las muestras de Frames, con la imagen recortada |
 | 11 | **`/final` lleva copy propio**, no el de `/review`: `Here's your decorated strip!` · `Download it, or start over to make a new one.` Botones `Download` y `Retake` |
@@ -86,13 +86,17 @@ Con eso, **D5, U3 y C5 quedan desbloqueados** y el camino crítico vuelve a ser 
 Lo que trajo de nuevo esa pantalla está en las decisiones 7-12 de §4 y en
 [../../specs/decoration.md](../../specs/decoration.md).
 
-**Lo único que queda pendiente de un dato**, y no bloquea nada todavía: el arte de
-frames, fondos e iconos está subido a Figma, pero **faltan los node IDs de sus
-contenedores**. `asset-pipeline` los pide al arrancar X1 — o los lee de la selección
-actual del editor, que `get_metadata` devuelve en un bloque *"Currently selected
-nodes"*. No hace falta enumerar la página `0:1`, que está prohibido.
+**Lo que sí queda pendiente, y ahora son dos datos:**
 
-La regla sigue en pie: un agente **no** resuelve una laguna inventándose la pantalla.
+1. **La geometría no cuadra.** El arte de los marcos sitúa el primer hueco 10 px más
+   abajo que el wireframe de Upload, del que salieron los números de
+   [../contracts/layouts.md](../contracts/layouts.md). Como el marco se dibuja encima de
+   las fotos, las dos fuentes no pueden ser correctas a la vez. **Bloquea S2**, que es la
+   raíz del camino crítico. Recomendación y números en ese contrato.
+2. **Falta el mapeo icono→marco.** Son 8 muestras de menú y 8 marcos por layout, con
+   numeración distinta en cada carpeta. No se deduce. Deja X1 a medias, no del todo.
+
+La regla sigue en pie: un agente **no** resuelve una laguna inventándose los números.
 Se pregunta.
 
 ## 7. Por dónde se empieza

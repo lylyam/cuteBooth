@@ -118,7 +118,7 @@ Dos cambios, ambos propiedad de `booth-state`:
    más dependa de él. Ver [contracts/layouts.md](contracts/layouts.md).
 2. **`useState` → `useReducer`** con los campos del flujo completo (nodo S1). El
    contrato exacto está en [contracts/state.md](contracts/state.md). Motivo: `photos`,
-   `frameSet`, `background` y `stickers` se actualizan de forma relacionada y desde
+   `frame`, `background` y `stickers` se actualizan de forma relacionada y desde
    páginas y pasos distintos; con `useState` sueltos, cada uno inventaría su forma de
    mutarlos.
 
@@ -202,12 +202,12 @@ parametrizado por copy y acciones sirve a ambas. No son dos trabajos.
 **Idioma: todo el texto de usuario en inglés**, incluidos los `alt`. Hoy la UI
 está en inglés y los `alt` en español (deuda D4); se corrige al tocar cada página.
 
-### El concepto que faltaba: *frame set*
+### El concepto que faltaba: marco
 
-Un **frame set** es un conjunto temático de cuatro recortes — uno por hueco, distintos
+Un *marco* es un conjunto temático de cuatro recortes — uno por hueco, distintos
 entre sí pero de la misma temática. El usuario elige el tema; el reparto de las cuatro
-máscaras es fijo. Eso añade un sexto campo al estado (`frameSet`) y una acción
-(`SET_FRAME_SET`), aplica las máscaras en `canvasUtils` y añade `constants/frames.ts` al
+máscaras es fijo. Eso añade un sexto campo al estado (`frame`) y una acción
+(`SET_FRAME`), aplica las máscaras en `canvasUtils` y añade `constants/frames.ts` al
 manifiesto de assets. No estaba en el plan original porque la pantalla que lo introduce
 estaba sin nombrar en Figma. Ver [contracts/state.md](contracts/state.md) y
 [../specs/decoration.md](../specs/decoration.md).
