@@ -49,17 +49,17 @@ graph LR
   P5 --> P9
 ```
 
-| ID | Nodo | Dueño | Necesita | Estado |
-|---|---|---|---|---|
-| P1 | `docs/ARCHITECTURE.md` | orquestador | — | ✅ hecho |
-| P2 | Triaje de `Analisis/` | orquestador | — | ✅ hecho |
-| P3 | `docs/contracts/{state,layouts,design-tokens}.md` | orquestador | P1 | ✅ hecho · más `assets.md`, que no estaba previsto |
-| P4 | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3 | ✅ hecho |
-| P5 | `.claude/agents/*.md` (3 de fase 1) | orquestador | P3, P4 | ✅ hecho |
-| P6 | `.claude/skills/nueva-pagina/` | orquestador | P1 | ✅ hecho |
-| P7 | `.claude/settings.json` (hooks + permisos) | orquestador | — | ✅ hecho |
-| P8 | Prettier + `.editorconfig` | orquestador | — | ✅ configurado · **la pasada sobre `src/` está pendiente de autorización**: toca 17 ficheros que ahora mismo tienen cambios sin commitear |
-| P9 | `CLAUDE.md` como índice | orquestador | P1, P3, P5 | ✅ hecho |
+| ID  | Nodo                                               | Dueño       | Necesita   | Estado                                                                                                                                    |
+| --- | -------------------------------------------------- | ----------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| P1  | `docs/ARCHITECTURE.md`                             | orquestador | —          | ✅ hecho                                                                                                                                  |
+| P2  | Triaje de `Analisis/`                              | orquestador | —          | ✅ hecho                                                                                                                                  |
+| P3  | `docs/contracts/{state,layouts,design-tokens}.md`  | orquestador | P1         | ✅ hecho · más `assets.md`, que no estaba previsto                                                                                        |
+| P4  | `specs/{camera,upload,review,decoration,final}.md` | orquestador | P1, P3     | ✅ hecho                                                                                                                                  |
+| P5  | `.claude/agents/*.md` (3 de fase 1)                | orquestador | P3, P4     | ✅ hecho                                                                                                                                  |
+| P6  | `.claude/skills/nueva-pagina/`                     | orquestador | P1         | ✅ hecho                                                                                                                                  |
+| P7  | `.claude/settings.json` (hooks + permisos)         | orquestador | —          | ✅ hecho                                                                                                                                  |
+| P8  | Prettier + `.editorconfig`                         | orquestador | —          | ✅ configurado · **la pasada sobre `src/` está pendiente de autorización**: toca 17 ficheros que ahora mismo tienen cambios sin commitear |
+| P9  | `CLAUDE.md` como índice                            | orquestador | P1, P3, P5 | ✅ hecho                                                                                                                                  |
 
 **DAG-0 cerrado el 2026-07-26**, y con él las dos dudas que quedaban: la geometría la
 manda el arte de los marcos ([../contracts/layouts.md](../contracts/layouts.md)) y las
@@ -113,33 +113,33 @@ graph LR
 
 ### Nodos
 
-| ID | Nodo | Dueño | Necesita | Produce | Aceptación | Estado |
-|---|---|---|---|---|---|---|
-| **S2** | Geometría y labels de los 3 layouts | `booth-state` | — | `constants/layouts.ts` | Geometría ya extraída del arte. Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md) | ⬜ |
-| **S1** | Reducer completo + tipos | `booth-state` | — | `context/PhotoBoothContext.tsx`, `types/` | 6 campos y **11** acciones (`SET_FRAME` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
-| **S3** | Guards de ruta | `booth-state` | S1 | `hooks/useRouteGuard.ts` | Tabla de guards y checklist de [../contracts/state.md](../contracts/state.md) | ⬜ |
-| **C1** | Utilidades de imagen | `canvas-media` | — | `utils/imageUtils.ts` | resize, dataURL↔Blob, sin fugas | ⬜ |
-| **C2** | Composición sobre canvas | `canvas-media` | S2, C1, **X1** | `utils/canvasUtils.ts` | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares | ⬜ |
-| **C3** | Hook de cámara | `canvas-media` | C1 | `hooks/useCamera.ts` | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado | ⬜ |
-| **C4** | Hook de canvas | `canvas-media` | C2 | `hooks/useCanvas.ts` | `draw(state)` + `exportAsBlob()` | ⬜ |
-| **C5** | Hook de stickers | `canvas-media` | S1, C4 | `hooks/useStickers.ts` | Arrastre correcto con escalado px-CSS ↔ px-canvas | ⬜ |
-| **C6** | Persistencia temporal | `canvas-media` | S1 | `services/storageService.ts` | Sobrevive a un refresco sin reventar la cuota | ⬜ |
-| **D1** | Delta de tokens **code-first** | `figma-design-sync` | — | §4 de `contracts/design-tokens.md`, `index.css` | El contrato, el catálogo de las 21 properties y la deuda T1-T8 ya están escritos (P3). D1 **rellena §4** y resuelve T1-T3. Checklist en [../contracts/design-tokens.md](../contracts/design-tokens.md) | ⬜ |
-| **D2** | Code Connect de los 5 componentes | `figma-design-sync` | D1 | `*.figma.ts` | `get_design_context` devuelve `<Button>`, no `<div>` | ⬜ |
-| **D3** | CSS CameraPage · nodo `91:954` | `figma-design-sync` | D1 | `CameraPage.module.css` | **Lote único D3-D7**, ver §6 | ⬜ |
-| **D4** | CSS UploadPage · nodos `91:1168`, `91:1202`, `91:1223` | `figma-design-sync` | D1 | `UploadPage.module.css` | No son 3 estados: son los 3 layouts | ⬜ |
-| **D5** | CSS DecorationPage · nodo `102:319` | `figma-design-sync` | D1 | `DecorationPage.module.css` | **Desbloqueado el 2026-07-26.** `103:382` es duplicado exacto: ignorarlo. Un solo panel + preview + botones sirve a los **tres pasos**; los pasos 2 y 3 no están dibujados y usan esa plantilla. Ver [../../specs/decoration.md](../../specs/decoration.md) | ⬜ |
-| **D6** | CSS FinalPage · nodo `2074:52` | `figma-design-sync` | D1, D7 | `FinalPage.module.css` | Idéntica a D7: reutilizar, no rehacer | ⬜ |
-| **D7** | CSS SelectedPicturesPage · nodo `91:1346` | `figma-design-sync` | D1 | `PhotoResult.module.css`, `ReviewPage.module.css` | El CSS del bloque de resultado es **compartido** con D6 | ⬜ |
-| **C7** | Componente `Loading` · nodo `91:1283` | `ui-composer` | D1 | `components/ui/Loading.tsx` | Spinner, no ruta. Lo usan las páginas que esperan | ⬜ |
-| **X1** | Manifiestos de assets | `asset-pipeline` | — | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Las muestras del menú se generan del propio marco, así que no falta ningún dato. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md) | ⬜ |
-| **U1** | CameraPage `/camera` | `ui-composer` | S1,S3,C3,C7,D3 | página + `components/camera/` | Checklist en [../../specs/camera.md](../../specs/camera.md) | ⬜ |
-| **U2** | UploadPage `/upload` | `ui-composer` | S1,S3,C1,C7,D4 | página + `components/upload/` | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md) | ⬜ |
-| **U5** | **SelectedPicturesPage `/review`** | `ui-composer` | S1,S3,C4,D7 | página + `components/result/PhotoResult.tsx` | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md) | ⬜ |
-| **U3** | DecorationPage `/decoration` | `ui-composer` | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/` | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md) | ⬜ |
-| **U4** | FinalPage `/final` | `ui-composer` | S1,S3,C4,D6,**U5** | página | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md) | ⬜ |
-| **R\*** | Revisión por pantalla | `booth-reviewer` | U* correspondiente | hallazgos | Build, lint, capas, a11y, fidelidad estructural | ⬜ |
-| **O\*** | Alta de ruta + commit | orquestador | R* correspondiente | `App.tsx` | Sin imports muertos | ⬜ |
+| ID      | Nodo                                                   | Dueño               | Necesita             | Produce                                                                  | Aceptación                                                                                                                                                                                                                                                       | Estado |
+| ------- | ------------------------------------------------------ | ------------------- | -------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **S2**  | Geometría y labels de los 3 layouts                    | `booth-state`       | —                    | `constants/layouts.ts`                                                   | Geometría ya extraída del arte. Contrato y checklist en [../contracts/layouts.md](../contracts/layouts.md)                                                                                                                                                       | ⬜     |
+| **S1**  | Reducer completo + tipos                               | `booth-state`       | —                    | `context/PhotoBoothContext.tsx`, `types/`                                | 6 campos y **11** acciones (`SET_FRAME` y `CLEAR_PHOTOS` son las nuevas) + checklist de [../contracts/state.md](../contracts/state.md)                                                                                                                           | ⬜     |
+| **S3**  | Guards de ruta                                         | `booth-state`       | S1                   | `hooks/useRouteGuard.ts`                                                 | Tabla de guards y checklist de [../contracts/state.md](../contracts/state.md)                                                                                                                                                                                    | ⬜     |
+| **C1**  | Utilidades de imagen                                   | `canvas-media`      | —                    | `utils/imageUtils.ts`                                                    | resize, dataURL↔Blob, sin fugas                                                                                                                                                                                                                                  | ⬜     |
+| **C2**  | Composición sobre canvas                               | `canvas-media`      | S2, C1, **X1**       | `utils/canvasUtils.ts`                                                   | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares                                                                                                                      | ⬜     |
+| **C3**  | Hook de cámara                                         | `canvas-media`      | C1                   | `hooks/useCamera.ts`                                                     | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado                                                                                                                                                                                     | ⬜     |
+| **C4**  | Hook de canvas                                         | `canvas-media`      | C2                   | `hooks/useCanvas.ts`                                                     | `draw(state)` + `exportAsBlob()`                                                                                                                                                                                                                                 | ⬜     |
+| **C5**  | Hook de stickers                                       | `canvas-media`      | S1, C4               | `hooks/useStickers.ts`                                                   | Arrastre correcto con escalado px-CSS ↔ px-canvas                                                                                                                                                                                                                | ⬜     |
+| **C6**  | Persistencia temporal                                  | `canvas-media`      | S1                   | `services/storageService.ts`                                             | Sobrevive a un refresco sin reventar la cuota                                                                                                                                                                                                                    | ⬜     |
+| **D1**  | Delta de tokens **code-first**                         | `figma-design-sync` | —                    | §4 de `contracts/design-tokens.md`, `index.css`                          | El contrato, el catálogo de las 21 properties y la deuda T1-T8 ya están escritos (P3). D1 **rellena §4** y resuelve T1-T3. Checklist en [../contracts/design-tokens.md](../contracts/design-tokens.md)                                                           | ⬜     |
+| **D2**  | Code Connect de los 5 componentes                      | `figma-design-sync` | D1                   | `*.figma.ts`                                                             | `get_design_context` devuelve `<Button>`, no `<div>`                                                                                                                                                                                                             | ⬜     |
+| **D3**  | CSS CameraPage · nodo `91:954`                         | `figma-design-sync` | D1                   | `CameraPage.module.css`                                                  | **Lote único D3-D7**, ver §6                                                                                                                                                                                                                                     | ⬜     |
+| **D4**  | CSS UploadPage · nodos `91:1168`, `91:1202`, `91:1223` | `figma-design-sync` | D1                   | `UploadPage.module.css`                                                  | No son 3 estados: son los 3 layouts                                                                                                                                                                                                                              | ⬜     |
+| **D5**  | CSS DecorationPage · nodo `102:319`                    | `figma-design-sync` | D1                   | `DecorationPage.module.css`                                              | **Desbloqueado el 2026-07-26.** `103:382` es duplicado exacto: ignorarlo. Un solo panel + preview + botones sirve a los **tres pasos**; los pasos 2 y 3 no están dibujados y usan esa plantilla. Ver [../../specs/decoration.md](../../specs/decoration.md)      | ⬜     |
+| **D6**  | CSS FinalPage · nodo `2074:52`                         | `figma-design-sync` | D1, D7               | `FinalPage.module.css`                                                   | Idéntica a D7: reutilizar, no rehacer                                                                                                                                                                                                                            | ⬜     |
+| **D7**  | CSS SelectedPicturesPage · nodo `91:1346`              | `figma-design-sync` | D1                   | `PhotoResult.module.css`, `ReviewPage.module.css`                        | El CSS del bloque de resultado es **compartido** con D6                                                                                                                                                                                                          | ⬜     |
+| **C7**  | Componente `Loading` · nodo `91:1283`                  | `ui-composer`       | D1                   | `components/ui/Loading.tsx`                                              | Spinner, no ruta. Lo usan las páginas que esperan                                                                                                                                                                                                                | ⬜     |
+| **X1**  | Manifiestos de assets                                  | `asset-pipeline`    | —                    | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Las muestras del menú se generan del propio marco, así que no falta ningún dato. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md) | ⬜     |
+| **U1**  | CameraPage `/camera`                                   | `ui-composer`       | S1,S3,C3,C7,D3       | página + `components/camera/`                                            | Checklist en [../../specs/camera.md](../../specs/camera.md)                                                                                                                                                                                                      | ⬜     |
+| **U2**  | UploadPage `/upload`                                   | `ui-composer`       | S1,S3,C1,C7,D4       | página + `components/upload/`                                            | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md)                                                                                                                                                | ⬜     |
+| **U5**  | **SelectedPicturesPage `/review`**                     | `ui-composer`       | S1,S3,C4,D7          | página + `components/result/PhotoResult.tsx`                             | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md)                                                                                                                                                              | ⬜     |
+| **U3**  | DecorationPage `/decoration`                           | `ui-composer`       | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/`                                        | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md)                                                                                                         | ⬜     |
+| **U4**  | FinalPage `/final`                                     | `ui-composer`       | S1,S3,C4,D6,**U5**   | página                                                                   | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md)                                                                                                                                                                         | ⬜     |
+| **R\*** | Revisión por pantalla                                  | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural                                                                                                                                                                                                                  | ⬜     |
+| **O\*** | Alta de ruta + commit                                  | orquestador         | R* correspondiente   | `App.tsx`                                                                | Sin imports muertos                                                                                                                                                                                                                                              | ⬜     |
 
 ### 4.1 · Estado tras el reinventariado de Figma (2026-07-26)
 
@@ -221,22 +221,22 @@ revienta el contexto — comprobado el 2026-07-26.
 4. Esperar. Volver a 1.
 
 **Límite de concurrencia: 2 agentes.** No es un límite técnico, es tu ancho de banda
-para revisar. El DAG te dice qué *puede* ir en paralelo; tú decides cuánto va de
+para revisar. El DAG te dice qué _puede_ ir en paralelo; tú decides cuánto va de
 verdad. La ola 1 tiene 5 nodos listos a la vez y no debes lanzar 5.
 
 **Orden sugerido con ese límite:**
 
-| Ola | Lanzar | Por qué |
-|---|---|---|
-| 1 | **S2** + D1 | S2 abre el camino crítico; D1 no depende de nada y libera todo Figma |
-| 2 | S1 + C1 | Ambos raíz, ambos desbloquean mucho |
-| 3 | **C2** + D3-D7 (lote) | C2 es camino crítico; Figma en lote y ya no vuelve a molestar |
-| 4 | **C4** + C3 | |
-| 5 | **U5** + C7 | `/review` desbloquea `PhotoResult`, que U4 reutiliza |
-| 6 | **U4** + U1 | |
-| 7 | X1 + **C5** | X1 antes de U3, que lee los tres manifiestos |
-| 8 | **U3** + U2 | |
-| 9 | R* → O* | Revisión y alta de rutas |
+| Ola | Lanzar                | Por qué                                                              |
+| --- | --------------------- | -------------------------------------------------------------------- |
+| 1   | **S2** + D1           | S2 abre el camino crítico; D1 no depende de nada y libera todo Figma |
+| 2   | S1 + C1               | Ambos raíz, ambos desbloquean mucho                                  |
+| 3   | **C2** + D3-D7 (lote) | C2 es camino crítico; Figma en lote y ya no vuelve a molestar        |
+| 4   | **C4** + C3           |                                                                      |
+| 5   | **U5** + C7           | `/review` desbloquea `PhotoResult`, que U4 reutiliza                 |
+| 6   | **U4** + U1           |                                                                      |
+| 7   | X1 + **C5**           | X1 antes de U3, que lee los tres manifiestos                         |
+| 8   | **U3** + U2           |                                                                      |
+| 9   | R* → O*               | Revisión y alta de rutas                                             |
 
 En **negrita**, el camino crítico. Si un día solo puedes atender a un agente, que
 sea el del camino crítico.

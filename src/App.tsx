@@ -5,23 +5,23 @@ import LayoutPage from './pages/layoutPage/LayoutPage';
 /* import CameraPage from './pages/cameraPage/CameraPage';
 import UploadPage from './pages/uploadPage/UploadPage';
 import DecorationPage from './pages/decorationPage/DecorationPage';
-import FinalPage from './pages/finalPage/FinalPage'; */ 
+import FinalPage from './pages/finalPage/FinalPage'; */
 
 function App() {
   return (
     <BrowserRouter>
       <PhotoBoothProvider>
         <Routes>
-          <Route path="/"           element={<HomePage />} />
-          <Route path="/layout"     element={<LayoutPage />} />
-        {/*  <Route path="/camera"     element={<CameraPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/layout" element={<LayoutPage />} />
+          {/*  <Route path="/camera"     element={<CameraPage />} />
           <Route path="/upload"     element={<UploadPage />} />
           <Route path="/decoration" element={<DecorationPage />} />
-          <Route path="/final"      element={<FinalPage />} /> */ }
+          <Route path="/final"      element={<FinalPage />} /> */}
         </Routes>
       </PhotoBoothProvider>
     </BrowserRouter>
   );
-};
+}
 
 export default App;

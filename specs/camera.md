@@ -15,8 +15,8 @@ El usuario consigue sus 4 fotos con la cámara del dispositivo, sin salir de la 
 
 ## Copy — literal de Figma `91:954`
 
-| Elemento | Texto |
-|---|---|
+| Elemento    | Texto                   |
+| ----------- | ----------------------- |
 | Botón único | `Start taking photos!!` |
 
 No hay más texto en la pantalla. El icono de objetivo + destello de la cabecera es
@@ -41,7 +41,7 @@ decorativo (`alt=""`).
 ## Dependencias
 
 - **Hooks:** `useCamera` (C3) — `{ videoRef, stream, countdown, error, start, stop,
-  captureWithCountdown }`. La página **no** llama a `getUserMedia`.
+captureWithCountdown }`. La página **no** llama a `getUserMedia`.
 - **Componentes:** `Loading` (C7) mientras se resuelve el permiso.
 - **CSS:** `CameraPage.module.css` (D3).
 - **Guard:** `useRouteGuard` (S3).
@@ -69,7 +69,7 @@ configurable. Grabar vídeo. Subir desde archivo (es `/upload`).
 2. **El preview va espejado, y la foto guardada también.** Es lo que espera cualquiera
    que se haya visto en un photobooth; una captura sin espejar sorprende.
 3. **Copy de error de permiso inventado:** `We can't reach your camera. Check the
-   browser permission, or upload photos instead.` Si no vale, es una línea.
+browser permission, or upload photos instead.` Si no vale, es una línea.
 4. **No se muestran las capturas ya hechas** durante la sesión. El wireframe no tiene
    sitio para ellas y `/review` es justo la pantalla que las enseña.
 

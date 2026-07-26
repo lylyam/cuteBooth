@@ -37,7 +37,7 @@ nombre X1 y sigue.
 ## Reglas que no se negocian
 
 1. **Las capas solo apuntan hacia abajo:** `pages → components → hooks →
-   context/services → utils/constants`. Tú vives abajo: no importes un componente.
+context/services → utils/constants`. Tú vives abajo: no importes un componente.
 2. **`constants/` no importa nada de `src/` salvo tipos.**
 3. **Exactamente 4 slots por layout**, forzado por tipos con una tupla.
 4. **`switch` exhaustivo y sin `default`** en el reducer, para que `tsc` avise al añadir

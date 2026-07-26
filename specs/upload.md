@@ -27,7 +27,7 @@ texto. Lo que va aquí es decisión de producto tomada el 2026-07-26:
 4. `Continue` se habilita con los 4 huecos llenos.
 
 **La tira a medio llenar es estado LOCAL de la página** (`(Photo | null)[4]`), no
-global: `state.photos` no puede representar huecos vacíos, porque su índice *es* el
+global: `state.photos` no puede representar huecos vacíos, porque su índice _es_ el
 número de hueco. Al pulsar `Continue` se hace un único `SET_PHOTOS` con los 4. Un
 refresco a medio llenar pierde el borrador, y está bien: los archivos locales no se
 pueden rehidratar de todas formas.
@@ -77,10 +77,10 @@ Subir más de 4. Cámara (es `/camera`).
 
 Los tres layouts, no tres estados:
 
-| Layout | Node ID |
-|---|---|
-| `classic` | `91:1168` |
-| `wide` | `91:1202` |
+| Layout      | Node ID   |
+| ----------- | --------- |
+| `classic`   | `91:1168` |
+| `wide`      | `91:1202` |
 | `spotlight` | `91:1223` |
 
 https://www.figma.com/design/df7hAve66qYTKiNz0UXE1E/cuteBooth--Copy-?node-id=91-1168

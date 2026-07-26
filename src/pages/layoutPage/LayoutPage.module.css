@@ -1,47 +1,47 @@
 .wideWindow {
-	width: min(1292px, calc(100vw - 140px));
-	position: relative;
-	left: 50%;
-	transform: translateX(-50%);
-	display: flex;
-	flex-direction: column;
-	/* fit the window within the viewport: full height minus the page's
-	   vertical padding and the space taken by the footer + gap below it */
-	max-height: calc(100dvh - (var(--page-padding-y) * 2) - 5rem);
+  width: min(1292px, calc(100vw - 140px));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  /* fit the window within the viewport: full height minus the page's
+     vertical padding and the space taken by the footer + gap below it */
+  max-height: calc(100dvh - (var(--page-padding-y) * 2) - 5rem);
 }
 
 .windowContent {
-	justify-content: space-between;
-	gap: clamp(1rem, 3vh, 50px);
+  justify-content: space-between;
+  gap: clamp(1rem, 3vh, 50px);
 }
 
 .title {
-	text-align: center;
+  text-align: center;
 }
 
 .cardsGrid {
-	width: 100%;
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 316px));
-	justify-content: center;
-	gap: clamp(1.5rem, 2vw, 50px);
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 316px));
+  justify-content: center;
+  gap: clamp(1.5rem, 2vw, 50px);
 }
 
 @media (max-width: 900px) {
-	.wideWindow {
-		width: 100%;
-		left: auto;
-		transform: none;
-	}
+  .wideWindow {
+    width: 100%;
+    left: auto;
+    transform: none;
+  }
 
-	.cardsGrid {
-		grid-template-columns: 316px;
-		gap: 24px;
-	}
+  .cardsGrid {
+    grid-template-columns: 316px;
+    gap: 24px;
+  }
 }
 
 @media (max-width: 768px) {
-	.windowContent {
-		gap: 32px;
-	}
+  .windowContent {
+    gap: 32px;
+  }
 }

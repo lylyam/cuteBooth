@@ -8,14 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 [docs/orchestration/KICKOFF.md](docs/orchestration/KICKOFF.md)** — self-contained
 briefing: current state, non-negotiable rules, first node, open decisions.
 
-| Need | Read |
-|---|---|
-| The real architecture, layers, known debt | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Need                                        | Read                                                     |
+| ------------------------------------------- | -------------------------------------------------------- |
+| The real architecture, layers, known debt   | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)             |
 | Which agent owns what, workflows, MCP usage | [docs/orchestration/PLAN.md](docs/orchestration/PLAN.md) |
-| What to work on next, what's blocking what | [docs/orchestration/DAG.md](docs/orchestration/DAG.md) |
-| Figma file key, node IDs, usage rules | [docs/design/FIGMA.md](docs/design/FIGMA.md) |
-| Contracts between layers | `docs/contracts/{state,layouts,design-tokens,assets}.md` |
-| Per-screen scope, literal copy, acceptance | `specs/{camera,upload,review,decoration,final}.md` |
+| What to work on next, what's blocking what  | [docs/orchestration/DAG.md](docs/orchestration/DAG.md)   |
+| Figma file key, node IDs, usage rules       | [docs/design/FIGMA.md](docs/design/FIGMA.md)             |
+| Contracts between layers                    | `docs/contracts/{state,layouts,design-tokens,assets}.md` |
+| Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`       |
 
 **Fifteen product decisions are CLOSED** in
 [KICKOFF.md](docs/orchestration/KICKOFF.md) §4, and **nothing is open**. Don't reopen
@@ -24,20 +24,20 @@ them, and don't invent geometry or copy — if a datum is missing, report and as
 Two of those decisions are the ones agents get wrong on their own:
 
 - **Slot geometry comes from the frame artwork**, not the Upload wireframe — the frame is
-  drawn *on top of* the photos, so it is the only source that can be right. Numbers in
+  drawn _on top of_ the photos, so it is the only source that can be right. Numbers in
   [docs/contracts/layouts.md](docs/contracts/layouts.md).
 - **A frame id is scoped to its layout** (`'classic/Frame 7'`). There is no
   cross-layout correspondence and none is needed.
 
 ### Context rules
 
-- **Never read `Analisis/`.** 171 KB (~43k tokens) of study notes on *other*
+- **Never read `Analisis/`.** 171 KB (~43k tokens) of study notes on _other_
   projects, partly outdated (they describe `.jsx`, a reducer that isn't
   implemented, and folders that are empty). Everything still valid has been
   extracted into `docs/`. See [docs/reference/TRIAJE.md](docs/reference/TRIAJE.md).
 - Load only the contract you need. `canvas-media` doesn't need the token table;
   `figma-design-sync` doesn't need the reducer.
-- Keep this file under 200 lines — it is injected into *every* agent.
+- Keep this file under 200 lines — it is injected into _every_ agent.
 
 ## Project
 

@@ -1,21 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap');
 
-
 :root {
-  font-family: "Fira Code", monospace;
+  font-family: 'Fira Code', monospace;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
 
   /* ---- Colors ---- */
-  --primary-color: #C2C2C2;
+  --primary-color: #c2c2c2;
   --secondary-color: #565656;
-  --background-color: #DEDEDE;
+  --background-color: #dedede;
   --dark-secondary: #222;
   --overlay-color: rgba(34, 34, 34, 0.4);
 
   /* ---- Typography ---- */
-  --font-family-base: "Fira Code", monospace;
+  --font-family-base: 'Fira Code', monospace;
   --font-size-sm: 14px;
   --font-size-md: 22px;
   --font-size-title: clamp(2rem, 5vw, 4.625rem);
@@ -36,7 +35,6 @@
   --content-max-width: 743px;
   --footer-links-gap: 33px;
 
-
   background-color: var(--background-color);
   color: var(--dark-secondary);
 
@@ -46,7 +44,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-*{
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;

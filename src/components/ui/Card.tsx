@@ -12,17 +12,9 @@ type CardProps = {
 function Card({ image, buttonLabel, onButtonClick, children }: CardProps) {
   return (
     <div className={styles.card}>
-      {image && (
-        <div className={styles.imageContainer}>
-          {image}
-        </div>
-      )}
+      {image && <div className={styles.imageContainer}>{image}</div>}
       {children && <div className={styles.content}>{children}</div>}
-      {buttonLabel && (
-        <Button onClick={onButtonClick}>
-          {buttonLabel}
-        </Button>
-      )}
+      {buttonLabel && <Button onClick={onButtonClick}>{buttonLabel}</Button>}
     </div>
   );
 }

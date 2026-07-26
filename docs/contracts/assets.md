@@ -33,16 +33,16 @@ gato) sustituyen el hueco rectangular por `path` + `mask`.
 
 ```ts
 // src/constants/frames.ts
-export type FrameId = string;   // `${LayoutId}/${fichero}`, p. ej. 'classic/Frame 7'
+export type FrameId = string; // `${LayoutId}/${fichero}`, p. ej. 'classic/Frame 7'
 
 export type FrameDef = {
   id: FrameId;
   layout: LayoutId;
-  art: string;      // el SVG del marco
-  swatch: string;   // la muestra del menú, generada del propio art
+  art: string; // el SVG del marco
+  swatch: string; // la muestra del menú, generada del propio art
 };
 
-export const FRAMES: Record<LayoutId, FrameDef[]>;   // 8 por layout
+export const FRAMES: Record<LayoutId, FrameDef[]>; // 8 por layout
 ```
 
 **Los IDs de marco son por layout, y eso disuelve el problema del mapeo.** No hace falta
@@ -102,12 +102,12 @@ puede pasar: el layout se elige antes de decorar y `/layout` no es alcanzable de
 
 ## Renombrados que toca hacer en X1
 
-| Hoy | Debe ser | Por qué |
-|---|---|---|
-| `frames/square/` | `frames/spotlight/` | `square` miente y se renombra en S2 |
-| `backgrounds/wide and square/` | `backgrounds/wide-and-spotlight/` | Espacios en rutas de import |
-| `frames/icons for frames menu/` | — | **Sin usar.** Las muestras se generan del marco |
-| `icons/` | `stickers/` | Son pegatinas, no iconos de UI. `assets/icons/` induce a error |
+| Hoy                             | Debe ser                          | Por qué                                                        |
+| ------------------------------- | --------------------------------- | -------------------------------------------------------------- |
+| `frames/square/`                | `frames/spotlight/`               | `square` miente y se renombra en S2                            |
+| `backgrounds/wide and square/`  | `backgrounds/wide-and-spotlight/` | Espacios en rutas de import                                    |
+| `frames/icons for frames menu/` | —                                 | **Sin usar.** Las muestras se generan del marco                |
+| `icons/`                        | `stickers/`                       | Son pegatinas, no iconos de UI. `assets/icons/` induce a error |
 
 Los nombres de fichero (`1.png`, `Frame 7.svg`) **se dejan como están**: renombrar 320
 ficheros para ganar legibilidad que el manifiesto ya da es trabajo sin retorno.

@@ -18,17 +18,17 @@ El usuario ve su tira decorada, se la descarga, y si no le gusta repite las foto
 
 El nodo `2074:52` sigue con el copy de `/review` sin actualizar. **Manda este spec:**
 
-| Elemento | Texto |
-|---|---|
-| `h1` | `Here's your decorated strip!` |
-| Subtítulo | `Download it, or start over to make a new one.` |
-| Botón izquierdo | `Download` |
-| Botón derecho | `Retake` |
+| Elemento        | Texto                                           |
+| --------------- | ----------------------------------------------- |
+| `h1`            | `Here's your decorated strip!`                  |
+| Subtítulo       | `Download it, or start over to make a new one.` |
+| Botón izquierdo | `Download`                                      |
+| Botón derecho   | `Retake`                                        |
 
 Los dos botones **sí** son literales de Figma. Los dos textos son nuevos, para que el
 usuario note que ha avanzado: en `/review` la tira está cruda, aquí está terminada.
 
-⚠️ El subtítulo dice *"start over"* pero `Retake` conserva la decoración (ver abajo). Si
+⚠️ El subtítulo dice _"start over"_ pero `Retake` conserva la decoración (ver abajo). Si
 se prefiere `Download it, or retake your photos.`, es un cambio de una línea.
 
 ## Estado que lee / escribe

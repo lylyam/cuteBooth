@@ -1,24 +1,30 @@
 .imageWrapper {
-    position: relative;
-    width: 100%;
+  position: relative;
+  width: 100%;
 }
 
 .photoBooth {
-    width: 100%;
-    display: block;
+  width: 100%;
+  display: block;
 }
 .photoBooth:hover {
-    animation: flicker 0.5s steps(1) infinite;
+  animation: flicker 0.5s steps(1) infinite;
 }
 
 .buttonWrapper {
-    position: absolute;
-    left: 16%;
-    top: 55%;
+  position: absolute;
+  left: 16%;
+  top: 55%;
 }
 
 @keyframes flicker {
-    0%   { content: url('../../assets/PhotoBooth.png'); }
-    50%  { content: url('../../assets/PhotoBoothHover.png'); }
-    100% { content: url('../../assets/PhotoBooth.png'); }
+  0% {
+    content: url('../../assets/PhotoBooth.png');
+  }
+  50% {
+    content: url('../../assets/PhotoBoothHover.png');
+  }
+  100% {
+    content: url('../../assets/PhotoBooth.png');
+  }
 }

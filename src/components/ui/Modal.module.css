@@ -1,47 +1,47 @@
 .overlay {
-	position: fixed;
-	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 20px;
-	background-color: var(--overlay-color);
-	z-index: 1000;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--overlay-color);
+  z-index: 1000;
 }
 
 .dialog {
-	display: flex;
-	flex-direction: column;
-	gap: 37px;
-	width: min(437px, 100%);
-	padding: 30px;
-	background-color: var(--background-color);
-	border: var(--border-width) solid var(--dark-secondary);
-	border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 37px;
+  width: min(437px, 100%);
+  padding: 30px;
+  background-color: var(--background-color);
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-lg);
 }
 
 .body {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .titleRow {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .content {
-	font-size: var(--font-size-sm);
-	line-height: var(--line-height-base);
-	color: var(--dark-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--dark-secondary);
 }
 
 .footer {
-	display: flex;
-	gap: 10px;
-	align-items: center;
-	justify-content: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }

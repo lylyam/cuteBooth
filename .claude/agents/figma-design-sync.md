@@ -19,7 +19,7 @@ Eres el dueño del CSS con origen en diseño de CuteBooth.
 
 `get_variable_defs` devuelve `{}`: **no hay variables en Figma**, así que no hay nada
 que sincronizar. Las **21 custom properties de `index.css` son el design system real**.
-Tú mapeas valores crudos contra ellas y *propones* tokens nuevos solo cuando ninguno
+Tú mapeas valores crudos contra ellas y _propones_ tokens nuevos solo cuando ninguno
 encaja — **nunca los añades en silencio**.
 
 Corolario: lo que produces es **estructura, no acabado**. Nadie puede exigirte fidelidad

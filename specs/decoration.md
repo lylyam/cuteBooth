@@ -23,11 +23,11 @@ El usuario decora su tira en tres pasos: recorte, fondo y pegatinas.
 estado global, no se persiste, y no hay URL por paso. Siguen siendo **seis rutas**, como
 dice [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) §9.
 
-| # | Paso | Panel | Escribe |
-|---|---|---|---|
-| 1 | Frames | rejilla de recortes | `SET_FRAME` |
-| 2 | Backgrounds | rejilla de fondos | `SET_BACKGROUND` |
-| 3 | Icons | rejilla de pegatinas | `ADD_STICKER`, `MOVE_STICKER`, `REMOVE_STICKER` |
+| #   | Paso        | Panel                | Escribe                                         |
+| --- | ----------- | -------------------- | ----------------------------------------------- |
+| 1   | Frames      | rejilla de recortes  | `SET_FRAME`                                     |
+| 2   | Backgrounds | rejilla de fondos    | `SET_BACKGROUND`                                |
+| 3   | Icons       | rejilla de pegatinas | `ADD_STICKER`, `MOVE_STICKER`, `REMOVE_STICKER` |
 
 ## Estructura — la misma en los tres pasos
 
@@ -45,13 +45,13 @@ contenido de la rejilla. Un solo componente de panel parametrizado, no tres.
 
 ## Copy
 
-| Elemento | Texto | Origen |
-|---|---|---|
-| Título panel paso 1 | `Frames` | literal de `102:319` |
-| Título panel paso 2 | `Backgrounds` | supuesto |
-| Título panel paso 3 | `Icons` | supuesto |
-| Botón izquierdo | `← Previous step` | literal de `102:319` |
-| Botón derecho | `Next step →` | literal de `102:319` |
+| Elemento            | Texto             | Origen               |
+| ------------------- | ----------------- | -------------------- |
+| Título panel paso 1 | `Frames`          | literal de `102:319` |
+| Título panel paso 2 | `Backgrounds`     | supuesto             |
+| Título panel paso 3 | `Icons`           | supuesto             |
+| Botón izquierdo     | `← Previous step` | literal de `102:319` |
+| Botón derecho       | `Next step →`     | literal de `102:319` |
 
 ## Los tres pasos, en detalle
 
@@ -132,10 +132,10 @@ Elegir un recorte distinto por hueco. Volver a `/decoration` desde `/final`.
 
 ## Nodos Figma
 
-| Nodo | Nombre en Figma | Qué es |
-|---|---|---|
-| `102:319` | `Decorarion` *(con typo)* | **Canónico.** El paso 1, Frames |
-| `103:382` | `Decoration 2` | **Duplicado exacto** de `102:319`. Conviene borrarlo |
+| Nodo      | Nombre en Figma           | Qué es                                               |
+| --------- | ------------------------- | ---------------------------------------------------- |
+| `102:319` | `Decorarion` _(con typo)_ | **Canónico.** El paso 1, Frames                      |
+| `103:382` | `Decoration 2`            | **Duplicado exacto** de `102:319`. Conviene borrarlo |
 
 Los pasos 2 y 3 **no están dibujados**: se construyen con la plantilla del paso 1.
 

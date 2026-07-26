@@ -16,12 +16,12 @@ El usuario ve su tira montada y decide: seguir a decorar, o repetir las fotos.
 
 ## Copy — literal de Figma `91:1346`
 
-| Elemento | Texto |
-|---|---|
-| `h1` | `Here's your photo strip!` |
-| Subtítulo | `Happy with it or want to try again?` |
-| Botón izquierdo | `Retake photos` |
-| Botón derecho | `Start decorating` |
+| Elemento        | Texto                                 |
+| --------------- | ------------------------------------- |
+| `h1`            | `Here's your photo strip!`            |
+| Subtítulo       | `Happy with it or want to try again?` |
+| Botón izquierdo | `Retake photos`                       |
+| Botón derecho   | `Start decorating`                    |
 
 ## Estado que lee / escribe
 
@@ -38,7 +38,7 @@ copy y botones.
 type PhotoResultProps = {
   title: string;
   subtitle: string;
-  actions: ReactNode;   // los botones, que cada página decide
+  actions: ReactNode; // los botones, que cada página decide
 };
 ```
 

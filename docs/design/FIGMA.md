@@ -20,20 +20,20 @@ Los tools MCP se invocan directamente, sin `@`. El `@` sirve para referenciar
 
 Todas 1440×1024. Ordenadas por posición en el lienzo.
 
-| Pantalla | Node ID | Ruta | Nodo DAG |
-|---|---|---|---|
-| Home | `6:52` | `/` | ✅ implementada |
-| Layout | `88:1676` | `/layout` | ✅ implementada |
-| Modal (sobre Layout) | `90:740` | modal de `/layout` | ✅ implementado |
-| Camera | `91:954` | `/camera` | D3 → U1 |
-| **Upload · classic** | `91:1168` | `/upload` | D4 → U2 · **y geometría para S2** |
-| **Upload · wide** | `91:1202` | `/upload` | D4 → U2 · **y geometría para S2** |
-| **Upload · spotlight** | `91:1223` | `/upload` | D4 → U2 · **y geometría para S2** |
-| Loading | `91:1283` | ❌ **no es ruta, es componente** | C7 |
-| **Selected pictures** | `91:1346` | `/review` | D7 → U5 |
-| **Decoration · paso 1 Frames** | `102:319` | `/decoration` | D5 → U3 · **canónico** |
-| Decoration (duplicado exacto) | `103:382` | — | ⚠️ borrar, ver §3 |
-| **Final** | `2074:52` | `/final` | D6 → U4 |
+| Pantalla                       | Node ID   | Ruta                             | Nodo DAG                          |
+| ------------------------------ | --------- | -------------------------------- | --------------------------------- |
+| Home                           | `6:52`    | `/`                              | ✅ implementada                   |
+| Layout                         | `88:1676` | `/layout`                        | ✅ implementada                   |
+| Modal (sobre Layout)           | `90:740`  | modal de `/layout`               | ✅ implementado                   |
+| Camera                         | `91:954`  | `/camera`                        | D3 → U1                           |
+| **Upload · classic**           | `91:1168` | `/upload`                        | D4 → U2 · **y geometría para S2** |
+| **Upload · wide**              | `91:1202` | `/upload`                        | D4 → U2 · **y geometría para S2** |
+| **Upload · spotlight**         | `91:1223` | `/upload`                        | D4 → U2 · **y geometría para S2** |
+| Loading                        | `91:1283` | ❌ **no es ruta, es componente** | C7                                |
+| **Selected pictures**          | `91:1346` | `/review`                        | D7 → U5                           |
+| **Decoration · paso 1 Frames** | `102:319` | `/decoration`                    | D5 → U3 · **canónico**            |
+| Decoration (duplicado exacto)  | `103:382` | —                                | ⚠️ borrar, ver §3                 |
+| **Final**                      | `2074:52` | `/final`                         | D6 → U4                           |
 
 ## 1. El diseño confirma la arquitectura de componentes
 
@@ -69,13 +69,13 @@ de revisión. El texto real de `/final` está decidido y **manda
 
 Copy verificado por captura el 2026-07-26:
 
-| Pantalla | `h1` | Subtítulo | Botones |
-|---|---|---|---|
-| `/review` `91:1346` | `Here's your photo strip!` | `Happy with it or want to try again?` | `Retake photos` · `Start decorating` |
-| `/final` `2074:52` | *(desactualizado)* | *(desactualizado)* | `Download` · `Retake` |
-| `/camera` `91:954` | — | — | `Start taking photos!!` |
-| `/decoration` `102:319` | — | panel `Frames` | `← Previous step` · `Next step →` |
-| `/upload` `91:1168` | — | — | **ninguno dibujado** |
+| Pantalla                | `h1`                       | Subtítulo                             | Botones                              |
+| ----------------------- | -------------------------- | ------------------------------------- | ------------------------------------ |
+| `/review` `91:1346`     | `Here's your photo strip!` | `Happy with it or want to try again?` | `Retake photos` · `Start decorating` |
+| `/final` `2074:52`      | _(desactualizado)_         | _(desactualizado)_                    | `Download` · `Retake`                |
+| `/camera` `91:954`      | —                          | —                                     | `Start taking photos!!`              |
+| `/decoration` `102:319` | —                          | panel `Frames`                        | `← Previous step` · `Next step →`    |
+| `/upload` `91:1168`     | —                          | —                                     | **ninguno dibujado**                 |
 
 ## 3. Decoration: resuelto el 2026-07-26
 
@@ -124,7 +124,7 @@ las pantallas Upload.**
 
 **El código es la fuente de verdad de los tokens.** Las 21 custom properties de
 `index.css` son el design system real. `figma-design-sync` mapea valores crudos
-contra ellas y *propone* tokens nuevos solo cuando ninguno encaja — nunca los crea
+contra ellas y _propone_ tokens nuevos solo cuando ninguno encaja — nunca los crea
 en silencio.
 
 Corolario: el CSS que salga de aquí es **estructura, no acabado**.

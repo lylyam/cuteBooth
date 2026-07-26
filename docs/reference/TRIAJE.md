@@ -5,12 +5,12 @@
 
 ## Veredicto
 
-| Documento | Tamaño | Qué es | Veredicto |
-|---|---|---|---|
-| `arquitectura.md` | 63 KB · 1802 líneas | §1-14 manual genérico de React; §15 diseño de CuteBooth | 🟡 **Extraer §15, congelar el resto** |
-| `ANALISIS_ny.md` | 68 KB · 1904 líneas | Análisis de *NYC Photobooth*, proyecto ajeno (React + Express) | 🟠 **Extraer solo dominio, congelar** |
-| `ANALISIS-underthesea.md` | 40 KB · 874 líneas | Análisis de *Underwater Photobooth*, proyecto ajeno (vanilla JS, MPA) | 🟠 **Extraer solo dominio, congelar** |
-| **Total** | **171 KB ≈ 43k tokens** | | |
+| Documento                 | Tamaño                  | Qué es                                                                | Veredicto                             |
+| ------------------------- | ----------------------- | --------------------------------------------------------------------- | ------------------------------------- |
+| `arquitectura.md`         | 63 KB · 1802 líneas     | §1-14 manual genérico de React; §15 diseño de CuteBooth               | 🟡 **Extraer §15, congelar el resto** |
+| `ANALISIS_ny.md`          | 68 KB · 1904 líneas     | Análisis de _NYC Photobooth_, proyecto ajeno (React + Express)        | 🟠 **Extraer solo dominio, congelar** |
+| `ANALISIS-underthesea.md` | 40 KB · 874 líneas      | Análisis de _Underwater Photobooth_, proyecto ajeno (vanilla JS, MPA) | 🟠 **Extraer solo dominio, congelar** |
+| **Total**                 | **171 KB ≈ 43k tokens** |                                                                       |                                       |
 
 ## Por qué no pueden entrar en contexto
 
@@ -32,15 +32,15 @@ Tres motivos, de menos a más grave:
 
 ### `arquitectura.md`
 
-| Sección | Destino |
-|---|---|
-| §15.1 Flujo de pantallas | → `docs/ARCHITECTURE.md` (ya migrado, corregido) |
-| §15.2 Forma del estado global | → `docs/contracts/state.md` (P3) — **corregir a TS** |
-| §15.7 Geometría de layouts | → `docs/contracts/layouts.md` (P3) — **resolver la incoherencia de nombres, ver ARCHITECTURE D2** |
-| §15.9 Guards de ruta | → `docs/contracts/state.md` (P3) |
-| §15.10 Grafo de capas | → `docs/ARCHITECTURE.md` §3 (ya migrado) — **es la base del DAG** |
-| §1-14 (manual de React) | 🔒 Congelar. Es material de aprendizaje, no documentación del proyecto. |
-| §15.3-15.6, 15.8 | 🔒 Congelar. Ya reflejado o desactualizado. |
+| Sección                       | Destino                                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| §15.1 Flujo de pantallas      | → `docs/ARCHITECTURE.md` (ya migrado, corregido)                                                  |
+| §15.2 Forma del estado global | → `docs/contracts/state.md` (P3) — **corregir a TS**                                              |
+| §15.7 Geometría de layouts    | → `docs/contracts/layouts.md` (P3) — **resolver la incoherencia de nombres, ver ARCHITECTURE D2** |
+| §15.9 Guards de ruta          | → `docs/contracts/state.md` (P3)                                                                  |
+| §15.10 Grafo de capas         | → `docs/ARCHITECTURE.md` §3 (ya migrado) — **es la base del DAG**                                 |
+| §1-14 (manual de React)       | 🔒 Congelar. Es material de aprendizaje, no documentación del proyecto.                           |
+| §15.3-15.6, 15.8              | 🔒 Congelar. Ya reflejado o desactualizado.                                                       |
 
 ### `ANALISIS_ny.md`
 

@@ -16,31 +16,31 @@ seis agentes reutilizan en vez de reinventar cada uno a su manera.
 
 ## 1. Imprescindible antes del primer agente
 
-| # | Qué | Por qué | Nodo DAG |
-|---|---|---|---|
-| 1 | **`docs/ARCHITECTURE.md`** | Sin esto, cada agente deduce la arquitectura de los ficheros que le toquen. Cinco agentes = cinco arquitecturas. | P1 ✅ |
-| 2 | **Triaje de `Analisis/`** | 171 KB de notas sobre otros proyectos, en `.jsx`, con estructura de carpetas falsa. Un agente que las lea construirá contra un proyecto que no existe. | P2 ✅ |
-| 3 | **`docs/contracts/`** ✅ | Es lo que los agentes se intercambian. Sin contrato escrito, la interfaz entre `canvas-media` y `ui-composer` se negocia en cada invocación, y cambia cada vez. | P3 |
-| 4 | **`specs/` por pantalla** ✅ | Un spec es la definición del nodo del DAG: alcance, criterio de aceptación, qué NO entra. Es lo que convierte "haz la CameraPage" en algo verificable. | P4 |
-| 5 | **`CLAUDE.md` corregido** | Se inyecta en **todos** los agentes. Hoy afirma cosas ciertas, pero no apunta a `docs/` ni prohíbe `Analisis/`. | P9 |
+| #   | Qué                          | Por qué                                                                                                                                                         | Nodo DAG |
+| --- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 1   | **`docs/ARCHITECTURE.md`**   | Sin esto, cada agente deduce la arquitectura de los ficheros que le toquen. Cinco agentes = cinco arquitecturas.                                                | P1 ✅    |
+| 2   | **Triaje de `Analisis/`**    | 171 KB de notas sobre otros proyectos, en `.jsx`, con estructura de carpetas falsa. Un agente que las lea construirá contra un proyecto que no existe.          | P2 ✅    |
+| 3   | **`docs/contracts/`** ✅     | Es lo que los agentes se intercambian. Sin contrato escrito, la interfaz entre `canvas-media` y `ui-composer` se negocia en cada invocación, y cambia cada vez. | P3       |
+| 4   | **`specs/` por pantalla** ✅ | Un spec es la definición del nodo del DAG: alcance, criterio de aceptación, qué NO entra. Es lo que convierte "haz la CameraPage" en algo verificable.          | P4       |
+| 5   | **`CLAUDE.md` corregido**    | Se inyecta en **todos** los agentes. Hoy afirma cosas ciertas, pero no apunta a `docs/` ni prohíbe `Analisis/`.                                                 | P9       |
 
 ## 2. Muy recomendable, y barato
 
-| # | Qué | Por qué |
-|---|---|---|
-| 6 | **Prettier + `.editorconfig`** | Hay tabs en `WebAppOldStyle.tsx` y 2 espacios en el resto. Con 6 agentes escribiendo, la deriva de formato se multiplica y ensucia todos los diffs — que es justo donde revisas. Un formateador es determinista: **hook, no agente**. |
-| 7 | **Hooks en `.claude/settings.json`** | `PostToolUse` sobre `Edit`/`Write` de `*.tsx` → `eslint --fix`. `Stop` → `npm run build`. Coste cero por invocación y elimina toda una clase de hallazgos del revisor. Usa la skill `/update-config`. |
-| 8 | **Permisos en `settings.json`** | Permitir `npm run build|lint`, `npx tsc -b`, `git status|diff` evita interrumpirte con confirmaciones en cada nodo. La skill `/fewer-permission-prompts` lo genera desde tu historial. |
-| 9 | **Skill `/nueva-pagina`** | El patrón `PageShell` + `WebAppOldStyle` + guard + `.module.css` se repite 4 veces. Una skill se inyecta en el contexto actual: coste marginal cero frente a un subagente. |
+| #   | Qué                                  | Por qué                                                                                                                                                                                                                               |
+| --- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6   | **Prettier + `.editorconfig`**       | Hay tabs en `WebAppOldStyle.tsx` y 2 espacios en el resto. Con 6 agentes escribiendo, la deriva de formato se multiplica y ensucia todos los diffs — que es justo donde revisas. Un formateador es determinista: **hook, no agente**. |
+| 7   | **Hooks en `.claude/settings.json`** | `PostToolUse` sobre `Edit`/`Write` de `*.tsx` → `eslint --fix`. `Stop` → `npm run build`. Coste cero por invocación y elimina toda una clase de hallazgos del revisor. Usa la skill `/update-config`.                                 |
+| 8   | **Permisos en `settings.json`**      | Permitir `npm run build                                                                                                                                                                                                               | lint`, `npx tsc -b`, `git status | diff`evita interrumpirte con confirmaciones en cada nodo. La skill`/fewer-permission-prompts` lo genera desde tu historial. |
+| 9   | **Skill `/nueva-pagina`**            | El patrón `PageShell` + `WebAppOldStyle` + guard + `.module.css` se repite 4 veces. Una skill se inyecta en el contexto actual: coste marginal cero frente a un subagente.                                                            |
 
 ## 3. Cuando toque, no ahora
 
-| Qué | Cuándo |
-|---|---|
+| Qué                          | Cuándo                                                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Vitest + Testing Library** | Cuando exista `useCanvas`. Testear composición sobre canvas sí paga; testear que un `<Button>` renderiza sus children, no. Hasta entonces la puerta es `npm run build` + `booth-reviewer`. |
-| **Agente `booth-tester`** | Solo después de instalar el runner. Un agente cuyo primer acto es instalar su propia infraestructura es expansión de alcance disfrazada. |
-| **CI (GitHub Actions)** | Cuando el repo se comparta o se despliegue. En solo local, el hook `Stop` cubre lo mismo. |
-| **Storybook** | Con 5 componentes UI, no. Reevaluar a partir de ~15. |
+| **Agente `booth-tester`**    | Solo después de instalar el runner. Un agente cuyo primer acto es instalar su propia infraestructura es expansión de alcance disfrazada.                                                   |
+| **CI (GitHub Actions)**      | Cuando el repo se comparta o se despliegue. En solo local, el hook `Stop` cubre lo mismo.                                                                                                  |
+| **Storybook**                | Con 5 componentes UI, no. Reevaluar a partir de ~15.                                                                                                                                       |
 
 ## 4. Nunca para este proyecto
 
@@ -91,29 +91,36 @@ Un spec de pantalla cabe en una página. Si no cabe, la pantalla es dos nodos.
 # Spec · <Pantalla>
 
 ## Objetivo
+
 Una frase. Qué consigue el usuario aquí.
 
 ## Entra / Sale
+
 - Entra con: <estado que debe existir ya> (si no, el guard redirige a X)
 - Sale a: <ruta> cuando <condición>
 
 ## Estado que lee / escribe
+
 - Lee: state.selectedLayout, state.photos
 - Escribe: dispatch ADD_PHOTO, dispatch SET_SOURCE
 
 ## Dependencias
+
 - Hooks: useCamera (C3)
 - CSS: CameraPage.module.css (D3)
 - Assets: —
 
 ## Criterio de aceptación
+
 - [ ] Verificable
 - [ ] Y observable
 - [ ] Sin ambigüedad
 
 ## Fuera de alcance
+
 Lo que NO entra en este nodo, dicho explícitamente.
 
 ## Nodo Figma
+
 <URL o "pendiente">
 ```

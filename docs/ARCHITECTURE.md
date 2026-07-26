@@ -44,6 +44,7 @@ construcción, y es la razón por la que el DAG de trabajo también lo es
 (ver [orchestration/DAG.md](orchestration/DAG.md)).
 
 Corolarios prácticos:
+
 - Un componente **nunca** llama a `getUserMedia`, `canvas.getContext` ni
   `sessionStorage` directamente. Eso vive en `hooks/`, `utils/` o `services/`.
 - Un hook **nunca** importa un componente.
@@ -103,7 +104,7 @@ type PhotoBoothContextValue = {
   selectedLayout: LayoutId | null;
   setSelectedLayout: (layout: LayoutId) => void;
 };
-type LayoutId = 'classic' | 'wide' | 'square';   // 'square' se renombra en S2
+type LayoutId = 'classic' | 'wide' | 'square'; // 'square' se renombra en S2
 ```
 
 Un `useState`. Nada más. `usePhotoBooth()` lanza si se usa fuera del provider
@@ -130,30 +131,30 @@ Contrato completo — forma, acciones, guards, persistencia — en
 
 Estado a 2026-07-25. Cada punto es candidato a nodo del DAG.
 
-| # | Deuda | Ubicación | Impacto |
-|---|---|---|---|
-| D1 | `cardData` se reconstruye en cada render y contiene datos de dominio | `pages/layoutPage/LayoutPage.tsx:26` | Debe vivir en `constants/layouts.ts` |
-| D2 | **Resuelto.** Los `alt` describen mal los layouts y `square` no es cuadrado (es 4:3 apaisado con rejilla 1+3) | `LayoutPage.tsx:30-42` | Ver [contracts/layouts.md](contracts/layouts.md) |
-| D3 | `Modal` sin focus trap, sin restaurar foco al cerrar, sin `aria-labelledby` | `components/ui/Modal.tsx:34` | Accesibilidad |
-| D4 | Idioma mezclado: UI en inglés, `alt` en español | `HomePage.tsx`, `LayoutPage.tsx` | El `alt` es texto de usuario; hay que elegir uno |
-| D5 | Indentación con tabs en un fichero, 2 espacios en el resto | `components/layouts/WebAppOldStyle.tsx` | Prettier ya está configurado (P8). Falta ejecutar `npm run format` — 17 ficheros — en un commit **solo de formato** |
-| D6 | 4 páginas son ficheros de 0 bytes con imports comentados | `pages/*`, `App.tsx:5` | Es el trabajo pendiente |
-| D7 | Sin runner de tests | — | La única puerta de calidad es `npm run build` + revisión |
+| #   | Deuda                                                                                                         | Ubicación                               | Impacto                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| D1  | `cardData` se reconstruye en cada render y contiene datos de dominio                                          | `pages/layoutPage/LayoutPage.tsx:26`    | Debe vivir en `constants/layouts.ts`                                                                                |
+| D2  | **Resuelto.** Los `alt` describen mal los layouts y `square` no es cuadrado (es 4:3 apaisado con rejilla 1+3) | `LayoutPage.tsx:30-42`                  | Ver [contracts/layouts.md](contracts/layouts.md)                                                                    |
+| D3  | `Modal` sin focus trap, sin restaurar foco al cerrar, sin `aria-labelledby`                                   | `components/ui/Modal.tsx:34`            | Accesibilidad                                                                                                       |
+| D4  | Idioma mezclado: UI en inglés, `alt` en español                                                               | `HomePage.tsx`, `LayoutPage.tsx`        | El `alt` es texto de usuario; hay que elegir uno                                                                    |
+| D5  | Indentación con tabs en un fichero, 2 espacios en el resto                                                    | `components/layouts/WebAppOldStyle.tsx` | Prettier ya está configurado (P8). Falta ejecutar `npm run format` — 17 ficheros — en un commit **solo de formato** |
+| D6  | 4 páginas son ficheros de 0 bytes con imports comentados                                                      | `pages/*`, `App.tsx:5`                  | Es el trabajo pendiente                                                                                             |
+| D7  | Sin runner de tests                                                                                           | —                                       | La única puerta de calidad es `npm run build` + revisión                                                            |
 
 ## 8. Divergencias con `Analisis/arquitectura.md`
 
 Ese documento **no describe este repositorio**. Diferencias verificadas:
 
-| `arquitectura.md` §15 | Realidad |
-|---|---|
-| `.jsx` sin tipos | `.tsx` con TypeScript estricto |
-| Context + `useReducer` ya implementado | `useState` con un solo campo |
-| `pages/HomePage.jsx` plano | `pages/homePage/HomePage.tsx`, carpeta por página |
-| `components/{camera,upload,decoration,final}/` | Solo `ui/` y `layouts/` |
-| No menciona `PageShell` ni `WebAppOldStyle` | Son el patrón de composición real |
-| `constants/layouts.js` existe | `constants/` está vacía |
-| `hooks/`, `services/`, `utils/` con contenido | Vacías |
-| 6 rutas activas | 2 activas |
+| `arquitectura.md` §15                          | Realidad                                          |
+| ---------------------------------------------- | ------------------------------------------------- |
+| `.jsx` sin tipos                               | `.tsx` con TypeScript estricto                    |
+| Context + `useReducer` ya implementado         | `useState` con un solo campo                      |
+| `pages/HomePage.jsx` plano                     | `pages/homePage/HomePage.tsx`, carpeta por página |
+| `components/{camera,upload,decoration,final}/` | Solo `ui/` y `layouts/`                           |
+| No menciona `PageShell` ni `WebAppOldStyle`    | Son el patrón de composición real                 |
+| `constants/layouts.js` existe                  | `constants/` está vacía                           |
+| `hooks/`, `services/`, `utils/` con contenido  | Vacías                                            |
+| 6 rutas activas                                | 2 activas                                         |
 
 Lo que **sí** sigue siendo válido de ese documento: el flujo de pantallas (§15.1),
 la forma del estado objetivo (§15.2), la idea de guards de ruta (§15.9) y el grafo
@@ -204,7 +205,7 @@ está en inglés y los `alt` en español (deuda D4); se corrige al tocar cada p�
 
 ### El concepto que faltaba: marco
 
-Un *marco* es un conjunto temático de cuatro recortes — uno por hueco, distintos
+Un _marco_ es un conjunto temático de cuatro recortes — uno por hueco, distintos
 entre sí pero de la misma temática. El usuario elige el tema; el reparto de las cuatro
 máscaras es fijo. Eso añade un sexto campo al estado (`frame`) y una acción
 (`SET_FRAME`), aplica las máscaras en `canvasUtils` y añade `constants/frames.ts` al

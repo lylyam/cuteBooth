@@ -23,42 +23,42 @@ contrato. Nada más lo usa todavía — por eso es ahora y no después.
 **Decidido el 2026-07-26.** Los números salen de los SVG de marco del repo, no del
 wireframe de Upload. Motivo: el marco se dibuja **encima** de las fotos, así que la única
 geometría que puede estar bien es la del propio dibujo que las va a rodear. Ver §
-*Cómo se leen* y § *Qué cambió*.
+_Cómo se leen_ y § _Qué cambió_.
 
 Fuente por layout — el marco rectangular simple de cada carpeta:
 
-| Layout | Fichero | Canvas (viewBox) |
-|---|---|---|
-| `classic` | `assets/frames/classic/Frame 7.svg` | 218 × 637 |
-| `wide` | `assets/frames/wide/Frame 7.svg` | 468 × 419 |
-| `spotlight` | `assets/frames/square/Frame 8.svg` | 468 × 419 |
+| Layout      | Fichero                             | Canvas (viewBox) |
+| ----------- | ----------------------------------- | ---------------- |
+| `classic`   | `assets/frames/classic/Frame 7.svg` | 218 × 637        |
+| `wide`      | `assets/frames/wide/Frame 7.svg`    | 468 × 419        |
+| `spotlight` | `assets/frames/square/Frame 8.svg`  | 468 × 419        |
 
 ### `classic` — tira vertical de 4
 
-| # | x | y | w | h |
-|---|---|---|---|---|
-| 1 | 23 | 30 | 172 | 120.99 |
-| 2 | 23 | 164.99 | 172 | 120.99 |
-| 3 | 23 | 300 | 172 | 120.99 |
-| 4 | 23 | 434.99 | 172 | 120.99 |
+| #   | x   | y      | w   | h      |
+| --- | --- | ------ | --- | ------ |
+| 1   | 23  | 30     | 172 | 120.99 |
+| 2   | 23  | 164.99 | 172 | 120.99 |
+| 3   | 23  | 300    | 172 | 120.99 |
+| 4   | 23  | 434.99 | 172 | 120.99 |
 
 ### `wide` — rejilla 2×2
 
-| # | x | y | w | h |
-|---|---|---|---|---|
-| 1 | 23 | 30 | 203 | 143 |
-| 2 | 242 | 30 | 203 | 143 |
-| 3 | 23 | 189 | 203 | 143 |
-| 4 | 242 | 189 | 203 | 143 |
+| #   | x   | y   | w   | h   |
+| --- | --- | --- | --- | --- |
+| 1   | 23  | 30  | 203 | 143 |
+| 2   | 242 | 30  | 203 | 143 |
+| 3   | 23  | 189 | 203 | 143 |
+| 4   | 242 | 189 | 203 | 143 |
 
 ### `spotlight` — una grande arriba, tres pequeñas debajo
 
-| # | x | y | w | h |
-|---|---|---|---|---|
-| 1 | 23 | 30 | 422 | 246 |
-| 2 | 23 | 294 | 134 | 95 |
-| 3 | 167 | 294 | 134 | 95 |
-| 4 | 311 | 294 | 134 | 95 |
+| #   | x   | y   | w   | h   |
+| --- | --- | --- | --- | --- |
+| 1   | 23  | 30  | 422 | 246 |
+| 2   | 23  | 294 | 134 | 95  |
+| 3   | 167 | 294 | 134 | 95  |
+| 4   | 311 | 294 | 134 | 95  |
 
 ### Cómo se leen del SVG, si hay que rehacerlo
 
@@ -109,23 +109,23 @@ export type Slot = { x: number; y: number; width: number; height: number };
 
 export type LayoutDef = {
   id: LayoutId;
-  label: string;    // visible en UI — en inglés
-  alt: string;      // describe la DISPOSICIÓN, no el marco — en inglés
-  icon: string;     // import del SVG de assets/draws/
-  canvas: { width: number; height: number };   // ya escalado
-  slots: [Slot, Slot, Slot, Slot];             // exactamente 4, ya escalados
+  label: string; // visible en UI — en inglés
+  alt: string; // describe la DISPOSICIÓN, no el marco — en inglés
+  icon: string; // import del SVG de assets/draws/
+  canvas: { width: number; height: number }; // ya escalado
+  slots: [Slot, Slot, Slot, Slot]; // exactamente 4, ya escalados
 };
 
 export const EXPORT_SCALE = 3;
 export const LAYOUTS: Record<LayoutId, LayoutDef>;
-export const LAYOUT_LIST: LayoutDef[];   // orden de presentación en LayoutPage
+export const LAYOUT_LIST: LayoutDef[]; // orden de presentación en LayoutPage
 ```
 
 ## Reglas
 
 1. **Exactamente 4 slots.** La tupla lo fuerza en tipos: si algún día hay un layout de 2
    o 6, es un cambio de contrato, no un descuido.
-2. **Coordenadas absolutas en px** del canvas de *ese* layout, no porcentajes.
+2. **Coordenadas absolutas en px** del canvas de _ese_ layout, no porcentajes.
    `canvasUtils` dibuja directo, sin conversión.
 3. **Todo el texto en inglés**, incluidos los `alt`
    (vertical strip of 4 / 2×2 grid / one large photo above three small).
