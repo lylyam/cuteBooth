@@ -310,11 +310,12 @@ todas las páginas a un patrón nuevo).
 
 ### Decisiones de producto pendientes
 
-| #   | Pregunta                                                                                                                                                                                                                                      | Bloquea                                     |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| A1  | **Los fondos de `classic` se ven muy ampliados.** Son de 440×550 para un lienzo de 654×1911: `cover` coge la franja central y la escala ×3,5. ¿Se **repite** el patrón a escala natural o se deja estirado? Son ~4 líneas en `canvasUtils.ts` | Nada, pero afecta a cómo se ve el resultado |
-| A2  | **Tamaño de las pegatinas**: hoy 22 % del lado corto del lienzo, cifra inventada en C2 por no haber dato de diseño (`STICKER_SIZE_RATIO`). Visualmente funciona                                                                               | Nada. Es una constante                      |
-| A3  | **Sin fondo elegido, la tira se descarga con transparencia.** Es lo más honesto y conserva la opción; si se prefiere blanco, es una línea                                                                                                     | Nada                                        |
+| #      | Pregunta                                                                                                                                                                                                                               | Bloquea                |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| ~~A1~~ | **Resuelta (decisión 19).** Los fondos se **repiten** como patrón. El tile va en unidades de dibujo, así que preview y descarga enseñan las mismas repeticiones — verificado a 218 y a 654                                             | —                      |
+| ~~A2~~ | **Resuelta (decisión 18).** Pegatinas a **20×20 unidades**, `contain`, sin deformar (`STICKER_BOX_UNITS`)                                                                                                                              | —                      |
+| A4     | **En `wide`/`spotlight` la pegatina de 20 se ve pequeña**: 4,3 % de la tira frente al 9,2 % en `classic`, porque el tamaño es fijo y esas tiras son más anchas. Aceptado al decidir, pero conviene mirarlo con una composición delante | Nada. Es una constante |
+| A3     | **Sin fondo elegido, la tira se descarga con transparencia.** Es lo más honesto y conserva la opción; si se prefiere blanco, es una línea                                                                                              | Nada                   |
 
 ### Deuda técnica encontrada, con dueño
 

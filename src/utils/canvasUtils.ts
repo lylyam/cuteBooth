@@ -5,8 +5,8 @@
  * here: `useCanvas` (C4) calls `composeStrip` to paint the preview and `exportStripAsBlob`
  * to produce the download. Four layers, bottom to top:
  *
- * 1. **background** — the family PNG, `cover` over the whole strip. It shows through the
- *    paper area of the frame, which is why frames stay SVG instead of flattened PNGs.
+ * 1. **background** — the family PNG **tiled**, never stretched. It shows through the paper
+ *    area of the frame, which is why frames stay SVG instead of flattened PNGs.
  * 2. **photos** — `photos[i]` into hole `i`, clipped with the hole's own shape.
  * 3. **frame** — the SVG with its hole fills neutralised (see `frameArtUtils`).
  * 4. **stickers** — in array order, so the last one added is on top.
@@ -28,7 +28,7 @@
  */
 import { getBackgroundForLayout } from '../constants/backgrounds';
 import { getFrameForLayout, type Rect } from '../constants/frames';
-import { LAYOUTS, type LayoutDef, type LayoutId } from '../constants/layouts';
+import { EXPORT_SCALE, LAYOUTS, type LayoutDef, type LayoutId } from '../constants/layouts';
 import { getSticker } from '../constants/stickers';
 import type { PhotoBoothState } from '../types/photobooth';
 import { clearFrameLayerCache, loadFrameLayer, type FrameLayer } from './frameArtUtils';
@@ -48,11 +48,16 @@ export type CompositionState = Pick<
 export type StickerPlacement = { x: number; y: number };
 
 /**
- * Side of a sticker's box, as a fraction of the **shorter** side of the strip: 22 % gives
- * 144 px on `classic` (48 viewBox units on a 218-unit-wide strip) and 277 px on `wide` and
- * `spotlight`. Nothing in the design specifies a sticker size — see SUPUESTOS.
+ * A sticker fits inside a box of **20 × 20 viewBox units**, the size the owner asked for.
+ * The longer side measures 20 and the shorter one follows the image's own proportion:
+ * stickers are never stretched and never cropped.
+ *
+ * Fixed units, not a fraction of the strip, so the same sticker is the same size on every
+ * layout — which does mean it looks proportionally smaller on `wide` and `spotlight`
+ * (468 units wide) than on `classic` (218). That is what "20 fixed" implies, and it is
+ * accepted. One number to change if it turns out to be wrong.
  */
-export const STICKER_SIZE_RATIO = 0.22;
+export const STICKER_BOX_UNITS = 20;
 
 /** Decoded images kept around. Bounded, or a session of sticker browsing never gives memory back. */
 export const IMAGE_CACHE_SIZE = 32;
@@ -65,24 +70,52 @@ export function getCompositionSize(layout: LayoutId): Size {
   return { width: canvas.width, height: canvas.height };
 }
 
-/** Side of the square a sticker is drawn inside, in canvas pixels. */
-export function getStickerSize(layout: LayoutId): number {
-  const { canvas } = LAYOUTS[layout];
-  return Math.round(Math.min(canvas.width, canvas.height) * STICKER_SIZE_RATIO);
+/**
+ * Side of the sticker box in **canvas pixels** — 60, because canvas units are viewBox units
+ * times `EXPORT_SCALE`. No layout parameter: the box is the same on all three, by decision.
+ */
+export function getStickerSize(): number {
+  return STICKER_BOX_UNITS * EXPORT_SCALE;
 }
 
 /**
- * The square a sticker occupies, in canvas pixels, centred on its stored position.
+ * The **hit box** of a sticker: the full 60 × 60 px square, centred on its stored position.
  *
- * **`x` and `y` are the centre**, not the top-left: that is what makes "drop it where the
- * pointer is" work, and what `ADD_STICKER` means by "the middle of the strip". The image is
- * drawn *inside* this square preserving its aspect ratio, so the box is a superset of the
- * visible art — which is exactly what a forgiving hit test wants. `useStickers` (C5) must
- * hit-test with this function and no other, or dragging drifts from drawing.
+ * **`x` and `y` are the centre**, not the top-left — that is what makes "drop it where the
+ * pointer is" work, and what `ADD_STICKER` means by "the middle of the strip".
+ *
+ * **This is the function `useStickers` (C5) hit-tests with, and the only one.** It stays the
+ * square rather than following the drawn image, deliberately: a 20-unit sticker is 60 px in
+ * the export and about 20 CSS px in the preview, so a rectangular sticker like 20 × 13 would
+ * otherwise offer a target barely a finger wide. The square is a superset of the art — you
+ * can grab a sticker just above or just below its drawing, which on a target this small is
+ * a feature. What must never happen is the two rules diverging: draw with
+ * `getStickerDrawRect`, hit-test with `getStickerBox`, both centred on the same point.
  */
-export function getStickerBox(layout: LayoutId, sticker: StickerPlacement): Rect {
-  const size = getStickerSize(layout);
+export function getStickerBox(sticker: StickerPlacement): Rect {
+  const size = getStickerSize();
   return { x: sticker.x - size / 2, y: sticker.y - size / 2, width: size, height: size };
+}
+
+/**
+ * Where a sticker is actually painted: its image scaled to `contain` inside the hit box,
+ * centred. The long side hits 20 units, the short one keeps the image's proportion, and
+ * nothing is ever distorted or cut.
+ */
+export function getStickerDrawRect(sticker: StickerPlacement, source: Size): Rect {
+  const box = getStickerBox(sticker);
+  if (source.width <= 0 || source.height <= 0) return box;
+
+  const scale = Math.min(box.width / source.width, box.height / source.height);
+  const width = source.width * scale;
+  const height = source.height * scale;
+
+  return {
+    x: box.x + (box.width - width) / 2,
+    y: box.y + (box.height - height) / 2,
+    width,
+    height,
+  };
 }
 
 /**
@@ -164,13 +197,15 @@ export function clearCompositionCaches(): void {
 
 type PhotoTarget = { box: Rect; clip: Path2D | null };
 
+type DrawableSticker = { image: HTMLImageElement; rect: Rect };
+
 type Prepared = {
   layout: LayoutDef;
   background: HTMLImageElement | null;
   frame: FrameLayer | null;
   targets: PhotoTarget[];
   photos: (HTMLImageElement | null)[];
-  stickers: { image: HTMLImageElement; box: Rect }[];
+  stickers: DrawableSticker[];
 };
 
 function layoutOf(state: CompositionState): LayoutDef | null {
@@ -216,10 +251,11 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
         const image = await optionalImage(definition.src);
         if (!image) return null;
 
-        return { image, box: getStickerBox(layout.id, sticker) };
+        // Geometry resolved here, once: paint stays a straight sequence of drawImage calls.
+        return { image, rect: getStickerDrawRect(sticker, getSourceSize(image)) };
       }),
     )
-  ).filter((entry): entry is { image: HTMLImageElement; box: Rect } => entry !== null);
+  ).filter((entry): entry is DrawableSticker => entry !== null);
 
   return { layout, background, frame, targets, photos, stickers };
 }
@@ -254,7 +290,7 @@ function paint(context: CanvasRenderingContext2D, prepared: Prepared, output: Si
     context.scale(output.width / unit.width, output.height / unit.height);
 
     if (prepared.background) {
-      drawCover(context, prepared.background, { x: 0, y: 0, ...unit });
+      drawTiled(context, prepared.background, unit);
     }
 
     prepared.targets.forEach((target, index) => {
@@ -274,9 +310,39 @@ function paint(context: CanvasRenderingContext2D, prepared: Prepared, output: Si
       context.drawImage(prepared.frame.raster, 0, 0, unit.width, unit.height);
     }
 
-    for (const sticker of prepared.stickers) {
-      drawContain(context, sticker.image, sticker.box);
+    for (const { image, rect } of prepared.stickers) {
+      context.drawImage(image, rect.x, rect.y, rect.width, rect.height);
     }
+  } finally {
+    context.restore();
+  }
+}
+
+/**
+ * Tiles `image` over the whole strip. Backgrounds are patterns, so they repeat — they are
+ * never blown up to fit, which on a 440 × 550 source and a 654 × 1911 strip meant a 3.5×
+ * upscale of five gingham checks.
+ *
+ * **One tile is one natural pixel per canvas unit**, i.e. `natural / EXPORT_SCALE` viewBox
+ * units. That anchor is the whole point: the pattern is filled in canvas units, so the
+ * transform onto the target canvas scales it with everything else and the **repeat count is
+ * identical at every resolution** — 1.5 × 3.5 tiles on `classic` whether it is being painted
+ * at 218 px wide for the preview or at 654 for the download. Tiling in device pixels instead
+ * would show the user one picture and hand them another.
+ */
+function drawTiled(context: CanvasRenderingContext2D, image: HTMLImageElement, area: Size): void {
+  const pattern = context.createPattern(image, 'repeat');
+
+  if (!pattern) {
+    // Only happens for an image with no decoded data, which `loadImage` already rules out.
+    warn('the background could not be turned into a pattern; skipped.');
+    return;
+  }
+
+  context.save();
+  try {
+    context.fillStyle = pattern;
+    context.fillRect(0, 0, area.width, area.height);
   } finally {
     context.restore();
   }
@@ -298,24 +364,6 @@ function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, b
     box.y,
     box.width,
     box.height,
-  );
-}
-
-/** Fits inside `box` without cropping or distorting, centred. What a sticker wants. */
-function drawContain(context: CanvasRenderingContext2D, image: HTMLImageElement, box: Rect): void {
-  const source = getSourceSize(image);
-  if (source.width <= 0 || source.height <= 0) return;
-
-  const scale = Math.min(box.width / source.width, box.height / source.height);
-  const width = source.width * scale;
-  const height = source.height * scale;
-
-  context.drawImage(
-    image,
-    box.x + (box.width - width) / 2,
-    box.y + (box.height - height) / 2,
-    width,
-    height,
   );
 }
 

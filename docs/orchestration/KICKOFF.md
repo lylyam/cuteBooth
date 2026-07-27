@@ -74,9 +74,13 @@ No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
 | 15  | **Los IDs de marco están acotados a su layout** (`'classic/Frame 7'`). No hay correspondencia entre layouts, y no hace falta                                                                                  |
 | 16  | **Los marcos se quedan en SVG**, y cada hueco es una **forma cerrada rellena** dentro del propio fichero. No se pasan a PNG. Motivo en [../contracts/assets.md](../contracts/assets.md) § _Por qué SVG_       |
 | 17  | **La muestra de un fondo ocupa el mismo hueco que la de un marco**: rectángulo de esquinas redondeadas con la imagen recortada. **No** se fuerza a 1:1 — "cuadrado" quería decir "misma caja", no cuadrado    |
+| 18  | **Las pegatinas miden 20×20 unidades de dibujo** (60 px en el PNG). No todas son cuadradas y **no se deforman**: `contain`, el lado largo a 20 y el otro por proporción                                       |
+| 19  | **Los fondos se REPITEN como patrón**, no se estiran a `cover`. El tile va en unidades de dibujo, así que se ven las mismas repeticiones en el preview y en la descarga                                       |
 
 Las decisiones 7-15 se cerraron el 2026-07-26, en la sesión que cerró DAG-0. Las **16 y
-17**, el mismo día, cuando aterrizó el arte definitivo de los marcos.
+17**, el mismo día, cuando aterrizó el arte definitivo de los marcos. Las **18 y 19** el
+2026-07-27, al ver la primera composición real y comprobar que los fondos salían
+ampliados ×3,5.
 
 El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.md) §9.
 

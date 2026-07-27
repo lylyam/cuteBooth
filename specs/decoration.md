@@ -83,6 +83,14 @@ en pantalla"**, no que fuera 1:1. Así que **no** se fuerza `aspect-ratio: 1`: m
 de la muestra de marco, y "cuadrado o rectángulo con bordes redondeados" describe el
 aspecto, no una proporción exacta.
 
+### 2.1 · Cómo se pinta el fondo
+
+**Decisión 19.** El fondo **se repite como patrón**, no se estira. Se probó `cover` primero
+y los de `classic` salían ampliados ×3,5 (son de 440×550 para un lienzo de 654×1911): el
+patrón se veía gigante y blando. El tile se define en unidades de dibujo y escala con el
+lienzo, de modo que **el preview enseña exactamente las mismas repeticiones que el PNG que
+se descarga**. Si no fuera así, el usuario decoraría viendo una cosa y se llevaría otra.
+
 ### 3 · Icons
 
 Hay **273 pegatinas en cuatro estilos** — `3dStyle` (102), `drawStyle` (75),
@@ -90,6 +98,12 @@ Hay **273 pegatinas en cuatro estilos** — `3dStyle` (102), `drawStyle` (75),
 `constants/stickers.ts` (`import.meta.glob` con `?url&no-inline`): salen a `dist/` como
 ficheros y **no** entran dentro del JS. Cómo se agrupan los cuatro estilos en el panel
 (pestañas, secciones o una lista sola) **no está dibujado**: ver supuesto 5.
+
+**Tamaño (decisión 18):** cada pegatina entra en una caja de **20×20 unidades de dibujo**
+(60 px en el PNG exportado, la constante `STICKER_BOX_UNITS`). No todas son cuadradas y
+**no se deforman**: se aplica `contain`, el lado largo mide 20 y el corto sale de su
+proporción. La caja de **agarre** sigue siendo el cuadrado completo aunque el dibujo sea más
+estrecho — a 20 px CSS en el preview, ceñirla al dibujo dejaría objetivos de 10 px.
 
 Clic en una pegatina la añade al centro de la tira (`ADD_STICKER`). Arrastrarla sobre el
 preview la mueve (`MOVE_STICKER`), con la conversión px-CSS ↔ px-canvas de `useStickers`
