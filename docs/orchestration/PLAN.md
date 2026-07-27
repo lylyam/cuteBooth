@@ -205,7 +205,11 @@ figma-design-sync ──▶ SPEC DE PANTALLA
     cssFiles[], classNames[], openQuestions[] }
 
 canvas-media ──▶ FIRMAS DE HOOKS
-  useCamera():    { videoRef, stream, countdown, error, start, stop, captureWithCountdown }
+  useCamera():    { videoRef, stream, countdown, error, isStarting, isCapturing,
+                    start, stop, captureWithCountdown }        ← entregado en C3
+     · captureWithCountdown({shots, onPhoto}) corre la SESIÓN entera y devuelve Photo[]
+     · nunca lanza: el permiso denegado es un estado (error.kind), no una excepción
+     · se apaga solo al desmontar — la página no tiene que hacer nada
   useCanvas(ref): { draw(state), exportAsBlob() }
   useStickers(ref): { onPointerDown, onPointerMove, onPointerUp }
 
