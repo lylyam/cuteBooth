@@ -3,21 +3,18 @@
  *
  * `LayoutId` and the slot geometry are NOT defined here: they live in
  * `constants/layouts.ts` (nodo S2). This module only imports the type.
+ *
+ * `FrameId`, `StickerId` and `BackgroundId` are NOT defined here either — same
+ * reasoning. They are the manifest node's (X1) `constants/{frames,stickers,
+ * backgrounds}.ts`, re-exported with `export type` so no manifest module (and
+ * its `import.meta.glob` calls) is pulled into the state's runtime graph.
  */
 import type { LayoutId } from '../constants/layouts';
+import type { FrameId } from '../constants/frames';
+import type { StickerId } from '../constants/stickers';
+import type { BackgroundId } from '../constants/backgrounds';
 
-// TODO(X1, asset-pipeline): narrow to the real union once
-// `constants/frames.ts` lands. Until then this is a bare `string` on purpose
-// — no id list gets duplicated here.
-export type FrameId = string;
-
-// TODO(X1, asset-pipeline): narrow to the real union once
-// `constants/stickers.ts` lands.
-export type StickerId = string;
-
-// TODO(X1, asset-pipeline): narrow to the real union once
-// `constants/backgrounds.ts` lands.
-export type BackgroundId = string;
+export type { FrameId, StickerId, BackgroundId };
 
 export type PhotoSource = 'camera' | 'upload';
 
