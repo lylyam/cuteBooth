@@ -134,6 +134,21 @@ no `localStorage`: una sesión de photobooth no sobrevive al cierre de la pesta�
 2. **`photos.length` nunca pasa de 4.** Lo garantiza el reducer, no la página.
 3. **Las coordenadas de sticker son px del canvas** del layout activo. La conversión
    px-CSS ↔ px-canvas es de `useStickers` (C5) y no llega al estado.
+
+   ⚠️ **La trampa que C4 dejó avisada, y cuesta cara.** El factor **no** es
+   `canvas.width / rect.width`. `canvas.width` es el bitmap, que vale caja CSS × DPR;
+   pero `sticker.x/y` y `getStickerBox()` están en **unidades del canvas del layout**
+   (654×1911). El factor correcto es:
+
+   ```
+   LAYOUTS[layout].canvas.width / canvas.clientWidth      // sin DPR de por medio
+   ```
+
+   Con el bitmap, las pegatinas se colocan **al doble de distancia en cualquier pantalla
+   retina** — y en el portátil del que programa se ve bien. Y `clientWidth`, nunca
+   `getBoundingClientRect()`: la tira de `/review` y `/final` va rotada 7,28°, y el rect
+   devuelve la caja envolvente (409 px donde `clientWidth` da 300).
+
 4. **Un `frame` o un `background` desconocido al rehidratar se trata como `null`.**
    El manifiesto puede cambiar; el estado guardado no manda sobre él. Y los fondos son
    **por familia de layout**: el juego de `classic` no vale para `wide`/`spotlight`.
@@ -159,11 +174,15 @@ tipo de retorno está anotado, así que `tsc` marca el fallthrough (TS2366) si a
 una acción y olvida manejarla. `ADD_PHOTO` con 4 fotos devuelve el **mismo objeto**, no un
 clon.
 
-**Pendiente de S1, y es la deuda D9:** los tres alias `FrameId`/`StickerId`/`BackgroundId`
-siguen siendo `string` con su `TODO(X1)`. X1 ya aterrizó y definió los suyos en
-`constants/`, así que hoy hay **dos definiciones de cada uno** y el estado usa la ancha —
-justo lo que la regla 5 de este contrato dice que no se haga. El arreglo es reexportar los
-de `constants/` desde `types/photobooth.ts`.
+**Deuda D9, cerrada.** `types/photobooth.ts` ya no declara `FrameId`/`StickerId`/
+`BackgroundId` como `string`: los reexporta (`import type` + `export type`) desde
+`constants/{frames,stickers,backgrounds}.ts`, que son la fuente de verdad de X1. Una
+sola definición de cada uno, como pide la regla 5. `state.frame`, `state.background` y
+`StickerInstance.assetId` quedan con los tipos estrechos
+(`` `${LayoutId}/${string}` ``, `` `${BackgroundFamily}/${string}` ``,
+`` `${StickerStyle}/${string}` ``); asignar un literal fuera de esas plantillas ya no
+compila. `import type` no deja huella en runtime: el JS de `dist/` no creció al cerrar
+esto (verificado, mismo hash de chunk).
 
 ## Criterio de aceptación de S3
 

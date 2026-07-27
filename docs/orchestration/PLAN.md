@@ -210,7 +210,11 @@ canvas-media ──▶ FIRMAS DE HOOKS
      · captureWithCountdown({shots, onPhoto}) corre la SESIÓN entera y devuelve Photo[]
      · nunca lanza: el permiso denegado es un estado (error.kind), no una excepción
      · se apaga solo al desmontar — la página no tiene que hacer nada
-  useCanvas(ref): { draw(state), exportAsBlob() }
+  useCanvas(ref): { draw, exportAsBlob, download, isDrawing, isExporting }  ← entregado en C4
+     · el estado va POR PARÁMETRO: permite previsualizar un marco al pasar el ratón
+       (`draw({...state, frame: hovered})`) sin despachar nada
+     · draw() nunca rechaza; exportAsBlob() y download() sí
+     · download() crea el <a>, lo pulsa y revoca el object URL — la página no toca eso
   useStickers(ref): { onPointerDown, onPointerMove, onPointerUp }
 
 X1 (canvas-media) ──▶ MANIFIESTO
