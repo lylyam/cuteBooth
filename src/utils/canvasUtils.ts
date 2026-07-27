@@ -48,16 +48,19 @@ export type CompositionState = Pick<
 export type StickerPlacement = { x: number; y: number };
 
 /**
- * A sticker fits inside a box of **20 × 20 viewBox units**, the size the owner asked for.
- * The longer side measures 20 and the shorter one follows the image's own proportion:
+ * A sticker fits inside a square box measuring this fraction of the strip's **short side**.
+ * The longer side of the image fills the box and the shorter one keeps its proportion:
  * stickers are never stretched and never cropped.
  *
- * Fixed units, not a fraction of the strip, so the same sticker is the same size on every
- * layout — which does mean it looks proportionally smaller on `wide` and `spotlight`
- * (468 units wide) than on `classic` (218). That is what "20 fixed" implies, and it is
- * accepted. One number to change if it turns out to be wrong.
+ * The fraction is the 20 viewBox units the owner approved on `classic` written as a
+ * fraction of `classic` itself, which is what pins it: **`classic` comes out at exactly the
+ * approved size** and the other two scale up to look the same size in proportion, instead
+ * of the speck a fixed 20 units made of them on a 468-unit-wide strip.
+ *
+ * The short side, and not the width or the area, because it is the reference that moves
+ * least between a tall strip and a landscape one — the same one this used before.
  */
-export const STICKER_BOX_UNITS = 20;
+export const STICKER_BOX_RATIO = (20 * EXPORT_SCALE) / shortSide('classic');
 
 /** Decoded images kept around. Bounded, or a session of sticker browsing never gives memory back. */
 export const IMAGE_CACHE_SIZE = 32;
@@ -70,40 +73,51 @@ export function getCompositionSize(layout: LayoutId): Size {
   return { width: canvas.width, height: canvas.height };
 }
 
-/**
- * Side of the sticker box in **canvas pixels** — 60, because canvas units are viewBox units
- * times `EXPORT_SCALE`. No layout parameter: the box is the same on all three, by decision.
- */
-export function getStickerSize(): number {
-  return STICKER_BOX_UNITS * EXPORT_SCALE;
+/** Short side of a layout's canvas, in canvas pixels. The reference a sticker scales from. */
+function shortSide(layout: LayoutId): number {
+  const { canvas } = LAYOUTS[layout];
+  return Math.min(canvas.width, canvas.height);
 }
 
 /**
- * The **hit box** of a sticker: the full 60 × 60 px square, centred on its stored position.
+ * Side of the sticker box in **canvas pixels**: 60 on `classic`, 115 on `wide` and
+ * `spotlight`. It depends on the layout — a sticker is a proportion of the strip, not a
+ * fixed size, so it looks equally big on all three.
+ */
+export function getStickerSize(layout: LayoutId): number {
+  return Math.round(shortSide(layout) * STICKER_BOX_RATIO);
+}
+
+/**
+ * The **hit box** of a sticker: the full square, centred on its stored position.
  *
  * **`x` and `y` are the centre**, not the top-left — that is what makes "drop it where the
  * pointer is" work, and what `ADD_STICKER` means by "the middle of the strip".
  *
  * **This is the function `useStickers` (C5) hit-tests with, and the only one.** It stays the
- * square rather than following the drawn image, deliberately: a 20-unit sticker is 60 px in
- * the export and about 20 CSS px in the preview, so a rectangular sticker like 20 × 13 would
- * otherwise offer a target barely a finger wide. The square is a superset of the art — you
- * can grab a sticker just above or just below its drawing, which on a target this small is
- * a feature. What must never happen is the two rules diverging: draw with
- * `getStickerDrawRect`, hit-test with `getStickerBox`, both centred on the same point.
+ * square rather than following the drawn image, deliberately: the box is about 20 CSS px in
+ * the preview, so a sticker shaped 20 × 13 would otherwise offer a target barely a finger
+ * wide. The square is a superset of the art — you can grab a sticker just above or just
+ * below its drawing, which on a target this small is a feature. What must never happen is
+ * the two rules diverging: draw with `getStickerDrawRect`, hit-test with `getStickerBox`,
+ * both centred on the same point.
  */
-export function getStickerBox(sticker: StickerPlacement): Rect {
-  const size = getStickerSize();
+export function getStickerBox(layout: LayoutId, sticker: StickerPlacement): Rect {
+  const size = getStickerSize(layout);
   return { x: sticker.x - size / 2, y: sticker.y - size / 2, width: size, height: size };
 }
 
 /**
  * Where a sticker is actually painted: its image scaled to `contain` inside the hit box,
- * centred. The long side hits 20 units, the short one keeps the image's proportion, and
+ * centred. The long side fills the box, the short one keeps the image's proportion, and
  * nothing is ever distorted or cut.
  */
-export function getStickerDrawRect(sticker: StickerPlacement, source: Size): Rect {
-  const box = getStickerBox(sticker);
+export function getStickerDrawRect(
+  layout: LayoutId,
+  sticker: StickerPlacement,
+  source: Size,
+): Rect {
+  const box = getStickerBox(layout, sticker);
   if (source.width <= 0 || source.height <= 0) return box;
 
   const scale = Math.min(box.width / source.width, box.height / source.height);
@@ -252,7 +266,7 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
         if (!image) return null;
 
         // Geometry resolved here, once: paint stays a straight sequence of drawImage calls.
-        return { image, rect: getStickerDrawRect(sticker, getSourceSize(image)) };
+        return { image, rect: getStickerDrawRect(layout.id, sticker, getSourceSize(image)) };
       }),
     )
   ).filter((entry): entry is DrawableSticker => entry !== null);
