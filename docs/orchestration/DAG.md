@@ -1,8 +1,9 @@
 # DAG de trabajo
 
 > Estado vivo. Se actualiza al cerrar cada nodo.
-> Última revisión: 2026-07-27. **Doce nodos cerrados**: S1, S2, S3, C1, C2, D1, D3-D7, X1.
-> Lo que queda abierto está en §9.
+> Última revisión: 2026-07-27. **Dieciséis nodos cerrados**: S1, S2, S3, C1, C2, C3, C4,
+> C7, D1, D3-D7, U5, X1. Quedan C5, C6, D2, U1-U4, R\* y O\*.
+> Lo que sigue abierto está en §9.
 
 ## 1. Por qué un DAG y no una lista de tareas
 
