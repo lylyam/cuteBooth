@@ -11,9 +11,16 @@
  * 3. **frame** — the SVG with its hole fills neutralised (see `frameArtUtils`).
  * 4. **stickers** — in array order, so the last one added is on top.
  *
- * Three states are drawings, not errors: no frame (photos as plain rectangles in the slots
- * of `layouts.ts`), no background (the strip stays transparent), fewer than four photos
- * (the remaining holes stay empty).
+ * **`frame: null` is not "bare" — node C2b.** It means the user has not reached
+ * `/decoration` step 1 yet, and it draws the layout's plain rectangular frame
+ * (`getEffectiveFrame`): border, 1.94 stroke, rounded corners. Four flat rectangles do not
+ * read as a photo strip, and `/review` and `/final` are seen before any frame is chosen.
+ * The fallback lives in the manifest, so no file name appears in this module.
+ *
+ * Two states are drawings, not errors: no background (the strip stays transparent) and fewer
+ * than four photos (the remaining holes stay empty). A third — photos as plain unclipped
+ * rectangles in the slots of `layouts.ts` — survives only as the degradation for frame art
+ * that fails to load; see `photoTargets`.
  *
  * Coordinates: everything is in the **canvas units of the active layout**
  * (`LAYOUTS[layout].canvas`, already multiplied by `EXPORT_SCALE`) — the same units the
@@ -27,7 +34,7 @@
  * as a parameter — no context, no hook, no component.
  */
 import { getBackgroundForLayout } from '../constants/backgrounds';
-import { getFrameForLayout, type Rect } from '../constants/frames';
+import { getEffectiveFrame, type Rect } from '../constants/frames';
 import { EXPORT_SCALE, LAYOUTS, type LayoutDef, type LayoutId } from '../constants/layouts';
 import { getSticker } from '../constants/stickers';
 import type { PhotoBoothState } from '../types/photobooth';
@@ -38,6 +45,11 @@ import { computeCoverRect, getSourceSize, loadImage, type Size } from './imageUt
  * What a composition needs. `PhotoBoothState` satisfies it, so callers pass `state`
  * straight through; `source` is not part of it because a picture does not depend on where
  * the photos came from.
+ *
+ * `frame: null` draws the layout's default frame (C2b), so `/decoration` can still preview a
+ * hover with `draw({ ...state, frame: hovered })` — but **there is no value that means "no
+ * frame at all"** any more. If the frame panel ever needs a "None" cell, that is a contract
+ * change here and in `getEffectiveFrame`, not something to fake with `null`.
  */
 export type CompositionState = Pick<
   PhotoBoothState,
@@ -236,8 +248,12 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
   if (!layout) return null;
 
   // The manifest outranks stored state: a frame or background from another layout, or one
-  // that no longer exists, counts as not chosen (assets.md rule 3).
-  const frameDef = getFrameForLayout(state.frame, layout.id);
+  // that no longer exists, counts as not chosen (assets.md rule 3). For the frame, "not
+  // chosen" resolves to the layout's plain rectangular one — C2b, see `getEffectiveFrame`.
+  // Same code path as a chosen frame on purpose: the hole fills get neutralised by
+  // `loadFrameLayer` either way, and a default that skipped that would cover the four photos
+  // with `#222222` blocks.
+  const frameDef = getEffectiveFrame(state.frame, layout.id);
   const backgroundDef = getBackgroundForLayout(state.background, layout.id);
 
   const [frame, background] = await Promise.all([
@@ -279,7 +295,11 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
  *
  * With a frame it is the hole's own box and path — a cloud inscribed in a slot is smaller
  * than the slot, by up to 6.2 viewBox units, and fitting to the slot would crop the photo
- * wrong (layouts.md rule 6). With no frame it is the slot rectangle, unclipped.
+ * wrong (layouts.md rule 6).
+ *
+ * The slot-rectangle branch is now the **degradation path only**: since C2b there is always
+ * a frame to draw, so it is reached when the art cannot be fetched or parsed. Keep it — it is
+ * what makes a failed frame download a strip with square photos instead of an empty one.
  */
 function photoTargets(layout: LayoutDef, frame: FrameLayer | null): PhotoTarget[] {
   if (frame && frame.holes.length > 0) {
