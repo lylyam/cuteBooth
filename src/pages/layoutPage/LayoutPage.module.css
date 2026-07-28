@@ -1,13 +1,8 @@
+/* D9b/T6 resolved: width, height and viewport-centering are now the shared
+   default of every WebAppOldStyle wrapper (see its own .module.css) — this
+   page no longer needs its own copy. The class stays only because
+   LayoutPage.tsx passes `className={styles.wideWindow}`; empty on purpose. */
 .wideWindow {
-  width: min(1292px, calc(100vw - 140px));
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  /* fit the window within the viewport: full height minus the page's
-     vertical padding and the space taken by the footer + gap below it */
-  max-height: calc(100dvh - (var(--page-padding-y) * 2) - 5rem);
 }
 
 .windowContent {
@@ -28,12 +23,6 @@
 }
 
 @media (max-width: 900px) {
-  .wideWindow {
-    width: 100%;
-    left: auto;
-    transform: none;
-  }
-
   .cardsGrid {
     grid-template-columns: 316px;
     gap: 24px;

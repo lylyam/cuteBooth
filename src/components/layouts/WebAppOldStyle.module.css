@@ -1,5 +1,20 @@
+/* D9b: width AND height now live here, once, for every page that mounts this
+   component — previously only LayoutPage's own `.wideWindow` escaped the
+   `--content-max-width` cap `PageShell` puts on `.main`, and only it grew to
+   fill the viewport height. That was the whole "the frame is a different size
+   on every screen" complaint. The escape trick: this element is wider than
+   its own parent, so `left: 50%` (of the parent) plus `translateX(-50%)` (of
+   itself) always lands it centered on the *viewport*, no matter how narrow
+   `.main` is — the two halves of the arithmetic cancel out. `position:
+   relative` keeps it in flow, so `PageShell`'s footer is unaffected. */
 .wrapper {
-  width: min(1292px, 100%);
+  width: min(var(--window-max-width), calc(100vw - 140px));
+  height: 100%;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
   border: var(--border-width) solid var(--dark-secondary);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
@@ -7,6 +22,7 @@
 
 .topBar {
   height: 45px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -39,6 +55,18 @@
   align-items: center;
   width: 100%;
   overflow-y: auto;
+}
+
+/* Below this, the viewport-centering trick just fights the page's own
+   padding for no benefit — fall back to filling `.main` like any other
+   block. Literal, not `--window-max-width`: `var()` doesn't resolve in a
+   media query (design-tokens.md rule 6). */
+@media (max-width: 900px) {
+  .wrapper {
+    width: 100%;
+    left: auto;
+    transform: none;
+  }
 }
 
 @media (max-width: 640px) {

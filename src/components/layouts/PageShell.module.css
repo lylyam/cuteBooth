@@ -11,12 +11,21 @@
   min-height: calc(100dvh - (var(--page-padding-y) * 2));
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 24px;
 }
 
+/* D9b: `flex: 1` (not `.inner`'s old `justify-content: space-between`) is what
+   gives `.main` a *definite* height — the thing a flex-grow item always gets,
+   even inside an `auto`-height, min-height-only container — which is what lets
+   WebAppOldStyle's `.wrapper` resolve `height: 100%` against it and actually
+   fill the screen, instead of just shrinking to its own content and leaving
+   the leftover space as one big gap above the footer. Net position of the
+   footer is identical either way; only pages using `WebAppOldStyle` see a
+   difference, because only its `.wrapper` reads that height. */
 .main {
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {

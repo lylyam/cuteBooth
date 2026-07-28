@@ -2,6 +2,11 @@
    components/result/PhotoResult.module.css; aquí solo el encaje de la ventana. */
 
 .windowContent {
+  /* D9b: the window now fills the screen's height (WebAppOldStyle.module.css),
+     so this needs its own vertical placement — PhotoResult is one block, not
+     two anchored ends, so centering it beats leaving it glued to the top with
+     empty space below. */
+  justify-content: center;
   padding-left: 50px;
   padding-right: 50px;
 }

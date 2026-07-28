@@ -36,6 +36,11 @@
   --page-padding-x: 10px;
   --content-max-width: 743px;
   --footer-links-gap: 33px;
+  /* T6 resolved (D9b): Frame 38 measures 1292px on every one of the 12 Figma
+     screens (confirmed 2026-07-28 via get_metadata on 88:1676 and 91:1346,
+     both "Frame 38" x=74 y=80 width=1292 height=763). One token so the window
+     can't drift apart again across pages — see WebAppOldStyle.module.css. */
+  --window-max-width: 1292px;
 
   background-color: var(--background-color);
   color: var(--dark-secondary);

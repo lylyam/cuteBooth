@@ -52,10 +52,15 @@
   padding: 24px;
 }
 
+/* No border/border-radius here (C2b): the strip's edge is content, not
+   chrome — it's whatever frame the layout draws on the canvas (a plain
+   rectangle today, a cloud or cat-ears frame once /decoration lets the user
+   pick one). A fixed-radius CSS ring on top would fight any shaped frame and
+   was only ever standing in for the frame the canvas now always draws.
+   `overflow: hidden` stays — cheap insurance if a bitmap ever renders a hair
+   outside its box, and harmless with nothing else to clip. */
 .strip {
   transform: rotate(7.28deg);
-  border: var(--border-width) solid var(--dark-secondary);
-  border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
 
