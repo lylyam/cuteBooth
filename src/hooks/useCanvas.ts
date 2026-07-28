@@ -5,9 +5,10 @@
  * `PhotoBoothState` into pixels. This hook owns the four things a browser gets wrong when
  * an async painter meets a React component:
  *
- * 1. **`devicePixelRatio`.** C2 paints at whatever pixel size the canvas already has, so
- *    sizing the bitmap is this hook's job: CSS box × DPR, kept in sync with a
- *    `ResizeObserver` and a `matchMedia` watch on the ratio itself.
+ * 1. **Resolution.** C2 paints at whatever pixel size the canvas already has, so sizing the
+ *    bitmap is this hook's job: **CSS box × DPR, and never below the layout's own
+ *    composition size** (654×1911 / 1404×1257), kept in sync with a `ResizeObserver` and a
+ *    `matchMedia` watch on the ratio itself. The floor is node C4b — see `renderSize`.
  * 2. **Ordering.** `composeStrip` is asynchronous. Three `draw()` calls in a row must not
  *    race: they are coalesced to one repaint per animation frame, and two passes are never
  *    in flight at once, so **the last `draw()` always wins**.
@@ -96,6 +97,97 @@ const REVOKE_DELAY_MS = 1000;
 
 /** Relative aspect drift tolerated before the dev warning fires. 2 % is invisible. */
 const ASPECT_TOLERANCE = 0.02;
+
+/**
+ * Ceiling on the bitmap, in device pixels — node C4b.
+ *
+ * The floor (the composition size) is bounded by the art: 1.25 Mpx for `classic`, 1.76 Mpx
+ * for the other two. This cap only ever bites for the other reason a bitmap grows: a very
+ * large CSS box on a DPR-3 screen, where 1000 CSS px of `wide` would ask for 3000×2686 ≈
+ * 8 Mpx and 32 MB of backing store for detail the drawing does not contain. 4 Mpx is 2.3×
+ * the largest composition and well inside every browser's own limit — including iOS Safari,
+ * whose canvas area limit is the tightest of them.
+ */
+const MAX_BITMAP_PIXELS = 4_194_304;
+
+/** No side over this. Older iOS refuses a canvas dimension above 4096, and nothing needs it. */
+const MAX_BITMAP_SIDE = 4096;
+
+/**
+ * Bitmap size for a canvas whose box measures `device` device pixels — node **C4b**.
+ *
+ * `max(device box, composition size)`, keeping the box's own proportions.
+ *
+ * **Why the floor.** The drawing is authored at the layout's composition size, and that is
+ * also the size the frame art is rasterised at (`frameArtUtils`) and the size the photos are
+ * stored at (`fileToDataUrl` gets the slot in canvas units). A `classic` preview box is
+ * 205 CSS px wide, so a bitmap of 205 px asked `drawImage` to squeeze 654 px of drawing into
+ * 205 in one step: the frame's 5.82 px stroke landed on 1.82 px, and every stroke, every photo
+ * edge and every sticker outline was resampled by canvas2d at a 3.19× reduction. Then the
+ * 7.28° rotation of `PhotoResult` resampled that again.
+ *
+ * Measured on `/review` at DPR 1, the peak darkness of the #222 strokes (luminance 34 when
+ * solid) along their length, before → after:
+ *
+ * | border            | before      | after       |
+ * | ----------------- | ----------- | ----------- |
+ * | outer, left       | 47 (σ 7.1)  | 39 (σ 2.3)  |
+ * | hole 1, top       | 62 (σ 7.9)  | 34 (σ 0.5)  |
+ * | hole 3, top       | 65 (σ 4.2)  | 34 (σ 0.4)  |
+ *
+ * i.e. lines that were a wobbling grey are now solid black. The fourth border measured — the
+ * near-vertical left edge of a hole — keeps a ±1 device pixel staircase (σ 18.9): that one is
+ * the rotation, not the resolution, and it is unavoidable for a 1.8 CSS px line at 7.28° on a
+ * DPR-1 grid. Its *ink* is conserved along the whole length in both configurations, which is
+ * why the stroke never actually breaks: measured 0 positions out of 204 with less than half the
+ * median ink, before and after.
+ *
+ * **Why not more than that.** Above the composition size there is nothing left to resolve —
+ * the frame raster and the photos have no more pixels to give — so a DPR-3 screen showing a
+ * small strip gets `device box` (its own pixels) and stops there.
+ *
+ * **The knob, if the owner ever says the photos look grainy.** Squeezing 3.19× into 1 CSS px
+ * is more than a 2×2 bilinear compositor tap can average, so the preview is now very slightly
+ * *sharper* than a mathematically perfect area average — measured against a reference
+ * rendering (compose at 654×1911, area-average to 205×599), photo interiors sit at RMSE 2.4/255
+ * where a 2× supersample would sit at 0.9. Capping `factor` at 2 buys that back, at the price
+ * of the strokes: they go back to 48-58 grey under the rotation. The trade was made for the
+ * strokes, which is what was reported.
+ *
+ * **What this does not change:** the canvas-unit ↔ CSS-px factor that `useStickers` (C5)
+ * converts pointer positions with is `LAYOUTS[layout].canvas.width / canvas.clientWidth`
+ * (state.md rule 3). It never mentions `canvas.width`, which is precisely why it survives
+ * this change untouched — verified by measuring where the strokes land on screen before and
+ * after: same position to the pixel, at DPR 1 and DPR 2.
+ */
+function renderSize(device: Size, layout: LayoutId | null): Size {
+  const composition = layout ? getCompositionSize(layout) : null;
+
+  // Below 1 the box already has more pixels than the drawing has detail: its own are enough.
+  const factor = composition
+    ? Math.max(
+        1,
+        composition.width / Math.max(1, device.width),
+        composition.height / Math.max(1, device.height),
+      )
+    : 1;
+
+  const width = device.width * factor;
+  const height = device.height * factor;
+
+  // One scale for both axes, so the bitmap keeps the box's proportions and cannot introduce a
+  // stretch of its own — whatever the box's aspect ratio is, right or wrong.
+  const budget = Math.min(
+    1,
+    Math.sqrt(MAX_BITMAP_PIXELS / Math.max(1, width * height)),
+    MAX_BITMAP_SIDE / Math.max(width, height),
+  );
+
+  return {
+    width: Math.max(1, Math.round(width * budget)),
+    height: Math.max(1, Math.round(height * budget)),
+  };
+}
 
 export type UseCanvasResult = {
   /**
@@ -215,6 +307,11 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     if (alive && before !== after) flags.setExporting(after);
   }
 
+  /** The layout the next pass will draw. `pump` knows it; a resize has to remember it. */
+  function currentLayout(state?: CompositionState | null): LayoutId | null {
+    return (state ?? pending ?? last)?.selectedLayout ?? null;
+  }
+
   /**
    * The canvas box in **device pixels**.
    *
@@ -224,7 +321,7 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
    * drawing by a third. The layout box does not care about transforms, and neither does
    * `ResizeObserver`, whose fractional sizes are preferred when it hands us any.
    */
-  function measure(entry?: ResizeObserverEntry): Size | null {
+  function measureDeviceBox(entry?: ResizeObserverEntry): Size | null {
     const canvas = canvasRef.current ?? observed;
     if (!canvas) return null;
 
@@ -246,15 +343,23 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     return { width: Math.round(cssWidth * ratio), height: Math.round(cssHeight * ratio) };
   }
 
-  /** Resizes the bitmap to the box. Returns `true` when it changed — which **wiped it**. */
-  function applySize(entry?: ResizeObserverEntry): boolean {
+  /**
+   * Resizes the bitmap to the box, at composition resolution or better (C4b). Returns `true`
+   * when it changed — which **wiped it**.
+   */
+  function applySize(entry?: ResizeObserverEntry, state?: CompositionState | null): boolean {
     const canvas = canvasRef.current;
     if (!canvas) return false;
 
-    const size = measure(entry);
+    const device = measureDeviceBox(entry);
     // A canvas inside a `display: none` panel measures 0. Keep the bitmap it has: zeroing it
     // would throw away a perfectly good drawing on the way to a step that is not visible.
-    if (!size || size.width < 1 || size.height < 1) return false;
+    // This has to be checked on the **box**, before the C4b floor is applied: the floor
+    // multiplies, so a 0-wide box would come out of `renderSize` as a 1×1 bitmap — a size that
+    // passes any later check and silently discards the drawing.
+    if (!device || device.width < 1 || device.height < 1) return false;
+
+    const size = renderSize(device, currentLayout(state));
     if (canvas.width === size.width && canvas.height === size.height) return false;
 
     canvas.width = size.width;
@@ -370,8 +475,9 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
 
     try {
       // Before painting, not after: C2 reads the size once the images are in, so a resize
-      // mid-load is already handled, but a stale bitmap size never is.
-      applySize();
+      // mid-load is already handled, but a stale bitmap size never is. The state goes in
+      // because the resolution floor is per layout (C4b) and this pass knows which one.
+      applySize(undefined, state);
       warnOnAspectMismatch(state, canvas);
       await composeStrip(canvas, state);
     } catch (error) {
