@@ -20,20 +20,32 @@ Los tools MCP se invocan directamente, sin `@`. El `@` sirve para referenciar
 
 Todas 1440×1024. Ordenadas por posición en el lienzo.
 
-| Pantalla                       | Node ID   | Ruta                             | Nodo DAG                          |
-| ------------------------------ | --------- | -------------------------------- | --------------------------------- |
-| Home                           | `6:52`    | `/`                              | ✅ implementada                   |
-| Layout                         | `88:1676` | `/layout`                        | ✅ implementada                   |
-| Modal (sobre Layout)           | `90:740`  | modal de `/layout`               | ✅ implementado                   |
-| Camera                         | `91:954`  | `/camera`                        | D3 → U1                           |
-| **Upload · classic**           | `91:1168` | `/upload`                        | D4 → U2 · **y geometría para S2** |
-| **Upload · wide**              | `91:1202` | `/upload`                        | D4 → U2 · **y geometría para S2** |
-| **Upload · spotlight**         | `91:1223` | `/upload`                        | D4 → U2 · **y geometría para S2** |
-| Loading                        | `91:1283` | ❌ **no es ruta, es componente** | C7                                |
-| **Selected pictures**          | `91:1346` | `/review`                        | D7 → U5                           |
-| **Decoration · paso 1 Frames** | `102:319` | `/decoration`                    | D5 → U3 · **canónico**            |
-| Decoration (duplicado exacto)  | `103:382` | —                                | ⚠️ borrar, ver §3                 |
-| **Final**                      | `2074:52` | `/final`                         | D6 → U4                           |
+| Pantalla                       | Node ID   | Ruta                             | Nodo DAG                                             |
+| ------------------------------ | --------- | -------------------------------- | ---------------------------------------------------- |
+| Home                           | `6:52`    | `/`                              | ✅ implementada                                      |
+| Layout                         | `88:1676` | `/layout`                        | ✅ implementada                                      |
+| Modal (sobre Layout)           | `90:740`  | modal de `/layout`               | ✅ implementado                                      |
+| Camera                         | `91:954`  | `/camera`                        | D3 → U1                                              |
+| **Upload · classic**           | `91:1168` | `/upload`                        | D4 → U2 · **y geometría para S2**                    |
+| **Upload · wide**              | `91:1202` | `/upload`                        | D4 → U2 · **y geometría para S2**                    |
+| **Upload · spotlight**         | `91:1223` | `/upload`                        | D4 → U2 · **y geometría para S2**                    |
+| Loading                        | `91:1283` | ❌ **no es ruta, es componente** | C7                                                   |
+| **Selected pictures**          | `91:1346` | `/review`                        | D7 → U5                                              |
+| **Decoration · paso 1 Frames** | `102:319` | `/decoration`                    | D5 → U3 · **canónico**                               |
+| Decoration (duplicado exacto)  | `103:382` | —                                | ⚠️ borrar, ver §3                                    |
+| **Final**                      | `2074:52` | `/final`                         | D6 → U4                                              |
+| **Camera shooting**            | `2084:47` | `/camera` (estado disparando)    | **D3b** → U1 · tipografía y color de la cuenta atrás |
+
+## 0. `Camera shooting` — el frame que no se podía encontrar
+
+**`2084:47`**, aportado por la propietaria el 2026-07-27. Trae la tipografía y el color que
+quiere para la **cuenta atrás** de `/camera`.
+
+Se buscó sin éxito y conviene saber por qué, para no repetirlo: **ningún tool de Figma
+busca un frame por nombre**. `get_metadata` devuelve solo el subárbol del nodo que le pides
+—nunca hermanos ni padre—, así que consultar un nodo conocido no expone los IDs de frames
+añadidos después. La única vía sería `get_metadata` sobre la página `0:1`, que está
+prohibido (§6, regla 1). **Cuando aparezca un frame nuevo, hay que pedir el enlace.**
 
 ## 1. El diseño confirma la arquitectura de componentes
 
