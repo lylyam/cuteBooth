@@ -35,6 +35,7 @@ Todas 1440×1024. Ordenadas por posición en el lienzo.
 | Decoration (duplicado exacto)  | `103:382` | —                                | ⚠️ borrar, ver §3                                    |
 | **Final**                      | `2074:52` | `/final`                         | D6 → U4                                              |
 | **Camera shooting**            | `2084:47` | `/camera` (estado disparando)    | **D3b** → U1 · tipografía y color de la cuenta atrás |
+| **Review · wide/spotlight**    | `2090:21` | `/review` con layout cuadrado    | **D9c** → los textos arriba, como en `classic`       |
 
 ## 0. `Camera shooting` — el frame que no se podía encontrar
 
