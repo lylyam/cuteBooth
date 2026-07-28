@@ -21,11 +21,13 @@ function LayoutPage() {
   };
 
   const handleTakePhotos = () => {
+    dispatch({ type: 'SET_SOURCE', source: 'camera' });
     setIsModalOpen(false);
     navigate('/camera');
   };
 
   const handleUploadPhotos = () => {
+    dispatch({ type: 'SET_SOURCE', source: 'upload' });
     setIsModalOpen(false);
     navigate('/upload');
   };
