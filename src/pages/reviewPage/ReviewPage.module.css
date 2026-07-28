@@ -2,11 +2,18 @@
    components/result/PhotoResult.module.css; aquí solo el encaje de la ventana. */
 
 .windowContent {
-  /* D9b: the window now fills the screen's height (WebAppOldStyle.module.css),
-     so this needs its own vertical placement — PhotoResult is one block, not
-     two anchored ends, so centering it beats leaving it glued to the top with
-     empty space below. */
-  justify-content: center;
+  /* D9c: reverted D9b's vertical centering. The owner asked for the text to be
+     anchored at the top in the wide/spotlight layouts, same as classic — and
+     get_design_context on `2090:23` (the wide/spotlight variant of this same
+     screen) confirms it: the wireframe just top-pads its content
+     (`pt-[50px] pb-[80px]`, no vertical centering anywhere), identical to what
+     `layout.md` already found for classic's `91:1348`. D9b's centering had no
+     Figma evidence behind it (its own note said so); this does, and it
+     overrides it. `.layout`'s `align-items: flex-start` (PhotoResult.module.css)
+     already keeps the text pinned to the top of its own row — what was dragging
+     it down for the shorter wide/spotlight strip was this `justify-content`,
+     centering the whole row within the tall window. */
+  justify-content: flex-start;
   padding-left: 50px;
   padding-right: 50px;
 }

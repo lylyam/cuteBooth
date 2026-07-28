@@ -5,32 +5,53 @@
   gap: clamp(1.5rem, 4vh, 50px);
 }
 
-/* Outer strip — shared by the three layouts, sized by the modifier below */
+/* Outer strip — shared by the three layouts, sized by the modifier below.
+   D9c: the uniform `padding: 20px` this used to carry made every hole a plain
+   rectangle stack with no "foot" — wrong shape. Real frame margins/gaps below are
+   the canonical numbers from contracts/layouts.md (the ARTWORK, not this
+   wireframe — see that file's "Qué cambió"), not measured off this Figma screen. */
 .strip {
   border: var(--border-width) solid var(--dark-secondary);
   border-radius: var(--border-radius-lg);
-  padding: 20px;
 }
 
+/* classic — canvas 218×637: margin 30px top / 81px bottom / 23px sides, 14px
+   between the 4 holes. Not resized (D9c #3 only flagged wide/spotlight as too
+   small): at 217px wide it already reads at roughly its own canvas size. */
 .classic {
   width: min(217px, 100%);
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 30px 23px 81px;
 }
 
+/* wide — canvas 468×419: margin 30px top / 87px bottom / 23px sides (a bottom
+   "foot" nearly 3x the top margin — that's the strip-with-a-foot look the owner
+   was missing), 16px between holes both ways.
+   D9c #3: shown at 620px instead of 468 (the previous, native-canvas width) —
+   every number above is that same canvas scaled ×1.3248 (620/468) so the shape
+   stays exact: 40/115/30 padding, 21px gap. */
 .wide {
-  width: min(468px, 100%);
+  width: min(620px, 100%);
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 21px;
+  padding: 40px 30px 115px;
 }
 
+/* spotlight — canvas 468×419: margin 30px top / 30px bottom / 23px sides
+   (symmetric — the "foot" here is only in the horizontal/vertical split between
+   the featured hole and the row of three below it, not in an extra bottom
+   margin), 18px between the featured hole and the row, 10px between the three.
+   Same ×1.3248 scale and reasoning as `.wide` above: 40/40/30 padding,
+   24px/13px gap (row-gap first, then column-gap). */
 .spotlight {
-  width: min(468px, 100%);
+  width: min(620px, 100%);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px 13px;
+  padding: 40px 30px;
 }
 
 /* One hole = one button. Filled with the chosen photo, or the placeholder. */
@@ -59,10 +80,13 @@
   aspect-ratio: 134 / 95;
 }
 
-/* First slot of spotlight: the one big photo above the other three */
+/* First slot of spotlight: the one big photo above the other three.
+   D9c: 422/246, not 428/246 — contracts/layouts.md (the artwork) is 6px narrower
+   than this page's own wireframe number, which is exactly the drift that
+   contract already documents ("bailaba hasta 6 px en spotlight"). */
 .spotlight .featured {
   grid-column: 1 / -1;
-  aspect-ratio: 428 / 246;
+  aspect-ratio: 422 / 246;
 }
 
 .slotPhoto {

@@ -2,9 +2,9 @@
    reutiliza components/result/PhotoResult.module.css, no lo rehace. */
 
 .windowContent {
-  /* D9b: same reasoning as ReviewPage.module.css — the shared PhotoResult
-     block gets centered in the now full-height window instead of top-aligned. */
-  justify-content: center;
+  /* D9c: same reversal, same reasoning as ReviewPage.module.css — text anchored
+     at the top in every layout, confirmed against `2090:23`. */
+  justify-content: flex-start;
   padding-left: 50px;
   padding-right: 50px;
 }

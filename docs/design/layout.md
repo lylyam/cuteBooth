@@ -60,3 +60,15 @@ Frame 42 también confirma que el texto está pegado arriba del área de conteni
 sin evidencia directa de Figma (es una pantalla de código, responsive), es centrar
 verticalmente el bloque **completo** de `PhotoResult` dentro de la ventana ya alta —
 ver SUPUESTOS del informe D9b.
+
+**D9c (2026-07-28) revierte ese centrado vertical.** La propietaria lo vio y pidió
+el texto anclado arriba en los tres layouts; `get_design_context` sobre `2090:23`
+(el mismo Frame 35, pero de la variante wide/spotlight, `2090:21`) confirma que el
+wireframe tampoco centra nada ahí — mismo `pt-[50px] pb-[80px]`, mismo `x=50 y=50`
+para el texto. Era exactamente la decisión sin respaldo que este párrafo ya
+señalaba como tal. Detalle en `docs/design/review.md` § D9c.
+
+**D9c también añade padding vertical propio en `LayoutPage.module.css`**, por
+encima del que ya pone `.content` por defecto (ese sí coincide con Figma: el mismo
+`50/80` que aparece en `2090:23` de arriba). Es una petición de "más margen" sin
+número de Figma detrás — pura decisión de código, documentada como tal en el CSS.

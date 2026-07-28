@@ -43,9 +43,15 @@
   gap: 15px;
 }
 
+/* D9c: this wrapper's own width cap has to be at least the inner `.strip`'s cap
+   plus its 24px padding on both sides, or the inner `min(Npx, 100%)` resolves
+   its "100%" against a smaller box than intended and silently shrinks below N —
+   exactly what was happening here before (320 wrapper vs 320 strip left no room
+   for the padding, so wide/spotlight actually rendered nearer 272px, smaller
+   than they looked like they should even at their old, already-small cap). */
 .stripWrapper {
   flex: 0 0 auto;
-  width: min(320px, 100%);
+  width: min(520px, 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,9 +75,13 @@
   aspect-ratio: 218 / 637;
 }
 
+/* D9c: 320 -> 468, the frame's own canvas width (contracts/layouts.md) — the
+   size at which the shape is exact, instead of an arbitrary smaller crop. Paired
+   with `.stripWrapper`'s 520px cap above, this now actually renders at 468px
+   instead of the ~272px the old 320/320 pairing produced (see that comment). */
 .stripWide,
 .stripSpotlight {
-  width: min(320px, 100%);
+  width: min(468px, 100%);
   aspect-ratio: 468 / 419;
 }
 

@@ -8,6 +8,19 @@
 .windowContent {
   justify-content: space-between;
   gap: clamp(1rem, 3vh, 50px);
+  /* D9c: the owner asked for more room above the title and below the cards grid,
+     inside the window, not on the page. `.content`'s own default padding
+     (WebAppOldStyle.module.css, max 50px top / 80px bottom) is Figma's own number
+     for this same container — confirmed by D9c's get_design_context on `2090:23`,
+     which shows that exact `pt-[50px] pb-[80px]` baked into the wireframe. It reads
+     as tight here because `justify-content: space-between` pushes the title and the
+     grid flush against it, and this window's height is real viewport height, not
+     Figma's fixed 763px artboard, so the two ends look glued to the border on a tall
+     screen. These two overrides only add breathing room on top of that default —
+     they don't replace it (longhand wins the cascade tie against `.content`'s
+     shorthand `padding`, same trick already used by Review/Final's lateral override). */
+  padding-top: clamp(2rem, 6vh, 80px);
+  padding-bottom: clamp(2.5rem, 8vh, 120px);
 }
 
 .title {
