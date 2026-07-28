@@ -1,8 +1,9 @@
 # DAG de trabajo
 
 > Estado vivo. Se actualiza al cerrar cada nodo.
-> Última revisión: 2026-07-27. **Dieciséis nodos cerrados**: S1, S2, S3, C1, C2, C3, C4,
-> C7, D1, D3-D7, U5, X1. Quedan C5, C6, D2, U1-U4, R\* y O\*.
+> Última revisión: 2026-07-27. **Dieciocho nodos cerrados**: S1, S2, S3, C1, C2, C3, C4,
+> C7, D1, D3-D7, U2, U4, U5, X1 — y `/upload`, `/review` y `/final` dadas de alta en
+> `App.tsx`. Quedan **C5, C6, D2, D3b, U1, U3** y las revisiones.
 > Lo que sigue abierto está en §9.
 
 ## 1. Por qué un DAG y no una lista de tareas
@@ -136,10 +137,10 @@ graph LR
 | **C7**  | Componente `Loading` · nodo `91:1283`                  | `ui-composer`       | D1                   | `components/ui/Loading.tsx`                                              | Spinner, no ruta. Lo usan las páginas que esperan                                                                                                                                                                                                                | ✅     |
 | **X1**  | Manifiestos de assets                                  | `canvas-media`      | —                    | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Las muestras del menú se generan del propio marco, así que no falta ningún dato. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md) | ✅     |
 | **U1**  | CameraPage `/camera`                                   | `ui-composer`       | S1,S3,C3,C7,D3       | página + `components/camera/`                                            | Checklist en [../../specs/camera.md](../../specs/camera.md)                                                                                                                                                                                                      | ⬜     |
-| **U2**  | UploadPage `/upload`                                   | `ui-composer`       | S1,S3,C1,C7,D4       | página + `components/upload/`                                            | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md)                                                                                                                                                | ⬜     |
+| **U2**  | UploadPage `/upload`                                   | `ui-composer`       | S1,S3,C1,C7,D4       | página + `components/upload/`                                            | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md)                                                                                                                                                | ✅     |
 | **U5**  | **SelectedPicturesPage `/review`**                     | `ui-composer`       | S1,S3,C4,D7          | página + `components/result/PhotoResult.tsx`                             | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md)                                                                                                                                                              | ✅     |
 | **U3**  | DecorationPage `/decoration`                           | `ui-composer`       | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/`                                        | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md)                                                                                                         | ⬜     |
-| **U4**  | FinalPage `/final`                                     | `ui-composer`       | S1,S3,C4,D6,**U5**   | página                                                                   | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md)                                                                                                                                                                         | ⬜     |
+| **U4**  | FinalPage `/final`                                     | `ui-composer`       | S1,S3,C4,D6,**U5**   | página                                                                   | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md)                                                                                                                                                                         | ✅     |
 | **R\*** | Revisión por pantalla                                  | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural                                                                                                                                                                                                                  | ⬜     |
 | **O\*** | Alta de ruta + commit                                  | orquestador         | R* correspondiente   | `App.tsx`                                                                | Sin imports muertos                                                                                                                                                                                                                                              | ⬜     |
 
@@ -329,6 +330,22 @@ todas las páginas a un patrón nuevo).
 
 Los dos últimos no son bugs: son cosas del arte que conviene saber antes de que alguien
 las descubra pensando que se ha roto algo.
+
+### El flujo, recorrido de punta a punta el 2026-07-27
+
+Verificado en la app real, no en un arnés: `/` → `Let's shoot!` → `/layout` → `Use this` →
+modal → `Upload photos` → `/upload` → cuatro ficheros → `Continue` → `/review` con la tira
+compuesta en canvas → `Retake photos` → `/upload`. **Cero errores de consola.**
+
+Los agentes prueban su pantalla en un arnés aislado, y eso deja un hueco: **`SET_SOURCE` no
+lo despachaba nadie.** La acción existía desde S1 y el reducer la manejaba, pero ninguna
+página la disparaba, así que `state.source` era siempre `null` y el `Retake` de `/review` y
+`/final` caía siempre en `/upload`. No se notaba porque `/camera` aún no existe — habría
+aparecido el día que alguien hiciera fotos con la cámara. Cerrado en el modal de `/layout`,
+que es quien el contrato decía que debía dispararla.
+
+**La lección para lo que queda:** un arnés por pantalla no ve las juntas. La integración hay
+que recorrerla en la app real, y es del orquestador.
 
 ### La carrera de `startTransition`, que le espera a U4
 
