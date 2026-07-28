@@ -132,11 +132,11 @@ graph LR
 | **D5**  | CSS DecorationPage · nodo `102:319`                    | `figma-design-sync` | D1                   | `DecorationPage.module.css`                                              | **Desbloqueado el 2026-07-26.** `103:382` es duplicado exacto: ignorarlo. Un solo panel + preview + botones sirve a los **tres pasos**; los pasos 2 y 3 no están dibujados y usan esa plantilla. Ver [../../specs/decoration.md](../../specs/decoration.md)      | ✅     |
 | **D6**  | CSS FinalPage · nodo `2074:52`                         | `figma-design-sync` | D1, D7               | `FinalPage.module.css`                                                   | Idéntica a D7: reutilizar, no rehacer                                                                                                                                                                                                                            | ✅     |
 | **D7**  | CSS SelectedPicturesPage · nodo `91:1346`              | `figma-design-sync` | D1                   | `PhotoResult.module.css`, `ReviewPage.module.css`                        | El CSS del bloque de resultado es **compartido** con D6                                                                                                                                                                                                          | ✅     |
-| **C7**  | Componente `Loading` · nodo `91:1283`                  | `ui-composer`       | D1                   | `components/ui/Loading.tsx`                                              | Spinner, no ruta. Lo usan las páginas que esperan                                                                                                                                                                                                                | ⬜     |
+| **C7**  | Componente `Loading` · nodo `91:1283`                  | `ui-composer`       | D1                   | `components/ui/Loading.tsx`                                              | Spinner, no ruta. Lo usan las páginas que esperan                                                                                                                                                                                                                | ✅     |
 | **X1**  | Manifiestos de assets                                  | `canvas-media`      | —                    | `constants/{frames,stickers,backgrounds}.ts`, renombrados en `assets/**` | **El arte ya está en el repo** (24 marcos, 46 fondos, 273 pegatinas, 38 MB): no se baja nada de Figma. Las muestras del menú se generan del propio marco, así que no falta ningún dato. Contrato y checklist en [../contracts/assets.md](../contracts/assets.md) | ✅     |
 | **U1**  | CameraPage `/camera`                                   | `ui-composer`       | S1,S3,C3,C7,D3       | página + `components/camera/`                                            | Checklist en [../../specs/camera.md](../../specs/camera.md)                                                                                                                                                                                                      | ⬜     |
 | **U2**  | UploadPage `/upload`                                   | `ui-composer`       | S1,S3,C1,C7,D4       | página + `components/upload/`                                            | Clic por hueco, `Continue` deshabilitado hasta las 4. Checklist en [../../specs/upload.md](../../specs/upload.md)                                                                                                                                                | ⬜     |
-| **U5**  | **SelectedPicturesPage `/review`**                     | `ui-composer`       | S1,S3,C4,D7          | página + `components/result/PhotoResult.tsx`                             | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md)                                                                                                                                                              | ⬜     |
+| **U5**  | **SelectedPicturesPage `/review`**                     | `ui-composer`       | S1,S3,C4,D7          | página + `components/result/PhotoResult.tsx`                             | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md)                                                                                                                                                              | ✅     |
 | **U3**  | DecorationPage `/decoration`                           | `ui-composer`       | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/`                                        | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md)                                                                                                         | ⬜     |
 | **U4**  | FinalPage `/final`                                     | `ui-composer`       | S1,S3,C4,D6,**U5**   | página                                                                   | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md)                                                                                                                                                                         | ⬜     |
 | **R\*** | Revisión por pantalla                                  | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural                                                                                                                                                                                                                  | ⬜     |
@@ -328,6 +328,21 @@ todas las páginas a un patrón nuevo).
 
 Los dos últimos no son bugs: son cosas del arte que conviene saber antes de que alguien
 las descubra pensando que se ha roto algo.
+
+### La carrera de `startTransition`, que le espera a U4
+
+**Encontrada y arreglada en U5, y no la anticipaba ningún contrato.** React Router v7
+envuelve sus propias actualizaciones de ruta en `React.startTransition`. Si una pantalla
+despacha algo que **invalida su propio guard** y navega en el mismo manejador, el dispatch
+—al no ir en transición— tiene más prioridad: React renderiza un commit intermedio donde
+el guard ya no se cumple, el `<Navigate to="/">` de la propia página se dispara, y gana la
+carrera contra la navegación pendiente.
+
+Síntoma: `Retake photos` en `/review` acababa en `/` en vez de `/camera`, **el 100 % de las
+veces**. Arreglo: meter dispatch y navigate en el **mismo** `startTransition`.
+
+**`/final` (U4) tiene el mismo patrón** — `CLEAR_PHOTOS` y volver al origen, desde una ruta
+con el mismo guard `layoutAndPhotos`. Sin el mismo arreglo, tendrá el mismo bug.
 
 ### El muro de la fase 2
 

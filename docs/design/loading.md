@@ -46,12 +46,12 @@ Sin texto. Sin color de relleno propio: la pantalla es el gris de página
 
 ## Mapeo a tokens
 
-| Uso                              | Token                                             |
-| --------------------------------- | -------------------------------------------------- |
-| Velo de fondo                    | `var(--overlay-color)`                            |
-| Anillo del spinner (base)        | `var(--border-width) solid var(--background-color)` |
-| Anillo del spinner (segmento)    | `var(--dark-secondary)` en `border-top-color`     |
-| Radio del contenedor (si aplica) | `border-radius: inherit` (copia el del padre)     |
+| Uso                              | Token                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------- |
+| Velo de fondo                    | `var(--overlay-color)`                                                           |
+| Anillo del spinner (base)        | `var(--border-width) solid var(--background-color)`                              |
+| Anillo del spinner (segmento)    | `var(--dark-secondary)` en `border-top-color`                                    |
+| Radio del contenedor (si aplica) | `border-radius: inherit` (copia el del padre)                                    |
 | Texto opcional `.label`          | `var(--font-size-sm)` / `var(--font-weight-regular)` / `var(--background-color)` |
 
 Ningún valor nuevo: todo lo anterior ya existe en `:root`. Ninguna propuesta de
