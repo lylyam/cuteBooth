@@ -1,0 +1,66 @@
+/* Loading — nodo C7, Figma 91:1283 (D3-D7 lo dejó pendiente, cerrado aquí) */
+
+/*
+ * SUPUESTO: en Figma "Loading" está dibujado como una pantalla completa (mismo
+ * Frame 38/35 que el resto de rutas), pero KICKOFF §4 decisión 3 lo fija como
+ * COMPONENTE, no ruta: se monta superpuesto sobre contenido ya pintado
+ * (un <canvas>, el preview de un slot, etc.), nunca a pantalla completa.
+ * Por eso `.overlay` es `position: absolute` (se ancla al contenedor que lo
+ * monta, que debe ser `position: relative`) y no `fixed` como el `Modal`
+ * (que sí bloquea toda la página). No compite con el `z-index` del `Modal`
+ * (T5 sigue abierta): al ser absoluto y quedar detrás en el DOM del elemento
+ * que decore, no necesita un z-index propio.
+ *
+ * SUPUESTO: sí lleva velo. El nodo no tiene fondo propio (es la pantalla
+ * completa gris de página), pero superpuesto sobre contenido ya pintado un
+ * spinner "flotando" sin nada detrás no comunica "espera, no interactúes".
+ * Reutilizo `--overlay-color`, el mismo velo que ya usa `Modal`, para que el
+ * único otro estado "bloqueante" de la UI se sienta igual.
+ *
+ * SUPUESTO: el icono de Figma ("Interface-Essential-Loading-0-Percent
+ * Streamline Pixel") es un asset que no existe en `src/assets/` y este agente
+ * no puede descargar/comprometer binarios (sin Bash, sin escritura de
+ * imágenes). En su lugar, `.spinner` es un anillo CSS animado con los mismos
+ * tokens de borde y color que el resto de la UI — mismo lenguaje visual, cero
+ * dependencia de un asset nuevo.
+ */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: var(--overlay-color);
+  border-radius: inherit;
+}
+
+.spinner {
+  width: clamp(48px, 8vw, 96px);
+  aspect-ratio: 1;
+  border-radius: var(--border-radius-pill);
+  border: var(--border-width) solid var(--background-color);
+  border-top-color: var(--dark-secondary);
+  animation: spin 1s linear infinite;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--background-color);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
