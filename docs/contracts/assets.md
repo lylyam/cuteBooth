@@ -183,6 +183,21 @@ puede pasar: el layout se elige antes de decorar y `/layout` no es alcanzable de
 3. **Un `frame`, `background` o sticker desconocido al rehidratar se trata como
    `null`.** El manifiesto manda sobre el estado guardado. Un `frame` de otro layout
    cuenta como desconocido.
+
+   ⚠️ **Corregido en C2b (2026-07-27): `frame: null` NO significa «sin marco».** Significa
+   «el usuario no ha elegido todavía», y la composición dibuja el **rectangular simple** del
+   layout (`classic/Frame 7`, `wide/Frame 7`, `spotlight/Frame 8`). Lo pidió la propietaria:
+   una tira sin borde ni esquinas redondeadas no parece una tira.
+
+   **Ya no existe ningún valor que signifique «sin marco».** Si algún día hace falta una
+   celda «None» en el panel de decoración, es un cambio de contrato explícito, no un `null`
+   disfrazado.
+
+   El respaldo vive en el **manifiesto**, no en `canvasUtils`: `DEFAULT_FRAME_ID`,
+   `getDefaultFrame()` y `getEffectiveFrame()`. Y esa última es la que **debe usar la UI de
+   `/decoration`** para pintar la celda seleccionada — si leyera `state.frame` directamente,
+   el lienzo enseñaría `Frame 7` con la rejilla sin nada marcado.
+
 4. Quien ejecute X1 **no escribe CSS ni TSX.** Solo `assets/**` y
    `constants/{frames,backgrounds,stickers}.ts`.
 

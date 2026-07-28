@@ -63,19 +63,19 @@ declaran como `string` con un `TODO` que nombre X1, y X1 los estrecha al llegar.
 
 ## Las once acciones
 
-| Acción           | Payload                                        | Quién la dispara    | Efecto                                             |
-| ---------------- | ---------------------------------------------- | ------------------- | -------------------------------------------------- |
-| `SET_LAYOUT`     | `{ layout: LayoutId }`                         | `/layout`           |                                                    |
-| `SET_SOURCE`     | `{ source: PhotoSource }`                      | modal de `/layout`  | Lo necesitan los "repetir" de `/review` y `/final` |
-| `ADD_PHOTO`      | `{ photo: Photo }`                             | `/camera`           | **No-op si ya hay 4**                              |
-| `SET_PHOTOS`     | `{ photos: Photo[] }`                          | `/upload`           | Reemplaza el lote. Trunca a 4                      |
-| `CLEAR_PHOTOS`   | —                                              | `/review`, `/final` | Vacía `photos`. **Conserva todo lo demás**         |
-| `SET_FRAME`      | `{ frame: FrameId \| null }`                   | `/decoration` 1     | `null` = sin marco                                 |
-| `SET_BACKGROUND` | `{ background: BackgroundId \| null }`         | `/decoration` 2     | `null` = sin fondo                                 |
-| `ADD_STICKER`    | `{ sticker: StickerInstance }`                 | `/decoration` 3     |                                                    |
-| `MOVE_STICKER`   | `{ instanceId: string; x: number; y: number }` | `/decoration` 3     | Posición absoluta, no delta                        |
-| `REMOVE_STICKER` | `{ instanceId: string }`                       | `/decoration` 3     |                                                    |
-| `RESET`          | —                                              | ninguno hoy         | Vuelve a `initialState`                            |
+| Acción           | Payload                                        | Quién la dispara    | Efecto                                                                |
+| ---------------- | ---------------------------------------------- | ------------------- | --------------------------------------------------------------------- |
+| `SET_LAYOUT`     | `{ layout: LayoutId }`                         | `/layout`           |                                                                       |
+| `SET_SOURCE`     | `{ source: PhotoSource }`                      | modal de `/layout`  | Lo necesitan los "repetir" de `/review` y `/final`                    |
+| `ADD_PHOTO`      | `{ photo: Photo }`                             | `/camera`           | **No-op si ya hay 4**                                                 |
+| `SET_PHOTOS`     | `{ photos: Photo[] }`                          | `/upload`           | Reemplaza el lote. Trunca a 4                                         |
+| `CLEAR_PHOTOS`   | —                                              | `/review`, `/final` | Vacía `photos`. **Conserva todo lo demás**                            |
+| `SET_FRAME`      | `{ frame: FrameId \| null }`                   | `/decoration` 1     | `null` = **sin elección** → se dibuja el rectangular del layout (C2b) |
+| `SET_BACKGROUND` | `{ background: BackgroundId \| null }`         | `/decoration` 2     | `null` = sin fondo                                                    |
+| `ADD_STICKER`    | `{ sticker: StickerInstance }`                 | `/decoration` 3     |                                                                       |
+| `MOVE_STICKER`   | `{ instanceId: string; x: number; y: number }` | `/decoration` 3     | Posición absoluta, no delta                                           |
+| `REMOVE_STICKER` | `{ instanceId: string }`                       | `/decoration` 3     |                                                                       |
+| `RESET`          | —                                              | ninguno hoy         | Vuelve a `initialState`                                               |
 
 **Dos acciones nuevas respecto al plan de nueve.** `SET_FRAME`, porque los frames no
 estaban en el flujo cuando se escribió. Y `CLEAR_PHOTOS`, que exigen el "repetir" de

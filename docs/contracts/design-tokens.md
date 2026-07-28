@@ -5,7 +5,7 @@
 > **El código es la fuente de verdad.** `get_variable_defs` sobre el fichero de Figma
 > devuelve `{}`: no hay variables que sincronizar. Ver [../design/FIGMA.md](../design/FIGMA.md) §5.
 
-## 1. Las 23 custom properties de `:root`
+## 1. Las 24 custom properties de `:root`
 
 Verificadas contra `src/index.css` el 2026-07-27. Las tres últimas y la baja de
 `--primary-color` salieron del lote D3-D7; el delta razonado está en §4. La columna _usos_ cuenta
@@ -45,14 +45,15 @@ Verificadas contra `src/index.css` el 2026-07-27. Las tres últimas y la baja de
 | `--border-radius-lg`   | `17.59px` | 3 · ventana, `Card`, `Modal`                         |
 | `--border-radius-pill` | `999px`   | 1 · botón de cerrar                                  |
 
-### Espaciado de página — 4
+### Espaciado de página — 5
 
-| Token                 | Valor                      | Usos |
-| --------------------- | -------------------------- | ---- |
-| `--page-padding-y`    | `clamp(1.5rem, 5vh, 80px)` | 3    |
-| `--page-padding-x`    | `10px`                     | 1    |
-| `--content-max-width` | `743px`                    | 1    |
-| `--footer-links-gap`  | `33px`                     | 1    |
+| Token                 | Valor                      | Usos                                    |
+| --------------------- | -------------------------- | --------------------------------------- |
+| `--page-padding-y`    | `clamp(1.5rem, 5vh, 80px)` | 3                                       |
+| `--page-padding-x`    | `10px`                     | 1                                       |
+| `--content-max-width` | `743px`                    | 1                                       |
+| `--footer-links-gap`  | `33px`                     | 1                                       |
+| `--window-max-width`  | `1292px`                   | 1 · el marco de **todas** las pantallas |
 
 ## 2. Reglas de mapeo
 
@@ -77,16 +78,16 @@ Verificadas contra `src/index.css` el 2026-07-27. Las tres últimas y la baja de
 Cada punto es un hallazgo real del CSS actual, no una hipótesis. **T1, T2 y T3 están
 cerrados**; T4-T8 siguen abiertos y el motivo de cada uno está al final de §4.
 
-| #   | Hallazgo                                                               | Dónde                          | Qué hacer                                                                                 |
-| --- | ---------------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------- |
-| T1  | **Resuelto (D1).** `border: 2px solid` en vez de `var(--border-width)` | `Button.module.css`            | Unificado. Dos grosores de borde en una UI de un solo trazo era un error, no una decisión |
-| T2  | **Resuelto (D1).** `gap: 10.514px` transcrito del inspector            | `Button.module.css`            | Redondeado a `10px`                                                                       |
-| T3  | **Resuelto (D3-D7).** `--primary-color` (`#C2C2C2`) no lo usaba nadie  | `index.css`                    | **Borrado.** Ningún hueco vacío lleva relleno en las 5 pantallas: son contornos. Ver §4   |
-| T4  | `box-shadow: 3px 3px 0 0` a pelo                                       | `Button.module.css:hover`      | Candidato a `--shadow-hard` si D3-D7 lo repiten                                           |
-| T5  | `z-index: 1000` a pelo                                                 | `Modal.module.css`             | Solo hay una capa flotante; token cuando haya dos                                         |
-| T6  | `width: min(1292px, ...)` repetido en dos ficheros                     | `WebAppOldStyle`, `LayoutPage` | Candidato a `--window-max-width`                                                          |
-| T7  | Espaciados sueltos sin escala: `8 10 12 15 16 20 24 30 32 37 40 70` px | todos los `.module.css`        | **No inventar la escala ahora.** Ver §4                                                   |
-| T8  | Breakpoints literales: `640px`, `768px`, `900px`                       | 5 ficheros                     | Dejarlos literales (regla 6), pero **usar solo esos tres**                                |
+| #   | Hallazgo                                                               | Dónde                     | Qué hacer                                                                                 |
+| --- | ---------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| T1  | **Resuelto (D1).** `border: 2px solid` en vez de `var(--border-width)` | `Button.module.css`       | Unificado. Dos grosores de borde en una UI de un solo trazo era un error, no una decisión |
+| T2  | **Resuelto (D1).** `gap: 10.514px` transcrito del inspector            | `Button.module.css`       | Redondeado a `10px`                                                                       |
+| T3  | **Resuelto (D3-D7).** `--primary-color` (`#C2C2C2`) no lo usaba nadie  | `index.css`               | **Borrado.** Ningún hueco vacío lleva relleno en las 5 pantallas: son contornos. Ver §4   |
+| T4  | `box-shadow: 3px 3px 0 0` a pelo                                       | `Button.module.css:hover` | Candidato a `--shadow-hard` si D3-D7 lo repiten                                           |
+| T5  | `z-index: 1000` a pelo                                                 | `Modal.module.css`        | Solo hay una capa flotante; token cuando haya dos                                         |
+| T6  | **Resuelta (D9b).** `width: min(1292px, ...)` repetido                 | `WebAppOldStyle`          | Era la causa de que el marco midiera distinto en cada pantalla. Ver §4                    |
+| T7  | Espaciados sueltos sin escala: `8 10 12 15 16 20 24 30 32 37 40 70` px | todos los `.module.css`   | **No inventar la escala ahora.** Ver §4                                                   |
+| T8  | Breakpoints literales: `640px`, `768px`, `900px`                       | 5 ficheros                | Dejarlos literales (regla 6), pero **usar solo esos tres**                                |
 
 ## 4. Delta de tokens — rellenada por el lote D3-D7 (2026-07-26)
 
@@ -116,6 +117,18 @@ la condición que esta sección exigía.
   reemplaza: text-[17px] de 102:351
 ```
 
+```
+--window-max-width : 1292px
+  motivo   : T6 resuelto (D9b). El marco (WebAppOldStyle) medía distinto en cada
+             pantalla porque solo LayoutPage escapaba del --content-max-width
+             (743px) que PageShell impone a .main. Confirmado en Figma: Frame 38
+             mide 1292×763 y es IDÉNTICO en 88:1676 (Layout) y 91:1346 (Review)
+  usos     : WebAppOldStyle.module.css → .wrapper (todas las pantallas)
+  reemplaza: el `min(1292px, calc(100vw - 140px))` que solo vivía en
+             LayoutPage.module.css → .wideWindow, y el `min(1292px, 100%)` sin
+             escape que dejaba Upload/Review/Final atrapadas en 743px
+```
+
 **T3 resuelto: `--primary-color` (`#C2C2C2`) se borra.** Con las cinco pantallas revisadas,
 **ningún hueco vacío ni ninguna forma lleva relleno** — son contornos de 1.94px sobre el
 fondo de página. `get_design_context` no devolvió `bg-[#c2c2c2]` en ningún nodo. Tenía 0
@@ -123,7 +136,8 @@ consumidores antes y 0 después, así que la baja es segura. Si algún día hace
 de "hueco vacío", se reintroduce con evidencia; mantenerlo huérfano solo invitaba a usarlo
 por error.
 
-Con esto `:root` pasa de **21 a 23** custom properties (−1 +3).
+Con esto `:root` pasa de **21 a 24** custom properties: −1 (`--primary-color`) +3 en el lote
+D3-D7, +1 (`--window-max-width`) en D9b.
 
 **T4-T8 siguen abiertas, y con motivo escrito:**
 
@@ -131,7 +145,7 @@ Con esto `:root` pasa de **21 a 23** custom properties (−1 +3).
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T4  | `--shadow-hard`: el fichero es un wireframe estático y **no dibuja estados hover**. D3-D7 no repiten la sombra, así que no hay evidencia para promoverla a token |
 | T5  | `z-index`: D3-D7 no añaden ninguna capa flotante que compita con el `Modal` — la capa de stickers se apila por orden de DOM, sin `z-index` explícito             |
-| T6  | `--window-max-width`: ninguno de los 6 ficheros nuevos escribe 1292px. Sigue siendo cosa de `WebAppOldStyle` y `LayoutPage`                                      |
+| T6  | **Resuelta (D9b).** Era la causa de que el marco midiera distinto en cada pantalla. Ver §4                                                                       |
 | T7  | Escala de espaciado: **deliberadamente sin inventar.** El lote añadió más valores sueltos (14, 20, 25, 30, 40, 50…). Es más evidencia, no una escala             |
 | T8  | Breakpoints: el lote usó solo `640px` y `768px`. Ninguno fuera de la lista                                                                                       |
 
