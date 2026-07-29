@@ -16,12 +16,19 @@
  *    state, and gives its bitmap back.
  * 4. **Object URLs.** `download()` revokes its own, including when the page navigates away
  *    before the timer fires.
+ * 5. **The tilt.** `/review` and `/final` show the strip on a slant. Turning the finished
+ *    bitmap with CSS makes the compositor resample a raster that is already flat, and the thin
+ *    strokes of the frame pay for it; the canvas turns the strip itself instead, so the
+ *    geometry is rasterised at its final angle. Node C4c — see `UseCanvasOptions.rotation`.
  *
  * ## How a page uses it
  *
  * ```tsx
  * const canvasRef = useRef<HTMLCanvasElement>(null);
- * const { draw, exportAsBlob, download, isDrawing, isExporting } = useCanvas(canvasRef);
+ * // `rotation: 'css'` only where the strip is tilted — /review and /final. See C4c below.
+ * const { draw, exportAsBlob, download, isDrawing, isExporting } = useCanvas(canvasRef, {
+ *   rotation: 'css',
+ * });
  * const { state, dispatch } = usePhotoBooth();
  *
  * // One line. `state` is a new object on every dispatch, so this repaints on every change
@@ -48,7 +55,8 @@
  * - **The CSS box sets the aspect ratio**, and it must be the active layout's:
  *   `previewClassic` / `stripClassic` for `classic`, the `wide`/`spotlight` pair for the
  *   other two. The hook fills whatever box it is given; a box with the wrong ratio stretches
- *   the strip, and says so in the console in dev.
+ *   the strip, and says so in the console in dev. With `rotation` the ratio to match is the
+ *   **envelope's**, not the strip's — see `UseCanvasOptions`.
  * - **`draw` never rejects.** A photo that will not load is a partial drawing plus a dev
  *   warning, not a crash. `exportAsBlob` and `download` *do* reject — a download that
  *   silently produces nothing is worse than an error message.
@@ -65,7 +73,12 @@
 import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 import type { LayoutId } from '../constants/layouts';
-import { composeStrip, exportStripAsBlob, getCompositionSize } from '../utils/canvasUtils';
+import {
+  composeStrip,
+  exportStripAsBlob,
+  getCompositionSize,
+  getEnvelopeSize,
+} from '../utils/canvasUtils';
 import type { CompositionState } from '../utils/canvasUtils';
 import type { Size } from '../utils/imageUtils';
 
@@ -97,6 +110,16 @@ const REVOKE_DELAY_MS = 1000;
 
 /** Relative aspect drift tolerated before the dev warning fires. 2 % is invisible. */
 const ASPECT_TOLERANCE = 0.02;
+
+/**
+ * Custom property the CSS puts the strip's tilt in, read when `rotation: 'css'` — node **C4c**.
+ *
+ * A number of degrees (`7.28`, or `7.28deg`). It lives in CSS because the tilt is a design
+ * value like a radius or a colour, and above all because it is **media-query dependent**:
+ * `/review` straightens the strip below 768 px, and only the stylesheet knows when. Absent or
+ * unparseable reads as `0`, which is exactly today's rendering.
+ */
+const ROTATION_PROPERTY = '--strip-rotation';
 
 /**
  * Ceiling on the bitmap, in device pixels — node C4b.
@@ -159,9 +182,14 @@ const MAX_BITMAP_SIDE = 4096;
  * (state.md rule 3). It never mentions `canvas.width`, which is precisely why it survives
  * this change untouched — verified by measuring where the strokes land on screen before and
  * after: same position to the pixel, at DPR 1 and DPR 2.
+ *
+ * **`rotation` — node C4c.** When the strip is turned inside the canvas the target has to hold
+ * its **envelope** at composition detail, not the strip: ≈891 × 1980 for `classic` (1.76 Mpx),
+ * ≈1552 × 1426 for the other two (2.21 Mpx), both comfortably under the cap. Rotating without
+ * raising the floor to the envelope would shrink the drawing to fit and undo C4b.
  */
-function renderSize(device: Size, layout: LayoutId | null): Size {
-  const composition = layout ? getCompositionSize(layout) : null;
+function renderSize(device: Size, layout: LayoutId | null, rotation: number): Size {
+  const composition = layout ? getEnvelopeSize(getCompositionSize(layout), rotation) : null;
 
   // Below 1 the box already has more pixels than the drawing has detail: its own are enough.
   const factor = composition
@@ -189,6 +217,35 @@ function renderSize(device: Size, layout: LayoutId | null): Size {
   };
 }
 
+export type UseCanvasOptions = {
+  /**
+   * Turn the strip **inside the canvas**, clockwise, in degrees — node **C4c**. Default `0`:
+   * the canvas paints the strip straight, exactly as before.
+   *
+   * `'css'` reads it from the `--strip-rotation` custom property of the `<canvas>` on every
+   * pass, so the stylesheet stays the single owner of the angle and of the media query that
+   * cancels it. That is the mode `/review` and `/final` use.
+   *
+   * **Why this exists.** `PhotoResult` used to tilt the finished bitmap with
+   * `transform: rotate(7.28deg)`, i.e. rasterise first and turn afterwards. Measured on the
+   * interior strokes of the frame (the outlines around the four photos), the compositor's
+   * resampling of that turn left them at peak luminance **69 ± 19** where solid `#222` is 34 —
+   * a line that beads along its length instead of reading as one rule. Turning inside the
+   * canvas, so the geometry is rasterised already tilted, puts them at **35 ± 0.8**, which is
+   * the same as an unrotated strip (36 ± 0) and as handing the tilted vector straight to the
+   * browser's SVG rasteriser (36 ± 4). See the C4c report for the full table.
+   *
+   * **Two things the page owes this option**, and both fail loudly rather than silently:
+   *
+   * 1. **No `transform` on the wrapper.** Both rotations would compound to 14.56°.
+   * 2. **The box is the strip's envelope**, not the strip: `min(279.26px, 100%)` and
+   *    `aspect-ratio: 296.97 / 659.49` for `classic`, `min(517.23px, 100%)` and
+   *    `517.23 / 474.93` for `wide`/`spotlight`. A strip-shaped box letterboxes the drawing
+   *    (the scale stays uniform — a rotation with two scales is a shear).
+   */
+  rotation?: number | 'css';
+};
+
 export type UseCanvasResult = {
   /**
    * Paints `state` into the canvas. Coalesced to one repaint per animation frame, and
@@ -202,6 +259,9 @@ export type UseCanvasResult = {
    * The strip as a PNG at export resolution (654×1911 for `classic`, 1404×1257 for the
    * other two), whatever size the preview happens to be. Defaults to the last state handed
    * to `draw`.
+   *
+   * **Always straight**, whatever `rotation` says: what is downloaded is the strip, not a
+   * photograph of the strip lying on a table.
    *
    * Rejects if there is no state yet, if no layout is selected, or if the encode fails.
    */
@@ -228,13 +288,18 @@ type Engine = {
   download: (state?: CompositionState, fileName?: string) => Promise<void>;
   /** Mount: arm the observers. Also re-arms after a StrictMode remount. */
   activate: () => void;
+  /** Every commit: take the options this render passed, before anything can repaint. */
+  setOptions: (options: UseCanvasOptions) => void;
   /** Every commit: bind to the `<canvas>` currently in the ref, whenever it appears. */
   syncCanvas: () => void;
   /** Unmount: cancel everything, resolve everyone, give the bitmap and the URLs back. */
   dispose: () => void;
 };
 
-export function useCanvas(canvasRef: RefObject<HTMLCanvasElement | null>): UseCanvasResult {
+export function useCanvas(
+  canvasRef: RefObject<HTMLCanvasElement | null>,
+  options: UseCanvasOptions = {},
+): UseCanvasResult {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -255,7 +320,12 @@ export function useCanvas(canvasRef: RefObject<HTMLCanvasElement | null>): UseCa
   // No dependency array on purpose. The page may render `Loading` and the `<canvas>` in the
   // same tree but mount the canvas a commit later; a `[]` effect would have run before it
   // existed and never fire again. Re-binding is a pointer comparison, so this is cheap.
+  //
+  // The options go in here, and not in the effect above, for the ordering: this hook's effects
+  // both run before the consumer's `useEffect(() => draw(state))` — a component's effects fire
+  // in declaration order — so the first paint already knows its angle.
   useEffect(() => {
+    engine.setOptions(options);
     engine.syncCanvas();
   });
 
@@ -293,6 +363,37 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
   const objectUrls = new Set<string>();
   const revokeTimers = new Set<number>();
   let warnedAspect = '';
+  /** How the strip is tilted inside the canvas — C4c. `0` until a page asks for otherwise. */
+  let tilt: number | 'css' = 0;
+
+  function setOptions(options: UseCanvasOptions): void {
+    tilt = options.rotation ?? 0;
+  }
+
+  /**
+   * The angle this pass will paint at, in degrees.
+   *
+   * Read once per pass and handed down, rather than consulted from three places: with
+   * `rotation: 'css'` every call is a `getComputedStyle`, and a sticker drag runs a pass per
+   * animation frame.
+   */
+  function rotation(): number {
+    if (tilt !== 'css') return Number.isFinite(tilt) ? tilt : 0;
+
+    const canvas = canvasRef.current ?? observed;
+    if (!canvas) return 0;
+
+    const raw = window.getComputedStyle(canvas).getPropertyValue(ROTATION_PROPERTY).trim();
+    if (!raw) return 0;
+
+    const value = Number.parseFloat(raw);
+    if (!Number.isFinite(value)) return 0;
+    // A custom property is just a token stream, so the unit is whatever CSS was written with.
+    if (/rad\s*$/i.test(raw)) return (value * 180) / Math.PI;
+    if (/turn\s*$/i.test(raw)) return value * 360;
+    if (/grad\s*$/i.test(raw)) return value * 0.9;
+    return value;
+  }
 
   function markDrawing(value: boolean): void {
     if (drawing === value) return; // no redundant setState: a drag would re-render at 120 Hz
@@ -315,11 +416,13 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
   /**
    * The canvas box in **device pixels**.
    *
-   * `clientWidth`/`clientHeight` and not `getBoundingClientRect()`: `/review` and `/final`
-   * rotate the strip 7.28°, and a rotated element's bounding rect is its axis-aligned
-   * envelope — 279 px for a 205 px strip. Sizing the bitmap from that would squash the
-   * drawing by a third. The layout box does not care about transforms, and neither does
-   * `ResizeObserver`, whose fractional sizes are preferred when it hands us any.
+   * `clientWidth`/`clientHeight` and not `getBoundingClientRect()`, and it has to stay that
+   * way even now that the canvas turns the strip itself (C4c): a CSS `transform` anywhere above
+   * the canvas makes the bounding rect the axis-aligned envelope of the rotated element —
+   * 279 px for a 205 px strip — and sizing the bitmap from that would squash the drawing by a
+   * third. `WebAppOldStyle` alone puts a `translateX(-50%)` on an ancestor. The layout box does
+   * not care about transforms, and neither does `ResizeObserver`, whose fractional sizes are
+   * preferred when it hands us any.
    */
   function measureDeviceBox(entry?: ResizeObserverEntry): Size | null {
     const canvas = canvasRef.current ?? observed;
@@ -347,7 +450,11 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
    * Resizes the bitmap to the box, at composition resolution or better (C4b). Returns `true`
    * when it changed — which **wiped it**.
    */
-  function applySize(entry?: ResizeObserverEntry, state?: CompositionState | null): boolean {
+  function applySize(
+    entry?: ResizeObserverEntry,
+    state?: CompositionState | null,
+    turn = rotation(),
+  ): boolean {
     const canvas = canvasRef.current;
     if (!canvas) return false;
 
@@ -359,7 +466,7 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     // passes any later check and silently discards the drawing.
     if (!device || device.width < 1 || device.height < 1) return false;
 
-    const size = renderSize(device, currentLayout(state));
+    const size = renderSize(device, currentLayout(state), turn);
     if (canvas.width === size.width && canvas.height === size.height) return false;
 
     canvas.width = size.width;
@@ -473,13 +580,17 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     running = true;
     startSlowTimer();
 
+    // One read for the whole pass: the bitmap size, the warning and the painting have to agree
+    // on the angle even if a media query flips it mid-flight.
+    const turn = rotation();
+
     try {
       // Before painting, not after: C2 reads the size once the images are in, so a resize
       // mid-load is already handled, but a stale bitmap size never is. The state goes in
       // because the resolution floor is per layout (C4b) and this pass knows which one.
-      applySize(undefined, state);
-      warnOnAspectMismatch(state, canvas);
-      await composeStrip(canvas, state);
+      applySize(undefined, state, turn);
+      warnOnAspectMismatch(state, canvas, turn);
+      await composeStrip(canvas, state, { rotation: turn });
     } catch (error) {
       // Only reachable when the 2D context itself is gone. Nothing the UI can do about it,
       // and a blank strip beats a crashed page.
@@ -561,11 +672,17 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     if (objectUrls.delete(url)) URL.revokeObjectURL(url);
   }
 
-  function warnOnAspectMismatch(state: CompositionState, canvas: HTMLCanvasElement): void {
+  function warnOnAspectMismatch(
+    state: CompositionState,
+    canvas: HTMLCanvasElement,
+    turn: number,
+  ): void {
     if (!import.meta.env.DEV || !state.selectedLayout) return;
     if (canvas.width < 1 || canvas.height < 1) return;
 
-    const unit = getCompositionSize(state.selectedLayout);
+    // Tilted, the shape to match is the envelope: a strip-shaped box letterboxes instead of
+    // stretching, which is just as wrong and much easier to mistake for a margin.
+    const unit = getEnvelopeSize(getCompositionSize(state.selectedLayout), turn);
     const target = unit.width / unit.height;
     const actual = canvas.width / canvas.height;
     if (Math.abs(actual - target) / target <= ASPECT_TOLERANCE) return;
@@ -575,8 +692,9 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     warnedAspect = key;
     warn(
       `the <canvas> box is ${canvas.width}×${canvas.height} but "${state.selectedLayout}" ` +
-        `composes ${unit.width}×${unit.height}: the strip will be stretched. Check the ` +
-        `aspect-ratio class the page puts on the wrapper.`,
+        `at ${turn}° needs ${Math.round(unit.width)}×${Math.round(unit.height)}: the strip ` +
+        `will be ${turn ? 'letterboxed' : 'stretched'}. Check the aspect-ratio class the page ` +
+        `puts on the wrapper.`,
     );
   }
 
@@ -648,7 +766,7 @@ function createEngine(canvasRef: RefObject<HTMLCanvasElement | null>, flags: Eng
     }
   }
 
-  return { draw, exportAsBlob, download, activate, syncCanvas, dispose };
+  return { draw, exportAsBlob, download, activate, setOptions, syncCanvas, dispose };
 }
 
 /** specs/final.md, supuesto 1: no date in the name — the browser adds "(1)" on a repeat. */

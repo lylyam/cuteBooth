@@ -85,6 +85,42 @@ export function getCompositionSize(layout: LayoutId): Size {
   return { width: canvas.width, height: canvas.height };
 }
 
+/**
+ * Axis-aligned envelope of `size` turned by `degrees` — node **C4c**.
+ *
+ * The box a rotated strip needs: `w·cos + h·sin` by `w·sin + h·cos`. For `classic` at 7.28°
+ * that is 891 × 1979 against the 654 × 1911 of the strip itself — **1.41 × the area**, which
+ * is what the bitmap and the CSS box both have to grow by. `degrees: 0` returns `size`
+ * unchanged, so callers can use it unconditionally.
+ */
+export function getEnvelopeSize(size: Size, degrees: number): Size {
+  const radians = (degrees * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
+  return {
+    width: size.width * cos + size.height * sin,
+    height: size.width * sin + size.height * cos,
+  };
+}
+
+/**
+ * Options of a composition pass. Everything here is about the **target**, never about the
+ * picture: the same state composes the same strip whatever these say.
+ */
+export type ComposeOptions = {
+  /**
+   * Turn the strip by this many degrees clockwise **inside** the canvas, centred in the
+   * target — node **C4c**, and `0` (the default) for the export, which must come out
+   * straight.
+   *
+   * When it is non-zero the canvas is the strip's **envelope**, not the strip: pass a target
+   * whose ratio is `getEnvelopeSize(composition, degrees)`, or the drawing is letterboxed
+   * rather than stretched (the scale stays uniform on purpose — a rotation with two
+   * different scales is a shear).
+   */
+  rotation?: number;
+};
+
 /** Short side of a layout's canvas, in canvas pixels. The reference a sticker scales from. */
 function shortSide(layout: LayoutId): number {
   const { canvas } = LAYOUTS[layout];
@@ -161,6 +197,7 @@ export function getStickerDrawRect(
 export async function composeStrip(
   canvas: HTMLCanvasElement,
   state: CompositionState,
+  options: ComposeOptions = {},
 ): Promise<void> {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Could not get a 2D canvas context.');
@@ -183,7 +220,7 @@ export async function composeStrip(
     return;
   }
 
-  paint(context, prepared, output);
+  paint(context, prepared, output, options.rotation ?? 0);
 }
 
 /**
@@ -308,7 +345,12 @@ function photoTargets(layout: LayoutDef, frame: FrameLayer | null): PhotoTarget[
   return layout.slots.map((slot) => ({ box: slot, clip: null }));
 }
 
-function paint(context: CanvasRenderingContext2D, prepared: Prepared, output: Size): void {
+function paint(
+  context: CanvasRenderingContext2D,
+  prepared: Prepared,
+  output: Size,
+  rotation: number,
+): void {
   const unit = prepared.layout.canvas;
 
   context.save();
@@ -321,7 +363,7 @@ function paint(context: CanvasRenderingContext2D, prepared: Prepared, output: Si
     context.imageSmoothingQuality = 'high';
 
     // From here on every coordinate is in the layout's canvas units.
-    context.scale(output.width / unit.width, output.height / unit.height);
+    applyUnitTransform(context, unit, output, rotation);
 
     if (prepared.background) {
       drawTiled(context, prepared.background, unit);
@@ -350,6 +392,34 @@ function paint(context: CanvasRenderingContext2D, prepared: Prepared, output: Si
   } finally {
     context.restore();
   }
+}
+
+/**
+ * Puts the context in the layout's canvas units, so every coordinate below is a number from
+ * `layouts.ts` whatever the target's size or angle.
+ *
+ * Straight: one scale per axis, which is what lets a mismatched box show as a stretch and be
+ * caught by C4's aspect warning. Rotated: **uniform** scale (two would shear), centred in the
+ * target, so the strip's envelope fits inside the box and the drawing sits in the middle of it.
+ */
+function applyUnitTransform(
+  context: CanvasRenderingContext2D,
+  unit: Size,
+  output: Size,
+  rotation: number,
+): void {
+  if (!rotation) {
+    context.scale(output.width / unit.width, output.height / unit.height);
+    return;
+  }
+
+  const envelope = getEnvelopeSize(unit, rotation);
+  const scale = Math.min(output.width / envelope.width, output.height / envelope.height);
+
+  context.translate(output.width / 2, output.height / 2);
+  context.rotate((rotation * Math.PI) / 180);
+  context.scale(scale, scale);
+  context.translate(-unit.width / 2, -unit.height / 2);
 }
 
 /**
