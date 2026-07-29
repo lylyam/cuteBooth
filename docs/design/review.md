@@ -77,7 +77,7 @@ no una variante. El wireframe nunca centró nada; el centrado vertical era una d
 de D9b sin respaldo en Figma (su propia nota lo decía: "sin evidencia directa de
 Figma"). Revertida en D9c.
 
-**Lo que NO se replica:** `Frame 9` (la rejilla) está en `position: absolute`, con un
+**Lo que NO se replica (en D9c):** `Frame 9` (la rejilla) está en `position: absolute`, con un
 `top: 196px` que no coincide con el top del texto (`y=50`) — es la propia rejilla
 del wireframe la que queda desplazada hacia abajo respecto al bloque de texto, no al
 revés. En CSS no hay ningún posicionamiento absoluto para la tira: `.layout` es un
@@ -87,7 +87,7 @@ concreto. No se ha tocado — es un detalle de posicionamiento fino de un wirefr
 no el bug reportado (que era sobre el texto, no sobre la tira), y placeholder para
 duda abierta en el informe de cierre.
 
-### Corrección aplicada
+### Corrección aplicada (D9c)
 
 `ReviewPage.module.css` y `FinalPage.module.css`: `.windowContent` pasa de
 `justify-content: center` (D9b) a `justify-content: flex-start` (D9c). Sin cambios
@@ -98,3 +98,64 @@ de la ventana.
 
 Ningún token nuevo: coordenadas y padding puros, sin color/radio/borde/fuente de por
 medio.
+
+## D9d (2026-07-29) — la tira baja a la esquina inferior derecha
+
+> Pedido de la propietaria: la tira (hoy arriba a la derecha) tiene que quedar
+> **abajo a la derecha**; el texto se queda donde está. Reportado con capturas del
+> app real, no de Figma: la ventana medía **1292×959** con mucho hueco vacío por
+> debajo del bloque de texto+tira.
+
+### Esto cierra la duda abierta de D9c
+
+Se repitió `get_metadata` sobre `2090:21` (no `get_design_context`: los números ya
+estaban cacheados arriba desde D9c, solo hacía falta releerlos con esta pregunta en
+mente) y confirma exactamente lo que D9c había registrado como "no replicado":
+`Frame 9` (`791.09, 197`, `517.32×474.93`) dentro de `Frame 35` (`1292×718`) —
+
+- **vertical**: `197 + 474.93 = 671.93`, a **46px** del borde inferior de `Frame 35`
+  (`718`). Muy por debajo del bloque de texto (`Frame 42`, `y=50` a `y=281`).
+- **horizontal**: `791.09 + 517.32 = 1308.4`, prácticamente a ras del borde derecho
+  (`Frame 35` mide `1292`; el sobrante de 16px es imprecisión de wireframe, no una
+  medida a reproducir — regla 2 de mapeo).
+
+O sea: el wireframe **ya** dibuja la tira abajo-derecha, desacoplada del top del
+texto. D9c no tocó esto porque el bug que resolvía era sobre el texto, no sobre la
+tira — quedó anotado como pendiente, y es lo que D9d resuelve.
+
+### Qué le faltaba al contenedor
+
+`.layout` (en `PhotoResult.module.css`) nunca tuvo una altura real: al ser el único
+hijo de `.content` (columna flex en `WebAppOldStyle.module.css`), medía solo lo que
+medía su contenido (el texto o la tira, lo que fuera más alto), y le sobraba toda la
+altura real de la ventana sin usar — de ahí el hueco de la captura. "Abajo" no podía
+significar nada sin una caja con altura real contra la que anclarse.
+
+### Corrección aplicada (D9d)
+
+`PhotoResult.module.css`, dos clases:
+
+- **`.layout`**: `flex: 1; min-height: 0;` — mismo patrón que `PageShell.module.css`
+  ya usa en `.main` para el mismo problema. Ahora `.layout` mide toda la altura real
+  de `.content` (que a su vez la lee de `.wrapper { height: 100% }`), no solo la de
+  su contenido.
+- **`.stripWrapper`**: `align-self: flex-end` — con `.layout` ya alto de verdad, esto
+  ancla la tira al borde inferior de esa caja. El anclaje horizontal (derecha) ya
+  existía: es `justify-content: space-between` de `.layout`, sin tocar.
+
+Las dos, en `@media (max-width: 768px)`, se revierten (`.layout { flex: 0 1 auto }`)
+para no tocar el comportamiento móvil existente, que no tiene diseño de Figma detrás
+(design-tokens.md §5) y ya resolvía su propio apilado sin este ancla.
+
+### Por qué sobrevive a que se quite `rotate(7.28deg)`
+
+`align-self: flex-end` está en `.stripWrapper`, no en `.strip` (que es quien lleva
+la rotación). Un `transform` en CSS repinta un elemento en su sitio sin cambiar la
+caja que ese elemento aporta al layout flex de su contenedor — por eso la caja
+envolvente rotada de la tira mide 277×620 mientras su caja real sigue siendo
+205×599 (`clientWidth`) y no 277×620 (`getBoundingClientRect()`). Si `.strip` pierde
+el `transform` la semana que viene, `.stripWrapper` sigue midiendo y anclándose
+igual: nada de esto lee la rotación.
+
+Ningún token nuevo: `flex`, `min-height`, `align-self` son layout puro (regla 7 de
+`design-tokens.md`), sin color/radio/borde/fuente de por medio.

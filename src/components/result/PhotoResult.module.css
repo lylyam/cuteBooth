@@ -1,7 +1,20 @@
 /* PhotoResult — compartido por /review (D7, Figma 91:1346) y /final (D6, Figma 2074:52) */
 
+/* D9d: `flex: 1; min-height: 0` is the same pattern PageShell.module.css already
+   uses on `.main` for exactly this problem — a flex item inside a column parent
+   (`.content`, WebAppOldStyle.module.css) that needs a *real*, stretched height
+   instead of shrinking to its own content. Without it, `.layout` only ever
+   measured as tall as the taller of textBlock/stripWrapper, so `.stripWrapper`'s
+   `align-self: flex-end` below had no spare room to push into, and the strip sat
+   flush under the text regardless of how much empty window was left beneath it
+   (the owner's screenshots showed `.wrapper` rendering at 1292x959, not Figma's
+   static 1292x763 canvas, with that gap unfilled). This reads `.content`'s real
+   height and hands all of it to `.layout`, so "abajo" resolves against the
+   window, not against the text block's height. */
 .layout {
   width: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -49,9 +62,23 @@
    exactly what was happening here before (320 wrapper vs 320 strip left no room
    for the padding, so wide/spotlight actually rendered nearer 272px, smaller
    than they looked like they should even at their old, already-small cap). */
+/* D9d: `align-self: flex-end` pins THIS box — not `.strip` — to the bottom of
+   `.layout`'s now-real height, on top of the row's existing right-alignment
+   (`.layout`'s `justify-content: space-between`). It reads `.stripWrapper`'s own
+   layout box, which `.strip`'s `transform: rotate()` never touches: a CSS
+   transform repaints an element in place without changing what its box
+   contributes to an ancestor's flex layout — that's why the rotated strip's
+   *visual* bounding box is 277x620 while its real box stays 205x599
+   (`clientWidth` vs `getBoundingClientRect()`). So if the rotation is ever moved
+   into the canvas and `.strip`'s `transform` drops, this bottom-right anchor
+   keeps working untouched — nothing here reads it, rotated or not. Confirmed
+   against Figma too: `2090:21`'s `Frame 9` (the strip) sits right-flush and only
+   ~46px from `Frame 35`'s bottom edge, well below the text block — see
+   docs/design/review.md. */
 .stripWrapper {
   flex: 0 0 auto;
   width: min(520px, 100%);
+  align-self: flex-end;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,7 +119,13 @@
 }
 
 @media (max-width: 768px) {
+  /* D9d: the bottom-right anchor above is a desktop/wireframe reading (1440px
+     artboards, no mobile design — design-tokens.md §5). Below this breakpoint
+     `.layout` drops back to its pre-D9d auto height, so there's no spare
+     vertical room left for `.stripWrapper`'s `align-self: flex-end` to push
+     into, and the two blocks stack tight, same as before this change. */
   .layout {
+    flex: 0 1 auto;
     justify-content: center;
   }
 
