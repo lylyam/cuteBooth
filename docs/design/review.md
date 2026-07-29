@@ -159,3 +159,47 @@ igual: nada de esto lee la rotación.
 
 Ningún token nuevo: `flex`, `min-height`, `align-self` son layout puro (regla 7 de
 `design-tokens.md`), sin color/radio/borde/fuente de por medio.
+
+## D9d, segunda mitad (2026-07-29) — el giro se muda al canvas (C4c)
+
+> `canvas-media` midió el trazo con escalones que la propietaria reportó: girar con
+> CSS un bitmap ya rasterizado da un pico de 69 (sd 18,5) contra 35 (sd 0,8) girando
+> dentro del `<canvas>` — ocho propiedades de compositor probadas y descartadas,
+> byte a byte idénticas a girar sin más. `hooks/useCanvas.ts` ya soporta
+> `rotation: 'css'` (nodo **C4c**, ya commiteado); esta mitad es la que le
+> corresponde a esta capa: `PhotoResult.module.css` deja de girar con `transform` y
+> en su lugar **publica el ángulo** en `--strip-rotation`, que el hook lee de
+> `getComputedStyle`.
+
+### Qué cambia y por qué
+
+- **`.strip`**: `transform: rotate(7.28deg)` fuera, `--strip-rotation: 7.28;`
+  dentro. Es una custom property de mecanismo (puente CSS→JS), no uno de los 24
+  tokens del contrato — vive en el componente porque el ángulo depende de la media
+  query (`/review` endereza la tira por debajo de 768px) y solo la hoja de estilos
+  sabe cuándo; un número en el TSX habría duplicado ese breakpoint ahí.
+- **`.stripClassic`** y **`.stripWide`/`.stripSpotlight`**: `width`/`aspect-ratio`
+  pasan de la caja real (205×599 vía `218/637`; 468×419) a la **envolvente** de esa
+  caja girada 7,28° — fórmula `(w·cosθ + h·sinθ) × (w·sinθ + h·cosθ)`,
+  `cos 7,28° = 0,9919398`, `sin 7,28° = 0,1267311`. El `<canvas>` ahora dibuja ya
+  girado, así que necesita esa caja mayor para no recortarse; la tinta no cambia de
+  tamaño ni posición — es la misma envolvente en la que ya desbordaba el bitmap
+  girado por CSS, solo que antes sin clip.
+- **`.stripWrapper`**: su tope sube de 520px a **566px** (517,23 + 2×24 de padding).
+  Es obligatorio: por debajo de eso, `wide`/`spotlight` se habrían encogido en
+  silencio un 9% — exactamente la trampa que documentó el propio comentario de D9c
+  en esta clase.
+- **Media query `≤768px`**: `--strip-rotation: 0` (nunca `transform: none` de
+  nuevo — las dos cosas a la vez sumarían 14,56°) y las cajas vuelven a sus valores
+  reales sin envolvente (205px/`218 / 637`, 468px/`468 / 419`): sin giro, envolvente
+  y caja real coinciden.
+
+### Lo que no se toca
+
+`align-self: flex-end` en `.stripWrapper` (la mitad anterior de D9d) sigue igual:
+su caja no cambia de naturaleza, solo de tamaño, así que el anclaje abajo-derecha
+sobrevive intacto a este cambio — tal como se garantizó cuando se escribió.
+
+Ningún token nuevo: `width`/`aspect-ratio` con números crudos ya era el patrón
+existente en estas clases (218/637, 468/419 tampoco eran tokens); `--strip-rotation`
+es mecanismo, no diseño reutilizable, y no entra en `index.css`.

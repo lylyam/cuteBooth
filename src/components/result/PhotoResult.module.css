@@ -58,26 +58,24 @@
 
 /* D9c: this wrapper's own width cap has to be at least the inner `.strip`'s cap
    plus its 24px padding on both sides, or the inner `min(Npx, 100%)` resolves
-   its "100%" against a smaller box than intended and silently shrinks below N —
-   exactly what was happening here before (320 wrapper vs 320 strip left no room
-   for the padding, so wide/spotlight actually rendered nearer 272px, smaller
-   than they looked like they should even at their old, already-small cap). */
+   its "100%" against a smaller box than intended and silently shrinks below N.
+   C4c (below) raised `.strip`'s own cap to the rotated envelope — 517.23px for
+   wide/spotlight, the taller of the two — so this one has to clear
+   517.23 + 2×24 = 565.23. 566 does; the old 520 doesn't, and would have shrunk
+   wide/spotlight by the same silent 9% this comment already once described. */
 /* D9d: `align-self: flex-end` pins THIS box — not `.strip` — to the bottom of
-   `.layout`'s now-real height, on top of the row's existing right-alignment
+   `.layout`'s real height, on top of the row's existing right-alignment
    (`.layout`'s `justify-content: space-between`). It reads `.stripWrapper`'s own
-   layout box, which `.strip`'s `transform: rotate()` never touches: a CSS
-   transform repaints an element in place without changing what its box
-   contributes to an ancestor's flex layout — that's why the rotated strip's
-   *visual* bounding box is 277x620 while its real box stays 205x599
-   (`clientWidth` vs `getBoundingClientRect()`). So if the rotation is ever moved
-   into the canvas and `.strip`'s `transform` drops, this bottom-right anchor
-   keeps working untouched — nothing here reads it, rotated or not. Confirmed
-   against Figma too: `2090:21`'s `Frame 9` (the strip) sits right-flush and only
-   ~46px from `Frame 35`'s bottom edge, well below the text block — see
+   layout box, which is unaffected either way `.strip` draws its tilt — as a CSS
+   `transform` (the old way) or baked into the bitmap by `useCanvas`'s
+   `rotation: 'css'` (C4c, below): neither changes what `.stripWrapper` itself
+   contributes to `.layout`'s flex sizing. Confirmed against Figma too:
+   `2090:21`'s `Frame 9` (the strip) sits right-flush and only ~46px from
+   `Frame 35`'s bottom edge, well below the text block — see
    docs/design/review.md. */
 .stripWrapper {
   flex: 0 0 auto;
-  width: min(520px, 100%);
+  width: min(566px, 100%);
   align-self: flex-end;
   display: flex;
   align-items: center;
@@ -92,24 +90,47 @@
    was only ever standing in for the frame the canvas now always draws.
    `overflow: hidden` stays — cheap insurance if a bitmap ever renders a hair
    outside its box, and harmless with nothing else to clip. */
+/* C4c: publishes the tilt as a custom property instead of applying it as a
+   `transform` — `useCanvas(ref, { rotation: 'css' })` reads `--strip-rotation`
+   off this element every pass and turns the *bitmap*, not the DOM node.
+   Measured against the ideal straight edge (11 borders of classic at DPR 1):
+   rotating an already-rasterised bitmap with CSS peaked at luminance 69
+   (σ 18.5) on strokes that should read solid #222 — supersampling ×2 on top of
+   that didn't move the number at all. Rotating inside the canvas instead drops
+   it to 35 (σ 0.8), matching the unrotated control (36, σ 0). Eight compositor
+   hints (the three `image-rendering` values, `will-change`, `translateZ`,
+   `filter: blur(0)`, `contain`, `isolation`) were tried first and produced
+   byte-identical output to plain `transform: rotate()` — there is no CSS-only
+   fix, see `useCanvas.ts` (C4c) for the full table.
+   A plain number here instead of the custom property would make `useCanvas`
+   duplicate the 768px breakpoint below to know when the strip stops
+   rotating — the stylesheet already knows that, so it publishes it instead. */
 .strip {
-  transform: rotate(7.28deg);
+  --strip-rotation: 7.28;
   overflow: hidden;
 }
 
+/* C4c: width/aspect-ratio now describe the *envelope* of the strip rotated
+   7.28° — envelope = (w·cosθ + h·sinθ) × (w·sinθ + h·cosθ), cos 7.28° =
+   0.9919398, sin 7.28° = 0.1267311, over the real 218×637 canvas — because the
+   `<canvas>` itself has to be that size for the tilted drawing `useCanvas`
+   now paints (C4c) to fit without clipping. The ink doesn't move or resize: a
+   CSS-rotated strip already overflowed into exactly this envelope before (just
+   unclipped, since `.stripWrapper` sets no `overflow` of its own), so on
+   screen the strip reads identical in size and angle to before this change. */
 .stripClassic {
-  width: min(205px, 100%);
-  aspect-ratio: 218 / 637;
+  width: min(279.26px, 100%);
+  aspect-ratio: 296.97 / 659.49;
 }
 
-/* D9c: 320 -> 468, the frame's own canvas width (contracts/layouts.md) — the
-   size at which the shape is exact, instead of an arbitrary smaller crop. Paired
-   with `.stripWrapper`'s 520px cap above, this now actually renders at 468px
-   instead of the ~272px the old 320/320 pairing produced (see that comment). */
+/* C4c: same envelope math as `.stripClassic`, over the real 468×419 canvas
+   (contracts/layouts.md). Paired with `.stripWrapper`'s 566px cap above, this
+   is what actually renders at its full size instead of silently shrinking —
+   see that comment. */
 .stripWide,
 .stripSpotlight {
-  width: min(468px, 100%);
-  aspect-ratio: 468 / 419;
+  width: min(517.23px, 100%);
+  aspect-ratio: 517.23 / 474.93;
 }
 
 .canvas {
@@ -129,7 +150,23 @@
     justify-content: center;
   }
 
+  /* C4c: `0`, not `transform: none` — the strip straightens by telling
+     `useCanvas` to stop tilting the bitmap, same mechanism as the 7.28° above,
+     never a `transform` here again (the two would compound to 14.56°, per
+     C4c's own warning). The boxes below shrink back to the strip's *real*
+     size: unrotated, the envelope and the strip are the same box. */
   .strip {
-    transform: none;
+    --strip-rotation: 0;
+  }
+
+  .stripClassic {
+    width: min(205px, 100%);
+    aspect-ratio: 218 / 637;
+  }
+
+  .stripWide,
+  .stripSpotlight {
+    width: min(468px, 100%);
+    aspect-ratio: 468 / 419;
   }
 }
