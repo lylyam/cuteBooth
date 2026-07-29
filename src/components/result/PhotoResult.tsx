@@ -35,7 +35,7 @@ const STRIP_LAYOUT_CLASS: Record<LayoutId, string> = {
 function PhotoResult({ title, subtitle, actions }: PhotoResultProps) {
   const { state } = usePhotoBooth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { draw } = useCanvas(canvasRef);
+  const { draw } = useCanvas(canvasRef, { rotation: 'css' });
 
   // `state` is a new object on every dispatch, so this repaints whenever the photos,
   // frame, background or stickers change, and on nothing else.
