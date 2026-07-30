@@ -23,6 +23,8 @@ descarga la imagen compuesta. React 19 + TypeScript + Vite 8 + CSS Modules.
 | 1   | `CLAUDE.md`                              | Reglas del repo. Se carga solo en todos los agentes              |
 | 2   | [../ARCHITECTURE.md](../ARCHITECTURE.md) | Capas, flujo definitivo, deudas conocidas                        |
 | 3   | [DAG.md](DAG.md)                         | Qué hacer ahora y qué bloquea a qué                              |
+| 3b  | [LECCIONES.md](LECCIONES.md)             | Trampas que ya costaron tiempo. **Antes de tocar código**        |
+| 3c  | [HANDOFF.md](HANDOFF.md)                 | **Solo si orquestas.** Lo que sabía el anterior y no escribió    |
 | 4   | [PLAN.md](PLAN.md)                       | Qué agente es dueño de qué                                       |
 | 5   | `../contracts/*.md`                      | Solo el contrato que te toque                                    |
 | 6   | `../../specs/*.md`                       | Solo el spec de tu pantalla: copy literal, aceptación, supuestos |

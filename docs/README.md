@@ -10,6 +10,7 @@ agente necesita saber para trabajar aquí está en `docs/` o en `CLAUDE.md`.
 | **[orchestration/KICKOFF.md](orchestration/KICKOFF.md)** | **Empieza aquí.** Briefing autosuficiente: estado, reglas, primer nodo, decisiones abiertas | Quien retoma el proyecto                     |
 | [ARCHITECTURE.md](ARCHITECTURE.md)                       | Arquitectura **real** del repo: capas, convenciones, deuda, divergencias con el diseño      | Todos                                        |
 | [orchestration/PLAN.md](orchestration/PLAN.md)           | Flota de agentes: roles, MCP, propiedad de ficheros, flujos                                 | Orquestador                                  |
+| [orchestration/HANDOFF.md](orchestration/HANDOFF.md)     | Relevo: lo que el orquestador saliente sabía y no estaba escrito. **Caduca**                | orquestador                                  |
 | [orchestration/LECCIONES.md](orchestration/LECCIONES.md) | Trampas que ya costaron tiempo. **Léelo antes de tocar código**                             | todos                                        |
 | [orchestration/DAG.md](orchestration/DAG.md)             | Grafo de trabajo, camino crítico y estado de cada nodo                                      | Orquestador                                  |
 | [orchestration/SETUP.md](orchestration/SETUP.md)         | Qué debe existir en el repo _antes_ de orquestar agentes                                    | Orquestador                                  |

@@ -16,6 +16,7 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Figma file key, node IDs, usage rules       | [docs/design/FIGMA.md](docs/design/FIGMA.md)                       |
 | Contracts between layers                    | `docs/contracts/{state,layouts,design-tokens,assets}.md`           |
 | **Traps that already cost time here**       | [docs/orchestration/LECCIONES.md](docs/orchestration/LECCIONES.md) |
+| Taking over orchestration? Read this too    | [docs/orchestration/HANDOFF.md](docs/orchestration/HANDOFF.md)     |
 | Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`                 |
 
 **Nineteen product decisions are CLOSED** in
@@ -70,8 +71,7 @@ photo holes as **closed filled paths**, which is what makes shaped clipping poss
 `services/` **does not exist** — it was an untracked empty folder, so git never carried it.
 C6 creates it. Nothing is broken.
 
-**`booth-reviewer` was never created**, so no screen has been through review and the `R*`
-nodes are blocked. Five screens are waiting.
+**`booth-reviewer` was never created**, so no screen has been reviewed and the `R*` nodes are blocked.
 
 **All user-facing text is in English**, including `alt` attributes. The project docs are
 in Spanish; the product is not.
