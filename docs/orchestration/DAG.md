@@ -1,10 +1,15 @@
 # DAG de trabajo
 
 > Estado vivo. Se actualiza al cerrar cada nodo.
-> Última revisión: 2026-07-27. **Veinticuatro nodos cerrados**: S1, S2, S3, C1, C2, C3, C4,
-> C7, C2b, D1, D3-D7, D9b, U2, U4, U5, X1 — y `/upload`, `/review` y `/final` dadas de alta en
-> `App.tsx`. Quedan **C5, C6, D2, D3b, U1, U3** y las revisiones.
-> Lo que sigue abierto está en §9.
+> Última revisión: **2026-07-29**. **Veinticuatro nodos cerrados**: S1, S2, S3, C1, C2, C2b,
+> C3, C4, C4b, C4c, C7, D1, D3-D7, D9b, D9c, D9d, U2, U4, U5, X1 — y `/upload`, `/review` y
+> `/final` dadas de alta en `App.tsx`.
+>
+> **Quedan cinco nodos: C5, C6, D3b, U1, U3.** Más `D2` (Code Connect, opcional) y las
+> revisiones `R*`, que están 🔴 porque `booth-reviewer` nunca se creó.
+>
+> Lo que sigue abierto está en **§9**. Las trampas que ya costaron tiempo, en
+> [LECCIONES.md](LECCIONES.md).
 
 ## 1. Por qué un DAG y no una lista de tareas
 
@@ -130,6 +135,7 @@ graph LR
 | **D1**  | Delta de tokens **code-first**                                 | `figma-design-sync` | —                    | `Button.module.css` · §4 de `contracts/design-tokens.md`                 | T1 y T2 resueltos. **T3 y §4 se cobran en el lote D3-D7**, por instrucción del propio contrato: sin las cinco pantallas no hay evidencia. Cero llamadas a Figma gastadas aquí                                                                                    | ✅     |
 | **D2**  | Code Connect de los 5 componentes                              | `figma-design-sync` | D1                   | `*.figma.ts`                                                             | `get_design_context` devuelve `<Button>`, no `<div>`                                                                                                                                                                                                             | ⬜     |
 | **D3**  | CSS CameraPage · nodo `91:954`                                 | `figma-design-sync` | D1                   | `CameraPage.module.css`                                                  | **Lote único D3-D7**, ver §6                                                                                                                                                                                                                                     | ✅     |
+| **D3b** | Tipografía y color de la cuenta atrás · nodo `2084:47`         | `figma-design-sync` | D3                   | `CameraPage.module.css`, quizá un token                                  | Frame aportado por la propietaria el 2026-07-27. **Bloquea U1**: hoy `.countdown` es un supuesto de D3 sin respaldo de diseño                                                                                                                                    | ⬜     |
 | **D4**  | CSS UploadPage · nodos `91:1168`, `91:1202`, `91:1223`         | `figma-design-sync` | D1                   | `UploadPage.module.css`                                                  | No son 3 estados: son los 3 layouts                                                                                                                                                                                                                              | ✅     |
 | **D5**  | CSS DecorationPage · nodo `102:319`                            | `figma-design-sync` | D1                   | `DecorationPage.module.css`                                              | **Desbloqueado el 2026-07-26.** `103:382` es duplicado exacto: ignorarlo. Un solo panel + preview + botones sirve a los **tres pasos**; los pasos 2 y 3 no están dibujados y usan esa plantilla. Ver [../../specs/decoration.md](../../specs/decoration.md)      | ✅     |
 | **D6**  | CSS FinalPage · nodo `2074:52`                                 | `figma-design-sync` | D1, D7               | `FinalPage.module.css`                                                   | Idéntica a D7: reutilizar, no rehacer                                                                                                                                                                                                                            | ✅     |
@@ -147,8 +153,8 @@ graph LR
 | **U5**  | **SelectedPicturesPage `/review`**                             | `ui-composer`       | S1,S3,C4,D7          | página + `components/result/PhotoResult.tsx`                             | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md)                                                                                                                                                              | ✅     |
 | **U3**  | DecorationPage `/decoration`                                   | `ui-composer`       | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/`                                        | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md)                                                                                                         | ⬜     |
 | **U4**  | FinalPage `/final`                                             | `ui-composer`       | S1,S3,C4,D6,**U5**   | página                                                                   | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md)                                                                                                                                                                         | ✅     |
-| **R\*** | Revisión por pantalla                                          | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural                                                                                                                                                                                                                  | ⬜     |
-| **O\*** | Alta de ruta + commit                                          | orquestador         | R* correspondiente   | `App.tsx`                                                                | Sin imports muertos                                                                                                                                                                                                                                              | ⬜     |
+| **R\*** | Revisión por pantalla                                          | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural. **🔴 `booth-reviewer` NO EXISTE** — cinco pantallas construidas y ninguna revisada                                                                                                                              | 🔴     |
+| **O\*** | Alta de ruta + commit                                          | orquestador         | R* correspondiente   | `App.tsx`                                                                | `/upload`, `/review` y `/final` dadas de alta el 2026-07-28 **saltándose R\***, porque no hay revisor. Faltan `/camera` y `/decoration`                                                                                                                          | 🟡     |
 
 ### 4.1 · Ola 1-2 cerrada, y el camino crítico se para en X1 (2026-07-26)
 

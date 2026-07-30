@@ -55,15 +55,15 @@ si algún día divergen las dos pantallas, divergen sus props, no el componente.
 
 ## Criterio de aceptación
 
-- [ ] Se ven las 4 fotos en el layout elegido, en el orden en que se capturaron
-- [ ] La tira se ve nítida en pantalla retina (`devicePixelRatio`), no borrosa
-- [ ] `Retake photos` con `source === 'camera'` va a `/camera`; con `'upload'`, a
+- [x] Se ven las 4 fotos en el layout elegido, en el orden en que se capturaron
+- [x] La tira se ve nítida en pantalla retina (`devicePixelRatio`), no borrosa
+- [x] `Retake photos` con `source === 'camera'` va a `/camera`; con `'upload'`, a
       `/upload`. Nunca a `/layout` ni a `/`
-- [ ] Tras `Retake photos`, `selectedLayout` sigue puesto y no se pide otra vez
-- [ ] `Start decorating` va a `/decoration`
-- [ ] `PhotoResult` no contiene ningún literal de copy de esta pantalla
-- [ ] Entrar en frío redirige a `/`
-- [ ] `npm run build` y `npm run lint` limpios
+- [x] Tras `Retake photos`, `selectedLayout` sigue puesto y no se pide otra vez
+- [x] `Start decorating` va a `/decoration`
+- [x] `PhotoResult` no contiene ningún literal de copy de esta pantalla
+- [x] Entrar en frío redirige a `/`
+- [x] `npm run build` y `npm run lint` limpios
 
 ## Fuera de alcance
 
@@ -81,3 +81,5 @@ Repetir **una** foto suelta: se repiten las cuatro. Descargar (es `/final`). Dec
 ## Nodo Figma
 
 `91:1346` — https://www.figma.com/design/df7hAve66qYTKiNz0UXE1E/cuteBooth--Copy-?node-id=91-1346
+
+**Nodo U5 cerrado.** Verificado el 2026-07-28. Aquí salió el bug de la carrera de `startTransition` — ver [../docs/orchestration/LECCIONES.md](../docs/orchestration/LECCIONES.md) §4.

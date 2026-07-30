@@ -8,16 +8,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 [docs/orchestration/KICKOFF.md](docs/orchestration/KICKOFF.md)** — self-contained
 briefing: current state, non-negotiable rules, first node, open decisions.
 
-| Need                                        | Read                                                     |
-| ------------------------------------------- | -------------------------------------------------------- |
-| The real architecture, layers, known debt   | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)             |
-| Which agent owns what, workflows, MCP usage | [docs/orchestration/PLAN.md](docs/orchestration/PLAN.md) |
-| What to work on next, what's blocking what  | [docs/orchestration/DAG.md](docs/orchestration/DAG.md)   |
-| Figma file key, node IDs, usage rules       | [docs/design/FIGMA.md](docs/design/FIGMA.md)             |
-| Contracts between layers                    | `docs/contracts/{state,layouts,design-tokens,assets}.md` |
-| Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`       |
+| Need                                        | Read                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------ |
+| The real architecture, layers, known debt   | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                       |
+| Which agent owns what, workflows, MCP usage | [docs/orchestration/PLAN.md](docs/orchestration/PLAN.md)           |
+| What to work on next, what's blocking what  | [docs/orchestration/DAG.md](docs/orchestration/DAG.md)             |
+| Figma file key, node IDs, usage rules       | [docs/design/FIGMA.md](docs/design/FIGMA.md)                       |
+| Contracts between layers                    | `docs/contracts/{state,layouts,design-tokens,assets}.md`           |
+| **Traps that already cost time here**       | [docs/orchestration/LECCIONES.md](docs/orchestration/LECCIONES.md) |
+| Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`                 |
 
-**Seventeen product decisions are CLOSED** in
+**Nineteen product decisions are CLOSED** in
 [KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them, and don't invent
 geometry or copy — if a datum is missing, report and ask. What is still **open** is
 tracked in [DAG.md](docs/orchestration/DAG.md) §9.
@@ -49,22 +50,28 @@ CuteBooth — a browser-based photobooth web app (React + TypeScript + Vite). Us
 photo layout, capture or upload 4 photos, review the strip, decorate it in three steps
 (frame, background, stickers), and download the composited image.
 
-**Six routes**, of which two are built. `/` and `/layout` work. The other five have
-**their CSS already written** (batch D3-D7) but **no `.tsx`**: `/camera`, `/upload`,
-`/decoration` and `/final` are 0-byte stubs with their routes commented out in
-`src/App.tsx`, and `/review` has a folder with only a `.module.css` in it. The `U*` nodes
-write the TSX.
+**Six routes, five of them built and clickable.** `/` → `/layout` → `/upload` →
+`/review` → `/final` works end to end in the browser. Only **`/camera` and
+`/decoration`** are still 0-byte `.tsx` stubs with their routes commented out in
+`src/App.tsx` — nodes **U1** and **U3**.
+
+Their CSS is **already written** (batch D3-D7), so building them means writing TSX
+against existing classes, not designing screens. The structure of each is cached in
+`docs/design/<screen>.md`.
 
 `src/assets/` is **not** empty: 343 art files — see
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
 photo holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-**The foundation is done** (S1, S2, S3, C1, C2, D1, D3-D7, X1): state, geometry, route
-guards, image and canvas utils, asset manifests and every screen's CSS. What is left is
-the hooks (C3-C6), the `Loading` component (C7), and the five pages.
+**24 nodes are closed.** What remains is exactly five: **C5** (sticker dragging), **C6**
+(persistence), **D3b** (the countdown's typography), **U1** (`/camera`) and **U3**
+(`/decoration`). Full table in [DAG.md](docs/orchestration/DAG.md).
 
 `services/` **does not exist** — it was an untracked empty folder, so git never carried it.
 C6 creates it. Nothing is broken.
+
+**`booth-reviewer` was never created**, so no screen has been through review and the `R*`
+nodes are blocked. Five screens are waiting.
 
 **All user-facing text is in English**, including `alt` attributes. The project docs are
 in Spanish; the product is not.
@@ -105,21 +112,20 @@ looking, and don't fix it as a side errand: it changes imports everywhere.
 
 ## Stack notes
 
-- **Vite 8**, which bundles via Rolldown. The React Compiler is wired in manually as a Babel plugin rather than through `babel-plugin-react-compiler`'s usual Vite integration — see `vite.config.ts`: `babel({ presets: [reactCompilerPreset()] })` from `@rolldown/plugin-babel`. Don't "simplify" this to a standard `vite-plugin-react-compiler` setup without checking it still works with Rolldown.
-- **TypeScript** is project-referenced: root `tsconfig.json` references `tsconfig.app.json` (src, DOM libs) and `tsconfig.node.json` (vite.config.ts, node libs). `npm run build` runs `tsc -b` across both before `vite build`.
-- **React Router v7** (`react-router-dom`) with `BrowserRouter` — routes are declared directly in `src/App.tsx`.
-- No global state library — global state is a `useReducer` in Context with 6 fields and 11
-  actions, delivered in node S1. Contract:
-  [docs/contracts/state.md](docs/contracts/state.md).
-- CSS Modules per component/page (`X.module.css` next to `X.tsx`), no Tailwind/styled-components.
+- **Vite 8** (Rolldown). The React Compiler is wired manually as a Babel preset in `vite.config.ts` via `@rolldown/plugin-babel` — don't "simplify" it to `vite-plugin-react-compiler` without checking it still works with Rolldown.
+- **TypeScript** is project-referenced; `npm run build` runs `tsc -b` across both configs before `vite build`.
+- **React Router v7** with `BrowserRouter`. ⚠️ It wraps its navigations in `startTransition` — see LECCIONES §4 before dispatching-and-navigating in one handler.
+- No global state library: a `useReducer` in Context, 6 fields, 11 actions. Contract: [docs/contracts/state.md](docs/contracts/state.md).
+- CSS Modules per component/page, no Tailwind/styled-components.
 
 ## Architecture
 
 Layer-based structure under `src/`:
 
-- `pages/<name>Page/` — one folder per route/screen, each with `<Name>Page.tsx` + `<Name>Page.module.css`.
-- `components/ui/` — small generic/reusable pieces (`Button`, `Card`, `Modal`), each self-contained with its own `.module.css`.
-- `components/layouts/` — page chrome: `PageShell` (outer page wrapper + `AppFooter`) and `WebAppOldStyle` (the retro "window" chrome with a title bar/logo/close button used to frame page content — see `LayoutPage.tsx` for the pattern).
+- `pages/<name>Page/` — one folder per route, each with `<Name>Page.tsx` + `.module.css`.
+- `components/ui/` — `Button`, `Card`, `Modal`, `Loading`, each with its own `.module.css`.
+- `components/layouts/` — page chrome: `PageShell` (+ `AppFooter`) and `WebAppOldStyle` (the retro window; its width is `--window-max-width` and it must measure the same on every screen).
+- `components/result/PhotoResult.tsx` — **shared by `/review` and `/final`**. Three props, zero copy literals inside. `/final` consumes it unmodified; keep it that way.
 - `context/PhotoBoothContext.tsx` — the one global state container, exposing
   `usePhotoBooth()`, which returns `{ state, dispatch }` and throws outside the provider.
   6 fields, 11 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
@@ -153,26 +159,20 @@ Every page wraps its content in `PageShell`, and content that should look like t
 
 Look at `src/pages/layoutPage/LayoutPage.tsx` as the reference implementation of this pattern (card grid + modal + navigation + context write) before adding a new page.
 
-### Intended full flow (not all built yet)
+### The flow
 
-```
-HomePage (/) → LayoutPage (/layout, pick 1 of 3 layouts)
-  → modal choice: CameraPage (/camera) or UploadPage (/upload), each producing 4 photos
-  → SelectedPicturesPage (/review): keep the strip, or retake the four photos
-  → DecorationPage (/decoration): THREE steps in one route — frame, background, stickers
-  → FinalPage (/final): download the PNG, or retake
-```
+Six routes: `/` → `/layout` → (`/camera` | `/upload`) → `/review` → `/decoration` →
+`/final`. Diagram and detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §9.
 
-`/review` and `/final` share one `PhotoResult` component: in Figma the two screens are
-structurally identical and only the copy and buttons change.
+`/decoration` is **one route with an internal step** (frame → background → stickers), not
+three routes. The step is local `useState`; it never goes into global state or the URL.
 
-`/decoration` is **one route with an internal step**, not three routes. The step is local
-`useState`; it never goes into global state or the URL.
+`/review` and `/final` share `PhotoResult`: in Figma the two screens are structurally
+identical and only the copy and buttons change.
 
-The four commented-out routes in `App.tsx` get uncommented as each page is built — and
-**only the orchestrator edits `App.tsx`**. Don't leave dead imports.
+**Only the orchestrator edits `src/App.tsx`.** Don't leave dead imports.
 
-### Layer dependency rule
+## Layer dependency rule
 
 ```
 pages → components → hooks → context/services → utils/constants/assets

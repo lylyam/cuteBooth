@@ -48,15 +48,15 @@ pueden rehidratar de todas formas.
 
 ## Criterio de aceptación
 
-- [ ] La tira dibujada es la del layout elegido, con sus 4 huecos en su posición
-- [ ] Clic en un hueco abre el selector; la foto aparece en ese hueco y no en otro
-- [ ] Clic en un hueco lleno reemplaza solo esa foto
-- [ ] `Continue` está visible y deshabilitado desde el primer render, y se habilita
+- [x] La tira dibujada es la del layout elegido, con sus 4 huecos en su posición
+- [x] Clic en un hueco abre el selector; la foto aparece en ese hueco y no en otro
+- [x] Clic en un hueco lleno reemplaza solo esa foto
+- [x] `Continue` está visible y deshabilitado desde el primer render, y se habilita
       exactamente con la cuarta foto
-- [ ] Un archivo que no es imagen se rechaza con mensaje y **no** ocupa el hueco
-- [ ] Una foto de 12 MP no congela la pestaña: se redimensiona antes de guardarla
-- [ ] Entrar en frío a `/upload` redirige a `/`
-- [ ] `npm run build` y `npm run lint` limpios
+- [x] Un archivo que no es imagen se rechaza con mensaje y **no** ocupa el hueco
+- [x] Una foto de 12 MP no congela la pestaña: se redimensiona antes de guardarla
+- [x] Entrar en frío a `/upload` redirige a `/`
+- [x] `npm run build` y `npm run lint` limpios
 
 ## Fuera de alcance
 
@@ -84,3 +84,5 @@ Los tres layouts, no tres estados:
 | `spotlight` | `91:1223` |
 
 https://www.figma.com/design/df7hAve66qYTKiNz0UXE1E/cuteBooth--Copy-?node-id=91-1168
+
+**Nodo U2 cerrado.** Verificado el 2026-07-28 con clics reales y `DOM.setFileInputFiles` en Chrome, más el recorrido completo en la app real.

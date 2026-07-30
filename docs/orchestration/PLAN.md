@@ -1,6 +1,6 @@
 # Plan de orquestación de agentes
 
-> Estado vivo. Revisado el 2026-07-27.
+> Estado vivo. Revisado el 2026-07-29.
 > El grafo de trabajo y su estado están en [DAG.md](DAG.md).
 > Los prerrequisitos del repositorio están en [SETUP.md](SETUP.md).
 
@@ -25,15 +25,15 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 
 ## 2. La flota
 
-| #   | Agente               | Rol                              | Modelo        | MCP                    | Fase           |
-| --- | -------------------- | -------------------------------- | ------------- | ---------------------- | -------------- |
-| —   | **Sesión principal** | **Orquestador**                  | Opus          | —                      | siempre        |
-| 1   | `booth-state`        | Estado, tipos, contratos         | Sonnet        | —                      | 1              |
-| 2   | `figma-design-sync`  | Diseño → CSS                     | Sonnet (high) | Figma (lectura)        | 1              |
-| 3   | `canvas-media`       | Cámara, canvas, hooks            | Opus          | —                      | 1              |
-| 4   | `booth-reviewer`     | Puerta de calidad (solo lectura) | Sonnet (high) | Figma `get_screenshot` | 2              |
-| 5   | `ui-composer`        | Páginas y componentes            | Sonnet        | —                      | 2              |
-| 6   | ~~`asset-pipeline`~~ | ~~Manifiestos de assets~~        | —             | —                      | **no se creó** |
+| #   | Agente               | Rol                              | Modelo        | MCP                    | Fase              |
+| --- | -------------------- | -------------------------------- | ------------- | ---------------------- | ----------------- |
+| —   | **Sesión principal** | **Orquestador**                  | Opus          | —                      | siempre           |
+| 1   | `booth-state`        | Estado, tipos, contratos         | Sonnet        | —                      | 1                 |
+| 2   | `figma-design-sync`  | Diseño → CSS                     | Sonnet (high) | Figma (lectura)        | 1                 |
+| 3   | `canvas-media`       | Cámara, canvas, hooks            | Opus          | —                      | 1                 |
+| 4   | `booth-reviewer`     | Puerta de calidad (solo lectura) | Sonnet (high) | Figma `get_screenshot` | 2 · **SIN CREAR** |
+| 5   | `ui-composer`        | Páginas y componentes            | Sonnet        | —                      | 2 · ✅ 2026-07-28 |
+| 6   | ~~`asset-pipeline`~~ | ~~Manifiestos de assets~~        | —             | —                      | **no se creó**    |
 
 ### 1 · `booth-state` — dueño del contrato de estado
 
@@ -56,7 +56,7 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 - ⚠️ **El fichero de Figma no tiene variables** (`get_variable_defs` → `{}`) y es
   de **wireframes**, no de alta fidelidad. Por tanto **el código es la fuente de
   verdad de los tokens**, no Figma. Este agente mapea valores crudos contra las 21
-  custom properties existentes (hoy **23**) y _propone_ tokens nuevos solo cuando ninguno
+  custom properties existentes (hoy **24**) y _propone_ tokens nuevos solo cuando ninguno
   encaja — nunca los crea a escondidas. Ver [../design/FIGMA.md](../design/FIGMA.md).
 - **Contexto.** `docs/design/FIGMA.md` (node IDs y reglas de uso),
   `docs/contracts/design-tokens.md`, `index.css`, los `.module.css` existentes.
@@ -102,8 +102,11 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
   existente. Consume hooks de `canvas-media`, clases de `figma-design-sync` y
   acciones de `booth-state`. **No escribe lógica imperativa ni CSS de Figma.**
 - **Contexto.** `LayoutPage.tsx` como referencia + los tres contratos + el spec
-  de la pantalla.
+  de la pantalla + la estructura cacheada en `docs/design/<pantalla>.md`.
 - **Entrega.** Ficheros creados y acciones del reducer cableadas.
+- **Creado el 2026-07-28**, y ya cerró C7, U2, U4 y U5. Ficha completa en
+  `.claude/agents/ui-composer.md`, que lleva dentro las cuatro piezas que debe reunir
+  antes de teclear y las prohibiciones que le van a tentar.
 
 ### 6 · ~~`asset-pipeline`~~ — nunca se creó, y está bien así
 

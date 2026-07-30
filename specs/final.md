@@ -58,14 +58,14 @@ semántica que el `Retake photos` de `/review`, y por eso comparten acción.
 
 ## Criterio de aceptación
 
-- [ ] Se ve la tira **con la decoración aplicada**, no la cruda
-- [ ] `Download` baja un PNG al tamaño de `layouts.ts`, no al tamaño en pantalla
-- [ ] El PNG incluye recorte de frame, fondo y pegatinas en su sitio
-- [ ] Descargar dos veces seguidas funciona y no fuga object URLs
-- [ ] `Retake` vuelve al origen correcto según `source` y **mantiene** la decoración
-- [ ] `PhotoResult` se reutiliza sin cambiarlo: solo cambian props
-- [ ] Entrar en frío redirige a `/`
-- [ ] `npm run build` y `npm run lint` limpios
+- [x] Se ve la tira **con la decoración aplicada**, no la cruda
+- [x] `Download` baja un PNG al tamaño de `layouts.ts`, no al tamaño en pantalla
+- [x] El PNG incluye recorte de frame, fondo y pegatinas en su sitio
+- [x] Descargar dos veces seguidas funciona y no fuga object URLs
+- [x] `Retake` vuelve al origen correcto según `source` y **mantiene** la decoración
+- [x] `PhotoResult` se reutiliza sin cambiarlo: solo cambian props
+- [x] Entrar en frío redirige a `/`
+- [x] `npm run build` y `npm run lint` limpios
 
 ## Fuera de alcance
 
@@ -86,3 +86,5 @@ calidad. Volver a `/decoration` a retocar. Galería de tiras anteriores.
 Estructuralmente idéntico a `91:1346` (`/review`): mismos textos, mismo bloque de 4
 huecos; solo cambian los anchos de los botones (98/81 frente a 140/150). De ahí que
 `PhotoResult` sea uno y no dos.
+
+**Nodo U4 cerrado.** Verificado el 2026-07-28. `PhotoResult` se reutilizó **sin tocarlo**, que era el criterio que decidía si U5 hizo bien su trabajo.

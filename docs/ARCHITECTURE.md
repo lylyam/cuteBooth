@@ -1,7 +1,7 @@
 # Arquitectura real de CuteBooth
 
 > Este documento describe **lo que hay**, no lo que se planeó. Verificado contra
-> `src/` el 2026-07-26. Si el código y este documento discrepan, el código gana y
+> `src/` el 2026-07-29. Si el código y este documento discrepan, el código gana y
 > este documento se corrige.
 
 ## 1. Qué es
@@ -17,7 +17,7 @@ en tres pasos (recorte, fondo, pegatinas) y descarga una imagen compuesta.
   preset de Babel en `vite.config.ts` vía `@rolldown/plugin-babel`. **No migrar** a
   la integración estándar sin comprobar que sigue funcionando con Rolldown.
 - **React Router v7**, `BrowserRouter`, rutas declaradas en `src/App.tsx`
-- **CSS Modules** (`X.module.css` junto a `X.tsx`) + 23 custom properties en `:root`.
+- **CSS Modules** (`X.module.css` junto a `X.tsx`) + 24 custom properties en `:root`.
   Sin Tailwind, sin styled-components, sin librería de UI.
 - **Sin librería de estado global.** Context API.
 - **Sin runner de tests.** No hay Vitest, ni Jest, ni Testing Library.
@@ -52,51 +52,59 @@ Corolarios prácticos:
 
 ## 4. Estructura actual
 
+Verificada contra el disco el 2026-07-29.
+
 ```
 src/
-├── App.tsx                    ← registro de rutas (2 activas, 4 comentadas · /review sin dar de alta)
+├── App.tsx                    ← rutas: 5 activas, 2 comentadas (/camera, /decoration)
 ├── main.tsx
-├── index.css                  ← reset + 23 custom properties en :root
-├── assets/
-│   ├── draws/                 ← layoutIcon1..3.svg, en uso
-│   ├── frames/{classic,wide,spotlight}/  ← 8 SVG cada uno + carpeta de menú sin usar
-│   ├── backgrounds/{classic,wide-and-spotlight}/  ← 25 + 21 PNG
-│   └── stickers/{3dStyle,drawStyle,feltStyle,pixelStyle}/  ← 273 PNG
+├── index.css                  ← reset + 24 custom properties en :root
+├── assets/                    ← 343 ficheros de arte
+│   ├── draws/                            layoutIcon1..3.svg
+│   ├── frames/{classic,wide,spotlight}/  8 SVG cada uno · los huecos son paths RELLENOS
+│   ├── backgrounds/{classic,wide-and-spotlight}/   25 + 21 PNG
+│   └── stickers/{3dStyle,drawStyle,feltStyle,pixelStyle}/   273 PNG
 ├── components/
-│   ├── ui/                    ← Button, Card, Modal
+│   ├── ui/                    ← Button, Card, Modal, Loading
 │   ├── layouts/               ← PageShell, WebAppOldStyle, AppFooter
-│   └── result/                ← SOLO PhotoResult.module.css (D7) · el .tsx lo hace U5
+│   └── result/                ← PhotoResult · COMPARTIDO por /review y /final
 ├── context/
-│   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 11 acciones (S1)
+│   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 11 acciones
 ├── types/
-│   └── photobooth.ts          ← forma del estado + unión de acciones (S1)
+│   └── photobooth.ts          ← estado + unión de acciones · reexporta los ids de constants/
 ├── constants/
-│   ├── layouts.ts             ← LayoutId + geometría + LAYOUT_LIST (S2)
-│   └── {frames,backgrounds,stickers}.ts  ← manifiestos por import.meta.glob (X1)
+│   ├── layouts.ts             ← LayoutId, geometría, LAYOUT_LIST, EXPORT_SCALE
+│   └── {frames,backgrounds,stickers}.ts   ← manifiestos por import.meta.glob
 ├── utils/
-│   ├── imageUtils.ts          ← primitivas de imagen (C1)
-│   ├── canvasUtils.ts         ← composición de la tira (C2)
-│   ├── frameArtUtils.ts       ← SVG del marco → recortes + capa neutralizada (C2)
-│   ├── svgPathUtils.ts        ← parseo de path-data, sin DOM (C2)
-│   └── assetManifest.ts       ← fontanería común de los manifiestos (X1)
+│   ├── imageUtils.ts          ← cover-crop, File→dataURL, dataURL→Blob
+│   ├── canvasUtils.ts         ← compone la tira: fondo → fotos recortadas → marco → pegatinas
+│   ├── frameArtUtils.ts       ← SVG del marco → Path2D de huecos + capa neutralizada
+│   ├── svgPathUtils.ts        ← parseo de path-data con bbox exacta de béziers, sin DOM
+│   └── assetManifest.ts       ← fontanería común de los manifiestos
 ├── hooks/
-│   └── useRouteGuard.ts       ← guards de las 6 rutas (S3)
+│   ├── useRouteGuard.ts       ← guards de las 6 rutas
+│   ├── useCamera.ts           ← getUserMedia, cuenta atrás, se apaga al desmontar
+│   └── useCanvas.ts           ← draw/export/download · el último draw() gana
 └── pages/
-    ├── homePage/              ← implementada
-    ├── layoutPage/            ← implementada (referencia del patrón)
-    ├── reviewPage/            ← SOLO el .module.css (D7)
-    └── {camera,upload,decoration,final}Page/  ← .module.css escrito, .tsx de 0 bytes
+    ├── homePage/  layoutPage/  uploadPage/  reviewPage/  finalPage/   ← implementadas
+    └── cameraPage/ decorationPage/          ← .module.css escrito, .tsx de 0 BYTES
 ```
 
-**Tres cosas que sorprenden al mirar el árbol:**
+**`services/` no existe.** Era una carpeta vacía sin trackear y git nunca la llevó; la crea
+**C6**.
 
-1. **Las cinco pantallas pendientes ya tienen su CSS**, escrito en el lote D3-D7. Lo que
-   falta es el `.tsx`. Si vas a montar una página, **no escribas CSS**: léelo, ya está,
-   y las clases que expone están en `docs/design/<pantalla>.md`.
-2. **`services/` no existe.** Era una carpeta vacía sin trackear y git nunca la llevó; la
-   crea C6. `hooks/` sí existe ya, desde S3.
-3. **Las pegatinas ya no se llaman `icons/`.** X1 las renombró a `stickers/`, porque no
-   son iconos de UI y el nombre inducía a error. Ver [contracts/assets.md](contracts/assets.md).
+**Cuatro cosas que sorprenden al mirar el árbol:**
+
+1. **Los dos `.tsx` de 0 bytes tienen su CSS escrito.** Si montas `/camera` o
+   `/decoration`, **no escribas CSS**: está hecho, y las clases que expone cada uno están
+   cacheadas en `docs/design/<pantalla>.md`.
+2. **`utils/` pesa más que `pages/`**, y es correcto: la complejidad real de este proyecto
+   es la composición sobre canvas, no la maquetación.
+3. **`PhotoResult` lo comparten `/review` y `/final`.** Tres props y cero literales de copy
+   dentro. `/final` lo consume **sin modificarlo**, y eso hay que mantenerlo.
+4. **Los huecos de los marcos vienen con relleno `#222222`.** Es cómo se distinguen del
+   arte, y si se pinta el SVG tal cual encima tapan las fotos. Ver
+   [contracts/assets.md](contracts/assets.md).
 
 ## 5. Patrón de composición de página
 
@@ -118,7 +126,7 @@ Léela antes de crear cualquier página.
 
 ## 6. Estado global
 
-### Actual — S1 y S2 cerrados el 2026-07-26
+### Actual
 
 ```ts
 // context/PhotoBoothContext.tsx
@@ -136,25 +144,13 @@ expone setters de conveniencia: cada uno sería una segunda forma de mutar lo mi
 
 `LayoutId` ya **no** se define aquí — vive en `constants/layouts.ts` con la geometría.
 
-Los tres alias de manifiesto (`FrameId`, `StickerId`, `BackgroundId`) se declararon en S1
-como `string` con un `TODO(X1)`, a la espera de que X1 los estrechara.
+`FrameId`, `StickerId` y `BackgroundId` los define `constants/` y `types/photobooth.ts`
+los **reexporta** con `import type`, así que hay una sola definición de cada uno y los
+manifiestos no entran en el módulo del estado (deuda D9, cerrada el 2026-07-27).
 
-**X1 aterrizó y no los estrechó**: definió los suyos propios en `constants/`. Así que hoy
-hay **dos definiciones de cada uno** y el estado sigue usando la ancha, que es la deuda
-**D9** de §7. Es exactamente contra lo que avisa la regla 5 del contrato de estado.
-
-### Lo que quedó hecho
-
-Dos cambios, ambos propiedad de `booth-state`, **los dos ya aplicados**:
-
-1. **`square` → `spotlight`** (nodo S2 ✅). El nombre viejo mentía: ese layout es
-   apaisado con una foto destacada, no cuadrado. Ver
-   [contracts/layouts.md](contracts/layouts.md). Queda el renombrado de
-   `assets/frames/square/` → `spotlight/`, hecho en X1.
-2. **`useState` → `useReducer`** (nodo S1 ✅). Contrato en
-   [contracts/state.md](contracts/state.md). Motivo: `photos`, `frame`, `background` y
-   `stickers` se actualizan de forma relacionada y desde páginas y pasos distintos; con
-   `useState` sueltos, cada uno inventaría su forma de mutarlos.
+**`frame: null` NO significa «sin marco»**, significa «el usuario no ha elegido todavía»:
+la composición dibuja el rectangular simple del layout. **No existe ningún valor que
+signifique «tira sin marco»** — decisión de la propietaria, cerrada.
 
 **No** introducir Zustand ni Redux. Seis campos y once acciones no lo justifican.
 Contrato completo — forma, acciones, guards, persistencia — en

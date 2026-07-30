@@ -2,9 +2,9 @@
 
 > **Empieza aquí.** Punto de entrada para cualquier agente o persona que retome
 > CuteBooth. Autosuficiente.
-> Estado a 2026-07-27. **Los cimientos están construidos**: estado, geometría, guards,
-> utilidades de imagen y canvas, manifiestos de assets y el CSS de las cinco pantallas.
-> Falta la cámara, los hooks que envuelven el canvas, y las cinco páginas `.tsx`.
+> Estado a 2026-07-29. **24 nodos cerrados y el producto casi entero.** Se recorre
+> `/` → `/layout` → `/upload` → `/review` → `/final` en el navegador. Faltan **dos
+> pantallas** (`/camera` y `/decoration`) y **cinco nodos**. Detalle en §6.
 
 ## 1. Qué es CuteBooth
 
@@ -12,13 +12,9 @@ Photobooth en navegador, 100 % cliente, sin backend. El usuario elige un layout,
 consigue 4 fotos (cámara o subida), las revisa, las decora con fondo y stickers, y
 descarga la imagen compuesta. React 19 + TypeScript + Vite 8 + CSS Modules.
 
-**Estado real:** funcionan `/` y `/layout`. Las otras cinco pantallas **ya tienen su
-CSS** (lote D3-D7) pero **no su `.tsx`**: cuatro son ficheros de 0 bytes con la ruta
-comentada en `src/App.tsx`, y `/review` es una carpeta con solo un `.module.css`.
-
-Por debajo, en cambio, está casi todo: reducer de 6 campos y 11 acciones, geometría de
-los 3 layouts, guards de ruta, primitivas de imagen, **composición sobre canvas con
-recorte por la forma del hueco**, y los manifiestos de los 343 ficheros de arte.
+**Estado real:** funcionan `/`, `/layout`, `/upload`, `/review` y `/final`. Solo
+`/camera` y `/decoration` siguen siendo ficheros de 0 bytes con la ruta comentada en
+`src/App.tsx`. Tabla completa en §6.
 
 ## 2. Orden de lectura
 
@@ -92,52 +88,58 @@ El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.
 - **Ningún otro MCP.** Descartados con motivo en [PLAN.md](PLAN.md) §9.
 - **No hay tests.** No instales un runner sin acordarlo: es cambio de alcance.
 
-## 6. Lo que estaba abierto y ya no
+## 6. Qué está construido, y qué falta
 
-**La pantalla Decoration existe.** Estaba sin nombrar, y por eso no se encontraba: es
-`102:319`, hoy llamado "Decorarion" (con typo). `103:382` ("Decoration 2") es un
-**duplicado exacto** — conviene borrarlo antes de que alguien lo tome por otro estado.
+**24 nodos cerrados.** El producto se recorre de punta a punta salvo dos pantallas.
 
-Con eso, **D5, U3 y C5 quedan desbloqueados** y el camino crítico vuelve a ser uno.
-Lo que trajo de nuevo esa pantalla está en las decisiones 7-12 de §4 y en
-[../../specs/decoration.md](../../specs/decoration.md).
+| Ruta          | Estado                                                 |
+| ------------- | ------------------------------------------------------ |
+| `/`           | ✅ funciona                                            |
+| `/layout`     | ✅ funciona · elige layout y `source`                  |
+| `/upload`     | ✅ funciona · 4 huecos, cada uno abre el selector      |
+| `/review`     | ✅ funciona · la tira compuesta en canvas              |
+| `/final`      | ✅ funciona · descarga el PNG                          |
+| `/camera`     | ⬜ **`.tsx` de 0 bytes**, ruta comentada — nodo **U1** |
+| `/decoration` | ⬜ **`.tsx` de 0 bytes**, ruta comentada — nodo **U3** |
 
-**Y el arte llegó al repo.** 343 ficheros el 2026-07-26 — 24 marcos, 46 fondos, 273
-pegatinas. No hay que bajar nada de Figma. Trajo dos discrepancias, las dos ya cerradas
-como decisiones 13 y 14 de §4:
+Por debajo está **todo**: reducer de 6 campos y 11 acciones, geometría de los 3 layouts,
+guards, primitivas de imagen, composición sobre canvas con recorte por la forma del hueco,
+hook de cámara, hook de canvas, y los manifiestos de los 343 ficheros de arte.
 
-- La geometría de los huecos **no coincidía** entre el arte y el wireframe (10 px en
-  `classic`). Manda el arte, porque es lo que se dibuja encima de las fotos.
-- **Faltaba** saber qué muestra del menú era qué marco. Ya no hace falta: la muestra se
-  genera del propio marco.
+**Lo que queda, exactamente cinco nodos:**
 
-**No queda ninguna pregunta abierta.** La regla sigue en pie de todas formas: un agente
-**no** resuelve una laguna inventándose los números. Se pregunta.
+| Nodo    | Qué                             | Dueño               | Bloqueado por |
+| ------- | ------------------------------- | ------------------- | ------------- |
+| **C5**  | `useStickers` — arrastre        | `canvas-media`      | nada          |
+| **C6**  | `storageService` — persistencia | `canvas-media`      | nada          |
+| **D3b** | Tipografía de la cuenta atrás   | `figma-design-sync` | nada          |
+| **U1**  | `/camera`                       | `ui-composer`       | D3b           |
+| **U3**  | `/decoration`                   | `ui-composer`       | C5            |
 
-**Y DAG-0 no deja nada pendiente.** La pasada de Prettier se aplicó el 2026-07-26 y con
-ella cayó la deuda D5. El siguiente paso es el primer nodo de producto: **S2**.
+Más las revisiones (`R*`) y el alta de las dos rutas que faltan (`O*`).
 
-## 7. Por dónde se empieza
+### El muro que hay que decidir antes de llegar
 
-DAG-0 (preparación): **cerrado el 2026-07-26** — P1-P9 ✅. Los contratos están en
-`docs/contracts/`, los specs de las cinco pantallas en `specs/`, y la flota de fase 1
-en `.claude/agents/`.
+**`booth-reviewer` no existe.** Es el único agente de fase 2 que sigue sin crear, y es el
+que no se puede reasignar sin perder su sentido: **juzga código que no ha escrito**. Si lo
+revisa quien lo escribió, no es una revisión. Ya hay cinco pantallas construidas, así que
+hay material de sobra. Decidir con la propietaria: crearlo o renunciar a los nodos `R*`.
 
-**El primer nodo de producto es S2: `src/constants/layouts.ts`.**
+Ya pasó dos veces que un nodo llegó sin dueño (`asset-pipeline` en X1, `ui-composer` en las
+páginas). Las dos se resolvieron, pero costaron una ronda cada una.
 
-No es intuitivo, y por eso está escrito: un fichero de constantes de ~50 líneas es
-la **raíz del camino crítico**. El reducer (S1), que parecería lo primero, no lo es.
+## 7. Por dónde seguir
 
-```
-S2 → C2 canvasUtils → C4 useCanvas → U5 /review → U4 /final
-```
+El camino crítico original (`S2 → C2 → C4 → C5 → U3`) está transitado hasta **C4**. Lo que
+queda del camino es **C5 → U3**, y `U3` es la última pantalla del flujo.
 
-Contrato, geometría real y criterio de aceptación en
-[../contracts/layouts.md](../contracts/layouts.md). La geometría ya está extraída
-de Figma: no hay que inventar ni un número.
+Ola natural: **C5 + D3b**. La primera desbloquea `/decoration`; la segunda desbloquea
+`/camera` y no depende de nada. Después **U3 + U1**, y con eso el producto está completo.
 
-En paralelo con S2 se puede lanzar **D1** o **C1**. Máximo 2 agentes a la vez — el
-límite no es técnico, es el ancho de banda de quien revisa.
+`C6` (persistencia) cabe en cualquier hueco: no bloquea a nadie.
+
+**Antes de tocar nada, lee [LECCIONES.md](LECCIONES.md).** Son las trampas que ya costaron
+tiempo en este proyecto, y varias no se deducen del código.
 
 ## 8. Cómo reportar al terminar un nodo
 
