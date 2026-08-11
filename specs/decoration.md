@@ -110,6 +110,41 @@ preview la mueve (`MOVE_STICKER`), con la conversión px-CSS ↔ px-canvas de `u
 (C5) — la página **no** hace esa aritmética. El orden del array `stickers` es el orden de
 pintado: la última añadida va encima.
 
+### 3.1 · Borrar, y por qué sobresalir a medias es válido
+
+**Decisión 20, cerrada por la propietaria el 2026-08-11.** Arrastrar una pegatina fuera de
+la tira la borra (`REMOVE_STICKER`), **pero solo cuando sale completa**.
+
+El motivo es suyo y es el que fija el umbral: **si la pegatina sobresale solo a medias, eso
+es una decisión del usuario y se queda ahí, dibujada y cortada por el borde de la tira.**
+Media pegatina asomando es una composición legítima, no un borrado a medio hacer.
+
+En la práctica: se borra únicamente cuando la caja de agarre de 20×20 unidades **no
+intersecta en absoluto** con el rectángulo del lienzo. Cualquier solape, por pequeño que
+sea, conserva la pegatina. El recorte lo hace solo el propio canvas, que no dibuja fuera de
+sus límites.
+
+Importa porque no hay deshacer (está fuera de alcance): con el umbral en el centro, un
+arrastre torpe pierde una pegatina sin vuelta atrás.
+
+### 3.2 · Las pegatinas las pinta el CANVAS, no el DOM
+
+**Decisión 21, del orquestador el 2026-08-11**, al encontrar dos geometrías para lo mismo.
+
+`DecorationPage.module.css` (D5) trae `.stickerLayer` y `.sticker { width: 48px }`, una
+capa de _handles_ DOM sobre el canvas. Pero `canvasUtils` (C2) **ya pinta las pegatinas
+dentro del lienzo**, y 60 px de canvas son ~20 px CSS en un preview de 217 — no 48.
+
+**Manda el canvas.** `useStickers` (C5) solo hace hit-test contra coordenadas de canvas, y
+U3 **no** monta ninguna capa DOM de pegatinas. Dos motivos: una capa encima las dibujaría
+dos veces y con tamaños distintos, y el canvas es además lo que se descarga, así que es la
+única capa que no puede divergir de lo que se lleva el usuario.
+
+**`.stickerLayer` y `.sticker` quedan como CSS muerto.** Los retira `figma-design-sync` al
+construir U3 — no antes, para no borrar algo que C5 pudiera necesitar. Es un caso de manual
+de [../docs/orchestration/LECCIONES.md](../docs/orchestration/LECCIONES.md) §9: dos agentes
+en paralelo que no se vieron.
+
 ## Dependencias
 
 - **Estado:** S1 (`SET_FRAME` y los tres de sticker), guard S3.
@@ -144,8 +179,8 @@ Elegir un recorte distinto por hueco. Volver a `/decoration` desde `/final`.
 
 1. **Títulos de panel de los pasos 2 y 3** (`Backgrounds`, `Icons`) inventados; el único
    literal es `Frames`.
-2. **Borrar una pegatina:** arrastrarla fuera de la tira la elimina. No hay nada dibujado
-   para esto y `REMOVE_STICKER` existe en el contrato, así que hace falta un gesto.
+2. ~~**Borrar una pegatina:** arrastrarla fuera de la tira la elimina.~~ **Cerrado el
+   2026-08-11 — ya no es un supuesto, es la decisión 20.** Ver abajo.
 3. **La rejilla es de 2 columnas con scroll vertical**, como en el wireframe, donde está
    recortada por abajo.
 4. **El preview del wireframe es `classic`.** `wide` y `spotlight` usan su geometría.

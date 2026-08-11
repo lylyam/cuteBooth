@@ -6,7 +6,8 @@
 > `/final` dadas de alta en `App.tsx`.
 >
 > **Quedan cinco nodos: C5, C6, D3b, U1, U3.** Más `D2` (Code Connect, opcional) y las
-> revisiones `R*`, que están 🔴 porque `booth-reviewer` nunca se creó.
+> revisiones `R*`, **desbloqueadas el 2026-08-11** al crearse `booth-reviewer`: la flota
+> ya está completa y ningún nodo se queda sin dueño.
 >
 > Lo que sigue abierto está en **§9**. Las trampas que ya costaron tiempo, en
 > [LECCIONES.md](LECCIONES.md).
@@ -153,7 +154,7 @@ graph LR
 | **U5**  | **SelectedPicturesPage `/review`**                             | `ui-composer`       | S1,S3,C4,D7          | página + `components/result/PhotoResult.tsx`                             | **`PhotoResult` es compartido con U4.** Checklist en [../../specs/review.md](../../specs/review.md)                                                                                                                                                              | ✅     |
 | **U3**  | DecorationPage `/decoration`                                   | `ui-composer`       | S1,S3,C4,C5,C7,D5,X1 | página + `components/decoration/`                                        | **Una ruta, tres pasos** (Frames → Backgrounds → Icons) con el paso en estado local. Checklist en [../../specs/decoration.md](../../specs/decoration.md)                                                                                                         | ⬜     |
 | **U4**  | FinalPage `/final`                                             | `ui-composer`       | S1,S3,C4,D6,**U5**   | página                                                                   | Reutiliza `PhotoResult` de U5. Checklist en [../../specs/final.md](../../specs/final.md)                                                                                                                                                                         | ✅     |
-| **R\*** | Revisión por pantalla                                          | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural. **🔴 `booth-reviewer` NO EXISTE** — cinco pantallas construidas y ninguna revisada                                                                                                                              | 🔴     |
+| **R\*** | Revisión por pantalla                                          | `booth-reviewer`    | U* correspondiente   | hallazgos                                                                | Build, lint, capas, a11y, fidelidad estructural. **Desbloqueados el 2026-08-11**: el revisor ya existe. Quedan **cinco pantallas construidas y sin revisar** (`/`, `/layout`, `/upload`, `/review`, `/final`), más las dos que faltan                            | ⬜     |
 | **O\*** | Alta de ruta + commit                                          | orquestador         | R* correspondiente   | `App.tsx`                                                                | `/upload`, `/review` y `/final` dadas de alta el 2026-07-28 **saltándose R\***, porque no hay revisor. Faltan `/camera` y `/decoration`                                                                                                                          | 🟡     |
 
 ### 4.1 · Ola 1-2 cerrada, y el camino crítico se para en X1 (2026-07-26)
@@ -375,17 +376,21 @@ veces**. Arreglo: meter dispatch y navigate en el **mismo** `startTransition`.
 **`/final` (U4) tiene el mismo patrón** — `CLEAR_PHOTOS` y volver al origen, desde una ruta
 con el mismo guard `layoutAndPhotos`. Sin el mismo arreglo, tendrá el mismo bug.
 
-### El muro de la fase 2
+### ~~El muro de la fase 2~~ — resuelto el 2026-08-11
 
-**Detrás de los hooks no hay nadie.** Las cinco páginas (`U1`-`U5`), el componente
-`Loading` (`C7`) y toda la revisión (`R*`) pertenecen a `ui-composer` y `booth-reviewer`,
-y **ninguno de los dos existe** en `.claude/agents/` — son de fase 2 ([PLAN.md](PLAN.md)
-§11).
+Estuvo abierto desde el principio: `ui-composer` y `booth-reviewer` no existían, y entre
+los dos se repartían las cinco páginas, el componente `Loading` y toda la revisión.
 
-Ya pasó una vez con `asset-pipeline` en X1, y se resolvió reasignando el nodo a quien lo
-consumía. Conviene decidirlo **antes** de cerrar C3-C6, no al llegar:
+- **`ui-composer`, creado el 2026-07-28.** Cerró C7, U2, U4 y U5.
+- **`booth-reviewer`, creado el 2026-08-11.** Decidido por la propietaria al proponerle la
+  ola C5 + D3b. Se creó **antes** de necesitarlo, y a propósito: el registro de agentes no
+  se recarga en caliente, así que crearlo el día que hiciera falta habría costado una
+  sesión entera de espera.
 
-- crear los dos agentes de fase 2, o
-- reasignar como se hizo con X1, sabiendo que `booth-reviewer` es el único que no se puede
-  reasignar sin perder su razón de ser: **juzga código que no ha escrito**. Si lo revisa
-  quien lo escribió, no es una revisión.
+**La flota está completa** y ningún nodo del DAG se queda sin dueño. La lección, que ya
+había costado dos rondas (`asset-pipeline` en X1, `ui-composer` en las páginas): **un nodo
+sin agente no es un problema de planificación, es un bloqueo silencioso**. Comprobar el
+dueño al calcular el conjunto listo, no al despachar.
+
+Lo que **no** se resuelve creando el agente: las cinco pantallas construidas siguen sin
+revisar. La deuda existe, ahora tiene quien la pague.

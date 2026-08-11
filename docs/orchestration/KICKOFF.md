@@ -51,7 +51,8 @@ No leas `Analisis/`. Ver regla 3.
 
 ## 4. Decisiones de producto — CERRADAS
 
-No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
+No las reabras. Las cerró la propietaria del proyecto entre el 2026-07-26 y el 2026-08-11;
+las fechas exactas, bajo la tabla.
 
 | #   | Decisión                                                                                                                                                                                                      |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -75,10 +76,17 @@ No las reabras. Están cerradas por la propietaria del proyecto el 2026-07-26.
 | 18  | **Las pegatinas miden 20×20 unidades de dibujo** (60 px en el PNG). No todas son cuadradas y **no se deforman**: `contain`, el lado largo a 20 y el otro por proporción                                       |
 | 19  | **Los fondos se REPITEN como patrón**, no se estiran a `cover`. El tile va en unidades de dibujo, así que se ven las mismas repeticiones en el preview y en la descarga                                       |
 
+| 20 | **Arrastrar una pegatina fuera de la tira la borra, pero SOLO si sale completa.** Sobresalir a medias es una decisión del usuario: la pegatina se queda y se ve cortada por el borde |
+| 21 | **Las pegatinas las pinta el canvas, no el DOM.** `useStickers` hace hit-test en coordenadas de canvas; `.sticker`/`.stickerLayer` de D5 son CSS muerto |
+
 Las decisiones 7-15 se cerraron el 2026-07-26, en la sesión que cerró DAG-0. Las **16 y
 17**, el mismo día, cuando aterrizó el arte definitivo de los marcos. Las **18 y 19** el
 2026-07-27, al ver la primera composición real y comprobar que los fondos salían
-ampliados ×3,5.
+ampliados ×3,5. La **20** el 2026-08-11, al despachar C5 — y su umbral no es un detalle de
+implementación: no hay deshacer, así que borrar por el centro pierde pegatinas sin vuelta
+atrás. La **21** el mismo día, al encontrar dos geometrías para la misma pegatina (48 px en
+el CSS de D5 contra ~20 px CSS del canvas). Las dos, detalladas en
+[../../specs/decoration.md](../../specs/decoration.md) §3.1 y §3.2.
 
 El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.md) §9.
 
@@ -120,15 +128,18 @@ hook de cámara, hook de canvas, y los manifiestos de los 343 ficheros de arte.
 
 Más las revisiones (`R*`) y el alta de las dos rutas que faltan (`O*`).
 
-### El muro que hay que decidir antes de llegar
+### El muro, derribado el 2026-08-11
 
-**`booth-reviewer` no existe.** Es el único agente de fase 2 que sigue sin crear, y es el
-que no se puede reasignar sin perder su sentido: **juzga código que no ha escrito**. Si lo
-revisa quien lo escribió, no es una revisión. Ya hay cinco pantallas construidas, así que
-hay material de sobra. Decidir con la propietaria: crearlo o renunciar a los nodos `R*`.
+**`booth-reviewer` ya existe**, decidido por la propietaria. Era el único agente de fase 2
+sin crear, y el único que no se podía reasignar sin perder su sentido: **juzga código que
+no ha escrito**. Si lo revisa quien lo escribió, no es una revisión.
 
-Ya pasó dos veces que un nodo llegó sin dueño (`asset-pipeline` en X1, `ui-composer` en las
-páginas). Las dos se resolvieron, pero costaron una ronda cada una.
+**La flota está completa** y ningún nodo del DAG se queda sin dueño. Ya había pasado dos
+veces que un nodo llegara sin agente (`asset-pipeline` en X1, `ui-composer` en las
+páginas): las dos se resolvieron, pero costaron una ronda cada una.
+
+Lo que sigue pendiente no es el agente, es el trabajo: **cinco pantallas construidas y
+ninguna revisada todavía**.
 
 ## 7. Por dónde seguir
 

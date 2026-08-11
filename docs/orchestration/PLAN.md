@@ -31,7 +31,7 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 | 1   | `booth-state`        | Estado, tipos, contratos         | Sonnet        | —                      | 1                 |
 | 2   | `figma-design-sync`  | Diseño → CSS                     | Sonnet (high) | Figma (lectura)        | 1                 |
 | 3   | `canvas-media`       | Cámara, canvas, hooks            | Opus          | —                      | 1                 |
-| 4   | `booth-reviewer`     | Puerta de calidad (solo lectura) | Sonnet (high) | Figma `get_screenshot` | 2 · **SIN CREAR** |
+| 4   | `booth-reviewer`     | Puerta de calidad (solo lectura) | Sonnet        | Figma `get_screenshot` | 2 · ✅ 2026-08-11 |
 | 5   | `ui-composer`        | Páginas y componentes            | Sonnet        | —                      | 2 · ✅ 2026-07-28 |
 | 6   | ~~`asset-pipeline`~~ | ~~Manifiestos de assets~~        | —             | —                      | **no se creó**    |
 
@@ -89,12 +89,19 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
   componente llama a `getUserMedia`?), conformidad con el patrón `PageShell`,
   accesibilidad, coherencia de idioma en el copy, fidelidad visual contra
   `get_screenshot`.
-- **Herramientas.** `Read, Grep, Glob, Bash(npm run lint|build)`, `get_screenshot`.
-  **`Edit` y `Write` denegados.**
+- **Herramientas.** `Read, Grep, Glob, Bash`, `get_screenshot`. **`Edit` y `Write`
+  denegados**, y su ficha le prohíbe además mutar nada por `Bash` (`sed -i`, `>`, `git`
+  que cambie el árbol): su `Bash` es para ejecutar y mirar, no para tocar.
 - **Por qué sin escritura.** Si puede arreglar, arregla y deja de reportar: pierdes
   la señal. Y evita que "corrija" a su gusto código que otro acaba de escribir
   con criterio.
 - **Entrega.** Hallazgos con `file:line`, severidad y escenario de fallo.
+- **Creado el 2026-08-11**, cuando ya había cinco pantallas sin revisar. Se creó **antes**
+  de cerrar U1 y U3 a propósito: el registro de agentes no se recarga en caliente, así que
+  crearlo al llegar a los `R*` habría costado una sesión de espera. Su ficha lleva dentro
+  la deuda ya conocida (D3, D8, D9, D10, A4) para que no la reporte como hallazgo nuevo, y
+  la advertencia de que **el fichero de Figma es de wireframes**: fidelidad estructural,
+  nunca de píxel.
 
 ### 5 · `ui-composer` — dueño del TSX
 
@@ -339,12 +346,12 @@ salen disjuntas por construcción, y el DAG de trabajo hereda la aciclicidad.
 
 ## 11. Adopción por fases
 
-| Fase                   | Agentes                                            | Cuándo                                                          |
-| ---------------------- | -------------------------------------------------- | --------------------------------------------------------------- |
-| **1 — mínimo honesto** | `booth-state`, `figma-design-sync`, `canvas-media` | Al cerrar DAG-0. Cubren los cimientos y el camino crítico       |
-| **2**                  | `+ booth-reviewer`, `+ ui-composer`                | Al llegar al primer nodo `U*`                                   |
-| ~~**3**~~              | ~~`+ asset-pipeline`~~                             | **Descartada.** X1 resultó ser pequeño y lo hizo `canvas-media` |
-| **Diferido**           | `booth-tester`                                     | Solo tras instalar Vitest                                       |
+| Fase                   | Agentes                                                       | Cuándo                                                                                   |
+| ---------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **1 — mínimo honesto** | `booth-state`, `figma-design-sync`, `canvas-media`            | Al cerrar DAG-0. Cubren los cimientos y el camino crítico                                |
+| **2 — completa** ✅    | `+ ui-composer` (2026-07-28), `+ booth-reviewer` (2026-08-11) | **La flota está completa.** Los seis roles previstos existen o se descartaron con motivo |
+| ~~**3**~~              | ~~`+ asset-pipeline`~~                                        | **Descartada.** X1 resultó ser pequeño y lo hizo `canvas-media`                          |
+| **Diferido**           | `booth-tester`                                                | Solo tras instalar Vitest                                                                |
 
 ## 12. Plantilla de agente
 

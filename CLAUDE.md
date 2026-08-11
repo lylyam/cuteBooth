@@ -19,7 +19,7 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Taking over orchestration? Read this too    | [docs/orchestration/HANDOFF.md](docs/orchestration/HANDOFF.md)     |
 | Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`                 |
 
-**Nineteen product decisions are CLOSED** in
+**Twenty-one product decisions are CLOSED** in
 [KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them, and don't invent
 geometry or copy — if a datum is missing, report and ask. What is still **open** is
 tracked in [DAG.md](docs/orchestration/DAG.md) §9.
@@ -56,13 +56,12 @@ photo layout, capture or upload 4 photos, review the strip, decorate it in three
 `/decoration`** are still 0-byte `.tsx` stubs with their routes commented out in
 `src/App.tsx` — nodes **U1** and **U3**.
 
-Their CSS is **already written** (batch D3-D7), so building them means writing TSX
-against existing classes, not designing screens. The structure of each is cached in
-`docs/design/<screen>.md`.
+Their CSS is **already written** (batch D3-D7): building them is writing TSX against
+existing classes, not designing screens. Structure cached in `docs/design/<screen>.md`.
 
 `src/assets/` is **not** empty: 343 art files — see
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
-photo holes as **closed filled paths**, which is what makes shaped clipping possible.
+holes as **closed filled paths**, which is what makes shaped clipping possible.
 
 **24 nodes are closed.** What remains is exactly five: **C5** (sticker dragging), **C6**
 (persistence), **D3b** (the countdown's typography), **U1** (`/camera`) and **U3**
@@ -71,7 +70,8 @@ photo holes as **closed filled paths**, which is what makes shaped clipping poss
 `services/` **does not exist** — it was an untracked empty folder, so git never carried it.
 C6 creates it. Nothing is broken.
 
-**`booth-reviewer` was never created**, so no screen has been reviewed and the `R*` nodes are blocked.
+`booth-reviewer` exists since 2026-08-11, so `R*` is unblocked — but **no screen has been
+reviewed yet**: five were built before the reviewer existed.
 
 **All user-facing text is in English**, including `alt` attributes. The project docs are
 in Spanish; the product is not.
@@ -186,9 +186,9 @@ not a scheduling problem.
 
 ## Working with the fleet
 
-**Three agents exist** (`.claude/agents/`): `booth-state`, `figma-design-sync`,
-`canvas-media`. `ui-composer` and `booth-reviewer` were planned but never created, and
-every remaining page node belongs to them — see [DAG.md](docs/orchestration/DAG.md) §9.
+**The fleet is complete** (`.claude/agents/`): `booth-state`, `figma-design-sync`,
+`canvas-media`, `ui-composer`, `booth-reviewer`. A newly added agent is **invisible until
+the session restarts** — the registry does not hot-reload.
 
 Ownership paths are **disjoint** (matrix in [PLAN.md](docs/orchestration/PLAN.md) §4),
 which is what makes parallel work safe without worktrees. Before writing a file, check
