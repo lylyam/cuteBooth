@@ -35,12 +35,63 @@ de preview): son solo contornos. Sin evidencia de `--primary-color`.
 
 ## Supuestos de estructura (no de producto — esos ya están en `specs/camera.md`)
 
-- La cuenta atrás (`.countdown`) es un círculo superpuesto centrado, usando
+- ~~La cuenta atrás (`.countdown`) es un círculo superpuesto centrado, usando
   `--overlay-color` de fondo y `--background-color` de texto, tamaño
-  `--font-size-title`. Nada de esto está dibujado; es la interpretación de la
-  SUPUESTO 1 de `specs/camera.md`.
+  `--font-size-title`.~~ **Superseded por D3b (2026-08-11), ver más abajo.** Era
+  la interpretación de la SUPUESTO 1 de `specs/camera.md` sin respaldo de
+  diseño; `2084:47` no dibuja ningún chip.
 - El `<video>` va con `transform: scaleX(-1)` (mirror), la cuenta atrás NO
-  (para que el número no salga al revés).
+  (para que el número no salga al revés). Esto sigue vigente.
+
+## D3b (2026-08-11) · resuelto: `2084:47` "Camera shooting"
+
+El enlace directo llegó de la propietaria. `get_metadata` sobre `2084:47`
+confirma la misma estructura `Frame 38 → Frame 35 → Frame 7` que `91:954`
+(mismo `Frame 7` 574×388), más un único hijo de texto: el nodo `2084:75`
+("3"), 75×154, centrado. `get_design_context` sobre `Frame 7` (`2084:59`)
+devuelve:
+
+```
+Frame 7 (contenedor, = nuestro .previewBox)
+  bg: rgba(34,34,34,0.4)   border: 1.94px #222   radius: 17.59px
+  └─ texto "3"
+       font-family: 'Pixelify Sans', Regular
+       font-size: 128px
+       font-weight: normal (400)
+       color: #222
+       line-height: normal
+       centrado (left: calc(50% - 37px), top: calc(50% - 77.5px))
+```
+
+**Lectura:** el `rgba(34,34,34,0.4)` y el borde/radio de `Frame 7` son el
+propio `.previewBox` (ya coincidían con `--dark-secondary`/`--border-width`/
+`--border-radius-lg` desde D3); en el wireframe ese relleno es el placeholder
+del feed de cámara que no existe en Figma, no una capa nueva que haya que
+pintar encima del `<video>` real. **La cuenta atrás no lleva chip, píldora ni
+fondo propio: es texto plano** — #222 sobre el placeholder gris de Figma, lo
+que se traduce a `--dark-secondary` en nuestro CSS.
+
+Mapeo a tokens:
+
+| Crudo Figma                    | Token                                         | Nota                                                                                                  |
+| ------------------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `color: #222`                  | `var(--dark-secondary)`                       | match exacto                                                                                          |
+| `font-weight: 400` (Regular)   | `var(--font-weight-regular)`                  | match exacto                                                                                          |
+| `line-height: normal`          | `var(--line-height-base)`                     | match exacto                                                                                          |
+| `font-family: 'Pixelify Sans'` | **`var(--font-family-display)`, token nuevo** | no hay tipografía pixel-art entre las 21                                                              |
+| `font-size: 128px`             | **`var(--font-size-display)`, token nuevo**   | 128px excede el máximo de `--font-size-title` (74px); no hay token que cubra un dígito de esta escala |
+
+Tokens añadidos en `src/index.css` `:root`:
+
+```
+--font-family-display: 'Pixelify Sans', monospace;
+--font-size-display: clamp(3rem, 9vw, 8rem);   /* 48px → 128px, 128px = 8rem exacto en Figma */
+```
+
+**Resuelto (orquestador, mismo día):** `'Pixelify Sans'` se carga por
+`@import` en la línea 2 de `index.css`, junto al de Fira Code, pidiendo solo
+el peso 400 (`wght@400`) — el único que usa `--font-weight-regular`. El
+`@import` va antes del bloque `:root`, como exige la sintaxis CSS.
 
 ## Búsqueda bloqueada 2026-07-28 · frame "Camera shooting"
 

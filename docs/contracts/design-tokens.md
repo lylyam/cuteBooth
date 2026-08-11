@@ -5,54 +5,68 @@
 > **El código es la fuente de verdad.** `get_variable_defs` sobre el fichero de Figma
 > devuelve `{}`: no hay variables que sincronizar. Ver [../design/FIGMA.md](../design/FIGMA.md) §5.
 
-## 1. Las 24 custom properties de `:root`
+## 1. Las 26 custom properties de `:root`
 
-Verificadas contra `src/index.css` el 2026-07-27. Las tres últimas y la baja de
-`--primary-color` salieron del lote D3-D7; el delta razonado está en §4. La columna _usos_ cuenta
-`var(--x)` en todo `src/`, incluido `index.css`.
+La baja de `--primary-color` y las tipografías de §4 salieron del lote D3-D7;
+`--window-max-width` de D9b; `--font-family-display` y `--font-size-display` de D3b (§4b).
+
+**La columna _usos_ está generada, no contada a mano** — recontada el 2026-08-11, y son
+ocurrencias de `var(--x)` en todo `src/`, `index.css` incluido. Vuelve a generarla en vez
+de incrementarla:
+
+```bash
+cd src && sed -n '/^:root {/,/^}/p' index.css | grep -o '^\s*--[a-z-]*' | tr -d ' ' \
+  | while read t; do printf "%-24s %s\n" "$t" "$(grep -ro "var($t)" . | wc -l)"; done
+```
+
+Se añade el comando porque la columna **ya mintió una vez**: decía 15 para
+`--dark-secondary` cuando había 27, tras el CSS que aterrizó en D9b-D9d sin recontar. Un
+número mantenido a mano en un documento que nadie ejecuta se desincroniza en silencio.
 
 ### Color — 4
 
-| Token                | Valor                   | Usos                                   |
-| -------------------- | ----------------------- | -------------------------------------- |
-| `--secondary-color`  | `#565656`               | 1 · color de `h1`                      |
-| `--background-color` | `#DEDEDE`               | 3 · fondo de página, `Button`, `Modal` |
-| `--dark-secondary`   | `#222`                  | 15 · texto y **todos** los bordes      |
-| `--overlay-color`    | `rgba(34, 34, 34, 0.4)` | 1 · velo del `Modal`                   |
+| Token                | Valor                   | Usos                                    |
+| -------------------- | ----------------------- | --------------------------------------- |
+| `--secondary-color`  | `#565656`               | 3 · `h1` y subtítulo de `PhotoResult`   |
+| `--background-color` | `#DEDEDE`               | 7 · fondo, `Button`, `Modal`, `Loading` |
+| `--dark-secondary`   | `#222`                  | 28 · texto y **todos** los bordes       |
+| `--overlay-color`    | `rgba(34, 34, 34, 0.4)` | 2 · velo de `Modal` y de `Loading`      |
 
-### Tipografía — 10
+### Tipografía — 12
 
-| Token                   | Valor                        | Usos                                  |
-| ----------------------- | ---------------------------- | ------------------------------------- |
-| `--font-family-base`    | `"Fira Code", monospace`     | 1                                     |
-| `--font-size-sm`        | `14px`                       | 4 · texto base, `p`, `button`, footer |
-| `--font-size-md`        | `22px`                       | 1 · `h2`                              |
-| `--font-size-lg`        | `40px`                       | 1 · subtítulo de `PhotoResult` (D7)   |
-| `--font-size-label`     | `17px`                       | 1 · título de panel en Decoration     |
-| `--font-size-title`     | `clamp(2rem, 5vw, 4.625rem)` | 1 · `h1`                              |
-| `--font-weight-light`   | `300`                        | 1                                     |
-| `--font-weight-regular` | `400`                        | 1                                     |
-| `--line-height-tight`   | `1`                          | 2                                     |
-| `--line-height-base`    | `normal`                     | 3                                     |
+| Token                   | Valor                        | Usos                                     |
+| ----------------------- | ---------------------------- | ---------------------------------------- |
+| `--font-family-base`    | `"Fira Code", monospace`     | 1 · `body`                               |
+| `--font-family-display` | `"Pixelify Sans", monospace` | 1 · `.countdown` de Camera (D3b)         |
+| `--font-size-sm`        | `14px`                       | 6 · texto base, `Modal`, footer, paneles |
+| `--font-size-md`        | `22px`                       | 2 · `h2` y Upload                        |
+| `--font-size-lg`        | `40px`                       | 1 · subtítulo de `PhotoResult` (D7)      |
+| `--font-size-label`     | `17px`                       | 1 · título de panel en Decoration        |
+| `--font-size-title`     | `clamp(2rem, 5vw, 4.625rem)` | 1 · `h1`                                 |
+| `--font-size-display`   | `clamp(3rem, 9vw, 8rem)`     | 1 · `.countdown` de Camera (D3b)         |
+| `--font-weight-light`   | `300`                        | 1 · `h1`                                 |
+| `--font-weight-regular` | `400`                        | 6 · base y cuatro pantallas              |
+| `--line-height-tight`   | `1`                          | 2 · `index.css`                          |
+| `--line-height-base`    | `normal`                     | 7 · base y cinco componentes             |
 
 ### Borde y radio — 5
 
 | Token                  | Valor     | Usos                                                 |
 | ---------------------- | --------- | ---------------------------------------------------- |
-| `--border-width`       | `1.94px`  | 5                                                    |
-| `--border-radius-sm`   | `8px`     | 1 · `Button`                                         |
-| `--border-radius-md`   | `10px`    | 4 · huecos de Upload, panel y muestras de Decoration |
-| `--border-radius-lg`   | `17.59px` | 3 · ventana, `Card`, `Modal`                         |
-| `--border-radius-pill` | `999px`   | 1 · botón de cerrar                                  |
+| `--border-width`       | `1.94px`  | 14 · **todos** los bordes del producto               |
+| `--border-radius-sm`   | `8px`     | 2 · `Button` y Decoration                            |
+| `--border-radius-md`   | `10px`    | 3 · huecos de Upload, panel y muestras de Decoration |
+| `--border-radius-lg`   | `17.59px` | 6 · ventana, `Card`, `Modal`, Upload, Camera, Decor. |
+| `--border-radius-pill` | `999px`   | 2 · botón de cerrar y `Loading`                      |
 
 ### Espaciado de página — 5
 
 | Token                 | Valor                      | Usos                                    |
 | --------------------- | -------------------------- | --------------------------------------- |
-| `--page-padding-y`    | `clamp(1.5rem, 5vh, 80px)` | 3                                       |
-| `--page-padding-x`    | `10px`                     | 1                                       |
-| `--content-max-width` | `743px`                    | 1                                       |
-| `--footer-links-gap`  | `33px`                     | 1                                       |
+| `--page-padding-y`    | `clamp(1.5rem, 5vh, 80px)` | 2 · `PageShell`                         |
+| `--page-padding-x`    | `10px`                     | 1 · `PageShell`                         |
+| `--content-max-width` | `743px`                    | 1 · `PageShell`                         |
+| `--footer-links-gap`  | `33px`                     | 1 · `AppFooter`                         |
 | `--window-max-width`  | `1292px`                   | 1 · el marco de **todas** las pantallas |
 
 ## 2. Reglas de mapeo
@@ -148,6 +162,32 @@ D3-D7, +1 (`--window-max-width`) en D9b.
 | T6  | **Resuelta (D9b).** Era la causa de que el marco midiera distinto en cada pantalla. Ver §4                                                                       |
 | T7  | Escala de espaciado: **deliberadamente sin inventar.** El lote añadió más valores sueltos (14, 20, 25, 30, 40, 50…). Es más evidencia, no una escala             |
 | T8  | Breakpoints: el lote usó solo `640px` y `768px`. Ninguno fuera de la lista                                                                                       |
+
+## 4b. Delta de tokens — D3b (2026-08-11), `2084:47` "Camera shooting"
+
+Dos tokens nuevos, sin bajas. Cerraron el supuesto sin respaldo de diseño que tenía
+`.countdown` desde D3: círculo/píldora con `--overlay-color` de fondo y
+`--background-color` de texto. `2084:47` no dibuja ningún chip — es texto plano.
+
+```
+--font-family-display : 'Pixelify Sans', monospace
+  motivo   : la propietaria pide un pixel-font solo para el dígito de la cuenta
+             atrás. --font-family-base ('Fira Code') es la única tipografía del
+             proyecto; ninguna existente cubre esto
+  usos     : CameraPage.module.css → .countdown
+  carga    : @import en index.css línea 2, junto al de Fira Code, solo peso
+             400 (wght@400) — el único que usa --font-weight-regular
+
+--font-size-display : clamp(3rem, 9vw, 8rem)
+  motivo   : 128px en Figma (dígito sobre el preview de 574px). Excede el máximo
+             de --font-size-title (74px) y no hay ningún otro token de tipografía
+             cerca; 8rem = 128px exacto, 3rem de suelo iguala al suelo de 48px
+             que ya usa .icon en la misma pantalla
+  usos     : CameraPage.module.css → .countdown
+  reemplaza: el font-size: var(--font-size-title) del supuesto de D3
+```
+
+Con esto `:root` pasa de **24 a 26** custom properties.
 
 ## 5. Criterio de aceptación de D1
 

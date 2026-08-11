@@ -1,4 +1,4 @@
-/* CameraPage — nodo D3, Figma 91:954 */
+/* CameraPage — nodo D3, Figma 91:954. .countdown updated by D3b, Figma 2084:47. */
 
 .windowContent {
   justify-content: space-between;
@@ -30,22 +30,18 @@
   transform: scaleX(-1);
 }
 
+/* D3b (2084:47 "Camera shooting"): plain digit centered over the preview, no
+   chip/pill behind it — that was D3's supuesto and Figma doesn't draw one. */
 .countdown {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: clamp(4rem, 12vw, 7rem);
-  aspect-ratio: 1;
-  border-radius: var(--border-radius-pill);
-  background-color: var(--overlay-color);
-  color: var(--background-color);
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-light);
-  line-height: var(--line-height-tight);
+  color: var(--dark-secondary);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
 }
 
 .error {
