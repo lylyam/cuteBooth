@@ -225,7 +225,17 @@ canvas-media ──▶ FIRMAS DE HOOKS
        (`draw({...state, frame: hovered})`) sin despachar nada
      · draw() nunca rechaza; exportAsBlob() y download() sí
      · download() crea el <a>, lo pulsa y revoca el object URL — la página no toca eso
-  useStickers(ref): { onPointerDown, onPointerMove, onPointerUp }
+  useStickers(ref, { layout, stickers, onMove, onRemove }):                 ← entregado en C5
+    { stickers, draggingId, willRemove,
+      onPointerDown, onPointerMove, onPointerUp, onPointerCancel }
+     · la firma prevista aquí eran TRES handlers y nada más; la real devuelve además
+       `stickers` (el array con la arrastrada en su posición viva, para
+       `draw({...state, stickers})`) y dos pistas de estado. Se corrige el contrato,
+       no el código: `ui-composer` debe montar los CUATRO handlers — sin
+       `onPointerCancel` un arrastre que pierda la captura se queda congelado
+     · el estado va POR PARÁMETRO, como en `useCanvas`: el hook no llama a `usePhotoBooth()`
+     · un gesto entero produce UN solo `MOVE_STICKER`, al soltar (medido: 24 `pointermove` → 1)
+     · el factor es `LAYOUTS[layout].canvas.width / canvas.clientWidth`, sin DPR
 
 X1 (canvas-media) ──▶ MANIFIESTO
   { manifestPath, ids[], count, skipped[] }

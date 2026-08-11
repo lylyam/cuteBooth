@@ -145,6 +145,50 @@ construir U3 — no antes, para no borrar algo que C5 pudiera necesitar. Es un c
 de [../docs/orchestration/LECCIONES.md](../docs/orchestration/LECCIONES.md) §9: dos agentes
 en paralelo que no se vieron.
 
+### 3.3 · Lo que U3 tiene que cablear de `useStickers`, y lo que NO debe inventar
+
+C5 cerró el 2026-08-11. Su firma real **no es** la de tres handlers que anunciaba
+[../docs/orchestration/PLAN.md](../docs/orchestration/PLAN.md) §5; ahí está corregida.
+
+```ts
+const {
+  stickers,
+  draggingId,
+  willRemove,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+} = useStickers(canvasRef, { layout, stickers: state.stickers, onMove, onRemove });
+```
+
+- **Los cuatro handlers van al `<canvas>`.** `onPointerCancel` no es opcional: sin él, un
+  arrastre que pierda la captura se congela para siempre.
+- **Dibuja con el `stickers` que devuelve el hook**, no con `state.stickers`:
+  `draw({ ...state, stickers })`. Es el mismo array cuando no hay arrastre, así que puede
+  ir en las dependencias del efecto sin provocar un bucle.
+- **`onMove` despacha `MOVE_STICKER` y `onRemove` despacha `REMOVE_STICKER`.** Un gesto
+  entero produce **un solo** dispatch, al soltar.
+- **`ADD_STICKER` lo dispara la rejilla del panel**, no el hook.
+
+Tres decisiones del orquestador sobre las dudas que dejó C5:
+
+1. **`touch-action: none` se queda en línea, en el hook.** Lo escribe sobre el `<canvas>` al
+   montar y lo restaura al desmontar. Podría vivir en `.canvas` de D5, pero entonces el
+   arrastre táctil dependería de que otro agente mantenga una línea de CSS en otro fichero:
+   exactamente la costura de LECCIONES §9. Medido sin él: el navegador se queda el gesto al
+   segundo movimiento y **el arrastre táctil no existe**. El hook garantiza su propia
+   precondición.
+2. **Cursor `grab`/`grabbing`: no hay, y U3 no lo inventa.** Exigiría re-renderizar en cada
+   movimiento del ratón o escribir CSS que no es suyo. Si la propietaria lo echa en falta al
+   verlo, es una línea en D5 y `draggingId` ya está expuesto.
+3. **`willRemove` se expone pero no hay señal visual de «suelta para borrar».** Decidirlo
+   mirando, con la pantalla construida, no antes. Sin deshacer, una pista es probablemente
+   buena idea — pero no se inventa el aspecto sin verla.
+
+**Fuera de alcance, y declarado:** mover o borrar pegatinas con el teclado. El gesto es solo
+de puntero. No está en este spec y C5 no lo implementa.
+
 ## Dependencias
 
 - **Estado:** S1 (`SET_FRAME` y los tres de sticker), guard S3.

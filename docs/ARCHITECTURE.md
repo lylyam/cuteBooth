@@ -80,11 +80,13 @@ src/
 │   ├── canvasUtils.ts         ← compone la tira: fondo → fotos recortadas → marco → pegatinas
 │   ├── frameArtUtils.ts       ← SVG del marco → Path2D de huecos + capa neutralizada
 │   ├── svgPathUtils.ts        ← parseo de path-data con bbox exacta de béziers, sin DOM
+│   ├── stickerGeometry.ts     ← C5: px-CSS ↔ px-canvas, hit test y umbral de borrado. Puro
 │   └── assetManifest.ts       ← fontanería común de los manifiestos
 ├── hooks/
 │   ├── useRouteGuard.ts       ← guards de las 6 rutas
 │   ├── useCamera.ts           ← getUserMedia, cuenta atrás, se apaga al desmontar
-│   └── useCanvas.ts           ← draw/export/download · el último draw() gana
+│   ├── useCanvas.ts           ← draw/export/download · el último draw() gana
+│   └── useStickers.ts         ← C5: arrastre de pegatinas · 1 MOVE_STICKER por gesto
 └── pages/
     ├── homePage/  layoutPage/  uploadPage/  reviewPage/  finalPage/   ← implementadas
     └── cameraPage/ decorationPage/          ← .module.css escrito, .tsx de 0 BYTES

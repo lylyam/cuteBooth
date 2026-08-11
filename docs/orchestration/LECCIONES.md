@@ -2,7 +2,8 @@
 
 > Trampas que **ya costaron tiempo** en este proyecto. Ninguna se deduce leyendo el código,
 > y varias se descubrieron reportando primero un bug que no existía.
-> Escrito el 2026-07-29, al traspasar la orquestación.
+> Escrito el 2026-07-29, al traspasar la orquestación. **§11 añadida el 2026-08-11**, al
+> cerrar C5: la antigua §11 pasa a ser §12.
 
 Esto no es teoría de buenas prácticas: cada punto pasó, y se dice cuándo.
 
@@ -135,7 +136,33 @@ Están escritas donde toca, pero conviene saber que existen:
 - **`no-inline` en `import.meta.glob` no es decorativo**: sin él Vite incrusta en base64
   todo lo que baje de 4 kB — eran 27 ficheros dentro del JS, 12 de ellos SVG de marco.
 
-## 11. Los contratos se corrigen cuando el código los desmiente
+## 11. Probar al tamaño real puede no probar nada
+
+Descubierto en **C5** (2026-08-11), y es la trampa más fina de todas las de esta lista.
+
+La conversión px-CSS ↔ px-canvas tiene que usar `LAYOUTS[layout].canvas.width`, nunca
+`canvas.width` (§ regla 3 de `state.md`). Pero al **tamaño real del preview** de
+`/decoration` —217 px en `classic`, 468 en los otros— el suelo de resolución que puso C4b
+fija el bitmap en 654×1934 y 1405×1257 **con DPR 1 y con DPR 2 por igual**. Y ahí la fórmula
+mala da exactamente el mismo número que la buena.
+
+O sea: **una prueba a DPR 2 y al tamaño real pasa con el código roto.** El bug solo asoma
+donde el suelo deja de morder. Forzando el preview a 900 px:
+
+| DPR | bitmap    | factor correcto | factor ingenuo | error       |
+| --- | --------- | --------------- | -------------- | ----------- |
+| 1   | 1404×1257 | 1,567           | 1,567          | 0           |
+| 2   | 1792×1604 | 1,567           | **2,000**      | 26 unidades |
+
+**La lección general:** cuando dos fórmulas coinciden en tu caso de prueba, no has probado
+la fórmula, has probado la coincidencia. Busca el régimen donde difieren y prueba **ahí**.
+
+Y un aviso que dejó el mismo nodo: esta conversión vale para un preview **sin rotar**.
+`/review` y `/final` rotan **dentro** del lienzo (C4c), así que el elemento no lleva
+`transform`, `offsetX` no deshace nada y la caja es la envolvente. Si algún día se arrastran
+pegatinas sobre una tira inclinada, hace falta el ángulo. Hoy no hay ningún consumidor así.
+
+## 12. Los contratos se corrigen cuando el código los desmiente
 
 Ha pasado varias veces, y siempre es mejor corregir el documento que forzar el código:
 

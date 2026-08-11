@@ -1,13 +1,19 @@
 # DAG de trabajo
 
 > Estado vivo. Se actualiza al cerrar cada nodo.
-> Última revisión: **2026-08-11**. **Veinticinco nodos cerrados**: S1, S2, S3, C1, C2, C2b,
-> C3, C4, C4b, C4c, C7, D1, D3, **D3b**, D4-D7, D9b, D9c, D9d, U2, U4, U5, X1 — y `/upload`,
-> `/review` y `/final` dadas de alta en `App.tsx`.
+> Última revisión: **2026-08-11**. **Veintiséis nodos cerrados**: S1, S2, S3, C1, C2, C2b,
+> C3, C4, C4b, C4c, **C5**, C7, D1, D3, **D3b**, D4-D7, D9b, D9c, D9d, U2, U4, U5, X1 — y
+> `/upload`, `/review` y `/final` dadas de alta en `App.tsx`.
 >
-> **Quedan cuatro nodos: C5, C6, U1, U3.** Más `D2` (Code Connect, opcional) y las
-> revisiones `R*`, **desbloqueadas el 2026-08-11** al crearse `booth-reviewer`: la flota
-> ya está completa y ningún nodo se queda sin dueño.
+> **Quedan tres nodos: C6, U1, U3.** Los dos últimos son las dos pantallas que faltan, y
+> ya no los bloquea nada. Más `D2` (Code Connect, opcional) y las revisiones `R*`,
+> **desbloqueadas el 2026-08-11** al crearse `booth-reviewer`: la flota ya está completa
+> y ningún nodo se queda sin dueño.
+>
+> ⚠️ **Hoy `/review` tiene un botón que lleva a una pantalla en blanco.**
+> `Start decorating` navega a `/decoration`, que no está dada de alta en `App.tsx`: React
+> Router avisa `No routes matched` y `#root` se queda vacío. Verificado con clics reales
+> el 2026-08-11. **Lo cierra U3**, y es la razón para no dejar U3 a medias.
 >
 > Lo que sigue abierto está en **§9**. Las trampas que ya costaron tiempo, en
 > [LECCIONES.md](LECCIONES.md).
@@ -131,7 +137,7 @@ graph LR
 | **C2**  | Composición sobre canvas                                       | `canvas-media`      | S2, C1, **X1**       | `utils/canvasUtils.ts`                                                   | Dibuja los 3 layouts a la resolución de `layouts.ts`, nítido en retina, pinta el SVG del marco encima y recorta los huecos no rectangulares                                                                                                                      | ✅     |
 | **C3**  | Hook de cámara                                                 | `canvas-media`      | C1                   | `hooks/useCamera.ts`                                                     | Cuenta atrás 3-2-1, corta los tracks al desmontar, gestiona permiso denegado                                                                                                                                                                                     | ✅     |
 | **C4**  | Hook de canvas                                                 | `canvas-media`      | C2                   | `hooks/useCanvas.ts`                                                     | `draw(state)` + `exportAsBlob()`                                                                                                                                                                                                                                 | ✅     |
-| **C5**  | Hook de stickers                                               | `canvas-media`      | S1, C4               | `hooks/useStickers.ts`                                                   | Arrastre correcto con escalado px-CSS ↔ px-canvas                                                                                                                                                                                                                | ⬜     |
+| **C5**  | Hook de stickers                                               | `canvas-media`      | S1, C4               | `hooks/useStickers.ts`, `utils/stickerGeometry.ts`                       | **Cerrado el 2026-08-11.** 67 comprobaciones en Chrome real. El factor sin DPR verificado a 900 px, donde el suelo de C4b ya no enmascara el bug: el ingenuo se desvía 26 unidades en retina. Umbral de borrado conforme a la decisión 20. **U3 desbloqueado**   | ✅     |
 | **C6**  | Persistencia temporal                                          | `canvas-media`      | S1                   | `services/storageService.ts`                                             | Sobrevive a un refresco sin reventar la cuota                                                                                                                                                                                                                    | ⬜     |
 | **D1**  | Delta de tokens **code-first**                                 | `figma-design-sync` | —                    | `Button.module.css` · §4 de `contracts/design-tokens.md`                 | T1 y T2 resueltos. **T3 y §4 se cobran en el lote D3-D7**, por instrucción del propio contrato: sin las cinco pantallas no hay evidencia. Cero llamadas a Figma gastadas aquí                                                                                    | ✅     |
 | **D2**  | Code Connect de los 5 componentes                              | `figma-design-sync` | D1                   | `*.figma.ts`                                                             | `get_design_context` devuelve `<Button>`, no `<div>`                                                                                                                                                                                                             | ⬜     |

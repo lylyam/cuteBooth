@@ -63,9 +63,8 @@ existing classes, not designing screens. Structure cached in `docs/design/<scree
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
 holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-**24 nodes are closed.** What remains is exactly five: **C5** (sticker dragging), **C6**
-(persistence), **D3b** (the countdown's typography), **U1** (`/camera`) and **U3**
-(`/decoration`). Full table in [DAG.md](docs/orchestration/DAG.md).
+**26 nodes are closed.** What remains is exactly three: **C6** (persistence), **U1**
+(`/camera`) and **U3** (`/decoration`). Full table in [DAG.md](docs/orchestration/DAG.md).
 
 `services/` **does not exist** — it was an untracked empty folder, so git never carried it.
 C6 creates it. Nothing is broken.
@@ -137,8 +136,9 @@ Layer-based structure under `src/`:
   without touching code — don't hand-write asset paths.
 - `utils/` — `imageUtils.ts` (cover-crop, `File` → data URL, data URL → `Blob`),
   `canvasUtils.ts` (composes the strip: background → clipped photos → frame → stickers),
-  `frameArtUtils.ts` (frame SVG → clip paths + neutralised draw layer) and
-  `svgPathUtils.ts`. Target sizes always arrive as parameters.
+  `frameArtUtils.ts` (frame SVG → clip paths + neutralised draw layer),
+  `svgPathUtils.ts` and `stickerGeometry.ts` (the pointer arithmetic of C5, kept pure and
+  DOM-free so it can be checked on its own). Target sizes always arrive as parameters.
 - `hooks/useRouteGuard.ts` — the only hook so far. C3-C6 add the rest. `services/` is still
   unborn; C6 creates it.
 - `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
