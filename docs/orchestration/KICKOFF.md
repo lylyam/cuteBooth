@@ -78,6 +78,7 @@ las fechas exactas, bajo la tabla.
 
 | 20 | **Arrastrar una pegatina fuera de la tira la borra, pero SOLO si sale completa.** Sobresalir a medias es una decisión del usuario: la pegatina se queda y se ve cortada por el borde |
 | 21 | **Las pegatinas las pinta el canvas, no el DOM.** `useStickers` hace hit-test en coordenadas de canvas; `.sticker`/`.stickerLayer` de D5 son CSS muerto |
+| 22 | **La pausa entre fotos sube a 1,5 s** (`SHOT_GAP_MS`); la cuenta atrás se queda en 3 s. Es el único hueco para cambiar de pose entre fotos. La sesión pasa de 14,4 s a **16,5 s** |
 
 Las decisiones 7-15 se cerraron el 2026-07-26, en la sesión que cerró DAG-0. Las **16 y
 17**, el mismo día, cuando aterrizó el arte definitivo de los marcos. Las **18 y 19** el
@@ -87,6 +88,10 @@ implementación: no hay deshacer, así que borrar por el centro pierde pegatinas
 atrás. La **21** el mismo día, al encontrar dos geometrías para la misma pegatina (48 px en
 el CSS de D5 contra ~20 px CSS del canvas). Las dos, detalladas en
 [../../specs/decoration.md](../../specs/decoration.md) §3.1 y §3.2.
+
+La **22** el mismo día, al despachar `/camera`: los tiempos de la sesión de cámara los
+había elegido un agente en C3, no el diseño, y estaban pendientes como pregunta A5. Ahora
+son decisión suya. Detalle en [../../specs/camera.md](../../specs/camera.md).
 
 El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.md) §9.
 

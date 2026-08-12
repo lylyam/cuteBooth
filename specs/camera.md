@@ -38,6 +38,24 @@ decorativo (`alt=""`).
 4. Al desmontar, `useCamera` corta los tracks. **Sin excepciones**: una cámara que
    sigue encendida al navegar es un fallo grave y es lo primero que mira el revisor.
 
+### Los tiempos de la sesión — decisión 22, cerrada el 2026-08-11
+
+Las tres constantes viven en `hooks/useCamera.ts`. **Ninguna salía del diseño**: las eligió
+un agente al construir C3, y estuvieron pendientes como pregunta **A5** hasta que la
+propietaria las cerró.
+
+| Constante           | Valor  | Qué controla                                                                    |
+| ------------------- | ------ | ------------------------------------------------------------------------------- |
+| `COUNTDOWN_SECONDS` | `3`    | el 3-2-1 antes de cada foto — **se queda así**                                  |
+| `COUNTDOWN_TICK_MS` | `1000` | un segundo por dígito                                                           |
+| `SHOT_GAP_MS`       | `1500` | la pausa entre una foto y la cuenta atrás de la siguiente — **subió de 800 ms** |
+
+Una sesión completa dura **16,5 s** (4 × 3 s + 3 × 1,5 s), antes 14,4 s.
+
+**El motivo de subir la pausa**, que es lo que hay que preservar si alguien la vuelve a
+tocar: es el **único** hueco que tiene el usuario para cambiar de pose entre foto y foto, y
+con 800 ms no había tiempo material de moverse.
+
 ## Dependencias
 
 - **Hooks:** `useCamera` (C3) — `{ videoRef, stream, countdown, error, start, stop,
