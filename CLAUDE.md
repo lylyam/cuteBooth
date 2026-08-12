@@ -59,12 +59,15 @@ browser, walked with real clicks and zero console errors on 2026-08-11.
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
 holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-**29 nodes are closed and no known defect breaks a user.** What remains is **C6**
-(persistence), **C3b** (delete the hook's eight error messages) and **A5** (`SHOT_GAP_MS`
-to 1500). Full table in [DAG.md](docs/orchestration/DAG.md).
+**DAG-1 is closed: 32 nodes, and no known defect breaks a user.** The only planned node
+left is `D2` (Code Connect), which was always optional. Full table in
+[DAG.md](docs/orchestration/DAG.md).
 
-`services/` **does not exist** — it was an untracked empty folder, so git never carried it.
-C6 creates it. Nothing is broken.
+**One thing is open and it is not cosmetic: `S4`.** C6 delivered
+`services/storageService.ts` and proved it survives a real reload, but **nothing consumes
+it** — wiring it means editing `PhotoBoothContext`, so `canvas-media` reported instead of
+touching another owner's file. Two lines, and they change what the user sees after a
+refresh.
 
 `booth-reviewer` exists since 2026-08-11, so `R*` is unblocked — but **no screen has been
 reviewed yet**: five were built before the reviewer existed.
@@ -136,8 +139,11 @@ Layer-based structure under `src/`:
   `frameArtUtils.ts` (frame SVG → clip paths + neutralised draw layer),
   `svgPathUtils.ts` and `stickerGeometry.ts` (the pointer arithmetic of C5, kept pure and
   DOM-free so it can be checked on its own). Target sizes always arrive as parameters.
-- `hooks/useRouteGuard.ts` — the only hook so far. C3-C6 add the rest. `services/` is still
-  unborn; C6 creates it.
+- `hooks/` — `useRouteGuard.ts` (the six route guards), `useCamera.ts`, `useCanvas.ts` and
+  `useStickers.ts`. A hook never imports a component.
+- `services/storageService.ts` — the one service. Saves state to `sessionStorage` under
+  `cutebooth:v1`, validates or discards on read, and never throws. **Nothing wires it yet**
+  — that is node `S4`, and it belongs to `booth-state` because it edits the context.
 - `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
   hooks and permissions (`settings.json`).
 

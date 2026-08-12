@@ -1,7 +1,7 @@
 # Arquitectura real de CuteBooth
 
 > Este documento describe **lo que hay**, no lo que se planeó. Verificado contra
-> `src/` el 2026-07-29. Si el código y este documento discrepan, el código gana y
+> `src/` el 2026-08-11. Si el código y este documento discrepan, el código gana y
 > este documento se corrige.
 
 ## 1. Qué es
@@ -56,7 +56,7 @@ Verificada contra el disco el 2026-07-29.
 
 ```
 src/
-├── App.tsx                    ← rutas: 5 activas, 2 comentadas (/camera, /decoration)
+├── App.tsx                    ← las 6 rutas activas, sin imports comentados
 ├── main.tsx
 ├── index.css                  ← reset + 24 custom properties en :root
 ├── assets/                    ← 343 ficheros de arte
@@ -87,19 +87,22 @@ src/
 │   ├── useCamera.ts           ← getUserMedia, cuenta atrás, se apaga al desmontar
 │   ├── useCanvas.ts           ← draw/export/download · el último draw() gana
 │   └── useStickers.ts         ← C5: arrastre de pegatinas · 1 MOVE_STICKER por gesto
+├── services/
+│   └── storageService.ts      ← C6: sessionStorage 'cutebooth:v1' · valida o descarta
 └── pages/
-    ├── homePage/  layoutPage/  uploadPage/  reviewPage/  finalPage/   ← implementadas
-    └── cameraPage/ decorationPage/          ← .module.css escrito, .tsx de 0 BYTES
+    └── homePage/ layoutPage/ cameraPage/ uploadPage/ reviewPage/
+        decorationPage/ finalPage/            ← las 7 implementadas (6 rutas + home)
 ```
 
-**`services/` no existe.** Era una carpeta vacía sin trackear y git nunca la llevó; la crea
-**C6**.
+**`services/` ya existe**, creada por **C6** el 2026-08-11. Contiene un solo fichero, y
+**nadie lo importa todavía**: cablearlo es el nodo `S4`.
 
 **Cuatro cosas que sorprenden al mirar el árbol:**
 
-1. **Los dos `.tsx` de 0 bytes tienen su CSS escrito.** Si montas `/camera` o
-   `/decoration`, **no escribas CSS**: está hecho, y las clases que expone cada uno están
-   cacheadas en `docs/design/<pantalla>.md`.
+1. **Ninguna página está vacía ya.** `/camera` y `/decoration` se construyeron el
+   2026-08-11 y con ellas el flujo se recorre entero. El CSS de las siete pantallas lo
+   escribió el lote D3-D7 **antes** que el TSX, así que las clases de cada una están
+   cacheadas en `docs/design/<pantalla>.md`: al tocar una pantalla, se leen, no se inventan.
 2. **`utils/` pesa más que `pages/`**, y es correcto: la complejidad real de este proyecto
    es la composición sobre canvas, no la maquetación.
 3. **`PhotoResult` lo comparten `/review` y `/final`.** Tres props y cero literales de copy

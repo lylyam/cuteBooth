@@ -67,8 +67,16 @@ export const COUNTDOWN_SECONDS = 3;
 /** One countdown step. */
 const COUNTDOWN_TICK_MS = 1000;
 
-/** Breather between two shots of the same session, so nobody is caught mid-blink. */
-const SHOT_GAP_MS = 800;
+/**
+ * Pause between a shot and the countdown of the next one — **decision 22**, closed by the
+ * owner on 2026-08-11 (it was question A5; the previous 800 ms was an agent's guess).
+ *
+ * This is the *only* window the user has to change pose between photos, and 800 ms was not
+ * physically enough to move. A full 4-shot session now lasts 16.5 s (4 × 3 s + 3 × 1.5 s),
+ * up from 14.4 s. If this ever moves again, that is the reason to preserve — see
+ * specs/camera.md § "Los tiempos de la sesión".
+ */
+const SHOT_GAP_MS = 1500;
 
 /** How long a shot waits for a decodable video frame before giving up. */
 const FRAME_TIMEOUT_MS = 2000;
@@ -111,8 +119,10 @@ const LARGEST_SLOT: Slot = Object.values(LAYOUTS)
   );
 
 /**
- * Why the camera is not available. The page paints the copy it wants; `message` is a
- * readable English default so no screen is ever blank.
+ * Why the camera is not available. **A classification, never a message** — node C3b: user
+ * copy belongs to the page, so `/camera` keeps the eight strings (`ERROR_MESSAGES` in
+ * `CameraPage.tsx`, listed in specs/camera.md) and this hook keeps none. The same sentence
+ * in two files is one sentence that goes stale the first time the owner edits the other.
  *
  * The distinction that matters is `denied` (the user can fix it) versus everything else
  * (the user cannot) — spec: denied offers the browser permission, the rest offer
@@ -128,7 +138,12 @@ export type CameraErrorKind =
   | 'capture' // the stream is fine, the shot is not
   | 'unknown';
 
-export type CameraError = { kind: CameraErrorKind; message: string };
+/**
+ * One field, and it stays an object on purpose: `error.kind` is what `/camera` already
+ * switches on, and collapsing this to a bare `CameraErrorKind` would be a breaking change
+ * to a page this hook does not own, in exchange for nothing.
+ */
+export type CameraError = { kind: CameraErrorKind };
 
 export type CaptureOptions = {
   /** Shots in this session, 1 by default. Clamped to the free slots left in the strip. */
@@ -161,20 +176,8 @@ export type UseCameraResult = {
   captureWithCountdown: (options?: CaptureOptions) => Promise<Photo[]>;
 };
 
-const MESSAGES: Record<CameraErrorKind, string> = {
-  // Literal from specs/camera.md, supuesto 3.
-  denied: "We can't reach your camera. Check the browser permission, or upload photos instead.",
-  'not-found': "We couldn't find a camera on this device. You can upload photos instead.",
-  'in-use': 'Your camera is busy in another app. Close it and try again, or upload photos instead.',
-  insecure: 'The camera needs a secure connection. You can upload photos instead.',
-  unsupported: "This browser can't open the camera. You can upload photos instead.",
-  ended: 'Your camera turned off. Try again, or upload photos instead.',
-  capture: "We couldn't take that photo. Try again, or upload photos instead.",
-  unknown: 'Something went wrong with your camera. Try again, or upload photos instead.',
-};
-
 function cameraError(kind: CameraErrorKind): CameraError {
-  return { kind, message: MESSAGES[kind] };
+  return { kind };
 }
 
 export function useCamera(): UseCameraResult {
@@ -237,7 +240,8 @@ export function useCamera(): UseCameraResult {
     const devices = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices;
     if (!devices || typeof devices.getUserMedia !== 'function') {
       // On plain http `navigator.mediaDevices` is simply absent. That is not a bug in the
-      // browser and not one in this app either, so it gets its own message.
+      // browser and not one in this app either, so it gets its own `kind` — the page turns
+      // that into "needs a secure connection" instead of a generic failure.
       const insecure = typeof window !== 'undefined' && window.isSecureContext === false;
       setError(cameraError(insecure ? 'insecure' : 'unsupported'));
       return;

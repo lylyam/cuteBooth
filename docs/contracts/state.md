@@ -122,10 +122,34 @@ una capa al árbol. El `Navigate` sale del `return` de la página, nunca de un e
 `services/storageService.ts`, `sessionStorage`, clave `cutebooth:v1`. `sessionStorage` y
 no `localStorage`: una sesión de photobooth no sobrevive al cierre de la pestaña.
 
-1. Se persiste el estado entero. `QuotaExceededError` **es lo esperado** con 4 fotos, no
-   una excepción: al fallar, reintentar sin `photos` y guardar el resto.
+1. Se persiste el estado entero, **fotos incluidas**. Si `setItem` falla, reintentar sin
+   `photos` y guardar el resto.
 2. Al montar: leer, validar la forma y, si no valida, **descartar en silencio**.
 3. La versión va en la clave. Si cambia el contrato, cambia la clave: sin migraciones.
+
+### Corregido el 2026-08-11: la cuota no es el problema que este contrato temía
+
+Este punto 1 decía que `QuotaExceededError` **«es lo esperado» con 4 fotos**. C6 lo midió en
+Chrome 150 y **es falso**, por bastante margen:
+
+| layout      | estado completo | % de la cuota |
+| ----------- | --------------- | ------------- |
+| `classic`   | 168 660 chars   | 3,2 %         |
+| `wide`      | 216 103 chars   | 4,1 %         |
+| `spotlight` | ~250 761 chars  | **4,8 %**     |
+
+Cuota real medida por búsqueda binaria hasta que `setItem` lanzó: **5 242 752 caracteres**.
+Todo lo que no es foto ocupa ~1 240.
+
+**El motivo por el que el contrato se equivocaba** es el que hay que recordar: un
+`Photo.dataUrl` **nunca es un fotograma de cámara**. `useCamera` y `fileToDataUrl` recortan
+al tamaño del **hueco** antes de codificar, así que una subida de 12 MP y una captura 1080p
+acaban las dos en decenas de KB. El contrato razonaba sobre el tamaño de la entrada, no
+sobre el de lo que se guarda.
+
+El reintento sin `photos` **se queda**, pero como seguro de un presupuesto que este código
+no ha visto (ventana privada con 1 MB, un `EXPORT_SCALE` más alto), no como camino normal.
+Gana el código y el contrato se corrige — [../orchestration/LECCIONES.md](../orchestration/LECCIONES.md) §12.
 
 ## Reglas
 
