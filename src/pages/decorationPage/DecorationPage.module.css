@@ -63,6 +63,16 @@
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  /* Backgrounds (25 items) collapsed and overlapped its rows without this: the
+     implicit "auto" row track lets Chrome redistribute the scroll container's
+     available height across rows instead of sizing each one to its item's
+     aspect-ratio height. `min-content` pins every row to its item's own
+     min-content contribution (the aspect-ratio height, since `.backgroundSwatch`
+     is `overflow: hidden` so its image can't inflate it), independent of how far
+     the grid overflows `.panel`. Frames (8 items) and Icons (102 items) never
+     showed the bug — same `.swatch` aspect-ratio, same columns — so this is
+     scoped to the auto-row sizing function, not a swatch/grid-column change. */
+  grid-auto-rows: min-content;
   gap: 10px 30px;
   align-content: start;
 }
@@ -132,26 +142,6 @@
   display: block;
   width: 100%;
   height: 100%;
-}
-
-/* Step 3 only: draggable stickers sit above the canvas */
-.stickerLayer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.sticker {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  cursor: grab;
-  pointer-events: auto;
-  touch-action: none;
-}
-
-.sticker:active {
-  cursor: grabbing;
 }
 
 .footerActions {

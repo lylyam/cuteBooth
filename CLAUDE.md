@@ -59,10 +59,9 @@ browser, walked with real clicks and zero console errors on 2026-08-11.
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
 holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-**28 nodes are closed.** What remains is **C6** (persistence), **C3b** (delete the hook's
-eight error messages), **A5** (`SHOT_GAP_MS` to 1500) and **D5b** — the only one that
-breaks a user: in the Backgrounds step the grid rows collapse and a click picks the wrong
-background. Full table in [DAG.md](docs/orchestration/DAG.md).
+**29 nodes are closed and no known defect breaks a user.** What remains is **C6**
+(persistence), **C3b** (delete the hook's eight error messages) and **A5** (`SHOT_GAP_MS`
+to 1500). Full table in [DAG.md](docs/orchestration/DAG.md).
 
 `services/` **does not exist** — it was an untracked empty folder, so git never carried it.
 C6 creates it. Nothing is broken.

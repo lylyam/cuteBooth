@@ -140,10 +140,15 @@ U3 **no** monta ninguna capa DOM de pegatinas. Dos motivos: una capa encima las 
 dos veces y con tamaños distintos, y el canvas es además lo que se descarga, así que es la
 única capa que no puede divergir de lo que se lleva el usuario.
 
-**`.stickerLayer` y `.sticker` quedan como CSS muerto.** Los retira `figma-design-sync` al
-construir U3 — no antes, para no borrar algo que C5 pudiera necesitar. Es un caso de manual
-de [../docs/orchestration/LECCIONES.md](../docs/orchestration/LECCIONES.md) §9: dos agentes
-en paralelo que no se vieron.
+**`.stickerLayer` y `.sticker` eran CSS muerto, y se borraron el 2026-08-11** (nodo D5b),
+una vez cerrados C5 y U3 y confirmado por `grep` que ningún `.tsx` las consumía. Se
+esperó a propósito: borrarlas antes habría sido tirar algo que C5 aún podía necesitar.
+
+Es un caso de manual de
+[../docs/orchestration/LECCIONES.md](../docs/orchestration/LECCIONES.md) §9: dos agentes en
+paralelo que no se vieron, uno escribiendo una capa DOM de 48 px y el otro pintando dentro
+del lienzo a ~20 px CSS. Si algún día reaparece la tentación de la capa DOM, el motivo por
+el que no se hace está arriba, en §3.2.
 
 ### 3.3 · Lo que U3 tiene que cablear de `useStickers`, y lo que NO debe inventar
 
