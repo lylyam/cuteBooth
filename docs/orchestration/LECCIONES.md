@@ -2,8 +2,8 @@
 
 > Trampas que **ya costaron tiempo** en este proyecto. Ninguna se deduce leyendo el código,
 > y varias se descubrieron reportando primero un bug que no existía.
-> Escrito el 2026-07-29, al traspasar la orquestación. **§11 añadida el 2026-08-11**, al
-> cerrar C5: la antigua §11 pasa a ser §12.
+> Escrito el 2026-07-29, al traspasar la orquestación. **§11 y §12 añadidas el 2026-08-11**, al
+> cerrar C5 y al cablear S4: la antigua §11 pasa a ser §13.
 
 Esto no es teoría de buenas prácticas: cada punto pasó, y se dice cuándo.
 
@@ -162,7 +162,32 @@ Y un aviso que dejó el mismo nodo: esta conversión vale para un preview **sin 
 `transform`, `offsetX` no deshace nada y la caja es la envolvente. Si algún día se arrastran
 pegatinas sobre una tira inclinada, hace falta el ángulo. Hoy no hay ningún consumidor así.
 
-## 12. Los contratos se corrigen cuando el código los desmiente
+## 12. Un agente puede borrar tu trabajo sin commitear, y el `git checkout` es suyo
+
+Pasó el **2026-08-11**, y es el fallo más tonto de esta lista porque se evita con un commit.
+
+El orquestador editó `specs/camera.md` —apuntando que la propietaria acababa de aprobar los
+ocho mensajes de error— y **lo dejó en el árbol sin commitear** mientras un subagente
+trabajaba. El agente ejecutó `npm run format`, vio que Prettier había reformateado de más
+tres ficheros que no eran suyos, e hizo lo que parecía correcto: `git checkout --` sobre los
+tres para dejar limpio lo que no le tocaba.
+
+Uno de esos tres era `specs/camera.md`. **La aprobación de la propietaria se perdió**, y solo
+se recuperó porque el agente lo declaró en sus SUPUESTOS. Si no lo hubiera dicho, el spec
+habría seguido diciendo «copy sin aprobar» sobre un copy ya aprobado.
+
+Dos reglas que salen de aquí:
+
+1. **El orquestador commitea antes de despachar.** Un árbol sucio es un árbol que otro puede
+   limpiar. No hay excepción: un cambio de una línea en un documento también.
+2. **Un agente que revierte ficheros ajenos debe decirlo**, y este lo dijo. Ese hábito de
+   declarar es lo que convirtió una pérdida silenciosa en un descuido de dos minutos.
+
+El caso general: **`git checkout --` es destructivo y no distingue de quién es el cambio.**
+Un agente que quiera dejar limpio lo que no es suyo está, sin saberlo, apostando a que nadie
+más tenía trabajo ahí.
+
+## 13. Los contratos se corrigen cuando el código los desmiente
 
 Ha pasado varias veces, y siempre es mejor corregir el documento que forzar el código:
 

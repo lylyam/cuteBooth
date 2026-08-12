@@ -1,6 +1,7 @@
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext, useEffect, useReducer } from 'react';
 import type { Dispatch, ReactNode } from 'react';
 import type { PhotoBoothAction, PhotoBoothState } from '../types/photobooth';
+import { loadState, scheduleSave } from '../services/storageService';
 
 const initialState: PhotoBoothState = {
   selectedLayout: null,
@@ -69,7 +70,18 @@ type PhotoBoothContextValue = {
 const PhotoBoothContext = createContext<PhotoBoothContextValue | undefined>(undefined);
 
 function PhotoBoothProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(photoBoothReducer, initialState);
+  // Hydrate in the reducer's lazy initializer, not in an effect: an effect would run its
+  // first `scheduleSave` against `initialState` before `loadState()` ever read the disk,
+  // overwriting whatever was there. See services/storageService.ts's own wiring note.
+  const [state, dispatch] = useReducer(
+    photoBoothReducer,
+    initialState,
+    (fallback) => loadState() ?? fallback,
+  );
+
+  useEffect(() => {
+    scheduleSave(state);
+  }, [state]);
 
   return (
     <PhotoBoothContext.Provider value={{ state, dispatch }}>{children}</PhotoBoothContext.Provider>

@@ -39,16 +39,16 @@ cambien sin abrir un `.tsx`.
 tabla y los aceptó tal cual. **Ya no son supuestos: son el copy del producto.** Cambiarlos
 es una decisión suya, no una corrección.
 
-| `kind`        | Texto                                                                                              | Origen    |
-| ------------- | -------------------------------------------------------------------------------------------------- | --------- |
-| `denied`      | `We can't reach your camera. Check the browser permission, or upload photos instead.`              | aprobado  |
-| `not-found`   | `We couldn't find a camera on this device. Upload your photos instead.`                            | aprobado  |
-| `in-use`      | `Your camera is being used by another app. Close it and try again, or upload your photos instead.` | aprobado  |
-| `insecure`    | `Camera access needs a secure connection. Upload your photos instead.`                             | aprobado  |
-| `unsupported` | `This browser can't open your camera. Upload your photos instead.`                                 | aprobado  |
-| `ended`       | `Your camera turned off unexpectedly. Upload your photos instead.`                                 | aprobado  |
-| `capture`     | `That shot didn't come through — press Start taking photos!! to try again.`                        | aprobado  |
-| `unknown`     | `Something went wrong with your camera. Upload your photos instead.`                               | aprobado  |
+| `kind`        | Texto                                                                                              | Origen   |
+| ------------- | -------------------------------------------------------------------------------------------------- | -------- |
+| `denied`      | `We can't reach your camera. Check the browser permission, or upload photos instead.`              | aprobado |
+| `not-found`   | `We couldn't find a camera on this device. Upload your photos instead.`                            | aprobado |
+| `in-use`      | `Your camera is being used by another app. Close it and try again, or upload your photos instead.` | aprobado |
+| `insecure`    | `Camera access needs a secure connection. Upload your photos instead.`                             | aprobado |
+| `unsupported` | `This browser can't open your camera. Upload your photos instead.`                                 | aprobado |
+| `ended`       | `Your camera turned off unexpectedly. Upload your photos instead.`                                 | aprobado |
+| `capture`     | `That shot didn't come through — press Start taking photos!! to try again.`                        | aprobado |
+| `unknown`     | `Something went wrong with your camera. Upload your photos instead.`                               | aprobado |
 
 **`capture` es el único no fatal**: el stream sigue vivo, así que el botón se queda en
 `Start taking photos!!` para reintentar. Los otros siete cambian el botón a
