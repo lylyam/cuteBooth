@@ -32,19 +32,23 @@ la cabecera es decorativo (`alt=""`), y sale de `src/assets/camera.svg`.
 
 **Ocho mensajes, uno por `kind` de `CameraErrorKind`.** Están en `CameraPage.tsx` porque el
 copy es de la página, no del hook (decisión de A6). Se listan aquí para que se lean y se
-cambien sin abrir un `.tsx`. **Solo el primero estaba aprobado**; los otros siete los
-escribió `ui-composer` al construir U1 y **son copy sin aprobar**.
+cambien sin abrir un `.tsx`.
+
+**Los ocho están APROBADOS por la propietaria el 2026-08-11.** Siete los había escrito
+`ui-composer` al construir U1 y estaban pendientes de revisión; se le enseñaron en esta
+tabla y los aceptó tal cual. **Ya no son supuestos: son el copy del producto.** Cambiarlos
+es una decisión suya, no una corrección.
 
 | `kind`        | Texto                                                                                              | Origen    |
 | ------------- | -------------------------------------------------------------------------------------------------- | --------- |
-| `denied`      | `We can't reach your camera. Check the browser permission, or upload photos instead.`              | **spec**  |
-| `not-found`   | `We couldn't find a camera on this device. Upload your photos instead.`                            | inventado |
-| `in-use`      | `Your camera is being used by another app. Close it and try again, or upload your photos instead.` | inventado |
-| `insecure`    | `Camera access needs a secure connection. Upload your photos instead.`                             | inventado |
-| `unsupported` | `This browser can't open your camera. Upload your photos instead.`                                 | inventado |
-| `ended`       | `Your camera turned off unexpectedly. Upload your photos instead.`                                 | inventado |
-| `capture`     | `That shot didn't come through — press Start taking photos!! to try again.`                        | inventado |
-| `unknown`     | `Something went wrong with your camera. Upload your photos instead.`                               | inventado |
+| `denied`      | `We can't reach your camera. Check the browser permission, or upload photos instead.`              | aprobado  |
+| `not-found`   | `We couldn't find a camera on this device. Upload your photos instead.`                            | aprobado  |
+| `in-use`      | `Your camera is being used by another app. Close it and try again, or upload your photos instead.` | aprobado  |
+| `insecure`    | `Camera access needs a secure connection. Upload your photos instead.`                             | aprobado  |
+| `unsupported` | `This browser can't open your camera. Upload your photos instead.`                                 | aprobado  |
+| `ended`       | `Your camera turned off unexpectedly. Upload your photos instead.`                                 | aprobado  |
+| `capture`     | `That shot didn't come through — press Start taking photos!! to try again.`                        | aprobado  |
+| `unknown`     | `Something went wrong with your camera. Upload your photos instead.`                               | aprobado  |
 
 **`capture` es el único no fatal**: el stream sigue vivo, así que el botón se queda en
 `Start taking photos!!` para reintentar. Los otros siete cambian el botón a
@@ -115,8 +119,8 @@ configurable. Grabar vídeo. Subir desde archivo (es `/upload`).
 1. **La cuenta atrás se pinta centrada sobre el preview.** El wireframe no la dibuja.
 2. **El preview va espejado, y la foto guardada también.** Es lo que espera cualquiera
    que se haya visto en un photobooth; una captura sin espejar sorprende.
-3. **Copy de error de permiso inventado:** `We can't reach your camera. Check the
-browser permission, or upload photos instead.` Si no vale, es una línea.
+3. ~~**Copy de error de permiso inventado.**~~ **Cerrado el 2026-08-11:** la propietaria
+   aprobó los ocho mensajes de error, no solo este. Ver la tabla de §Copy.
 4. **No se muestran las capturas ya hechas** durante la sesión. El wireframe no tiene
    sitio para ellas y `/review` es justo la pantalla que las enseña.
 
