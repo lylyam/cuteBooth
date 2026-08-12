@@ -8,8 +8,14 @@ El usuario consigue sus 4 fotos con la cámara del dispositivo, sin salir de la 
 
 ## Entra / Sale
 
-- **Entra con** `selectedLayout !== null` y `source === 'camera'`. Si no, el guard (S3)
-  redirige a `/`.
+- **Entra con** `selectedLayout !== null`. Si no, el guard (S3) redirige a `/`.
+  **Corregido el 2026-08-11:** esta línea decía además `source === 'camera'`, y eso nunca
+  fue verdad. El guard real (`useRouteGuard('layout')`) y
+  [../docs/contracts/state.md](../docs/contracts/state.md) §guards **solo piden el layout**,
+  igual que `/upload`. Lo levantó `ui-composer` al construir U1, y **gana el código**: el
+  spec era el que mentía. Consecuencia aceptada: con un layout elegido se puede llegar a
+  `/camera` escribiendo la URL aunque en el modal se eligiera «subir fotos». No rompe nada
+  —`/review` decide su `Retake` por `state.source`— y lo simétrico ya pasaba con `/upload`.
 - **Sale a** `/review` en cuanto `photos.length === 4`. Automático: la cuarta captura es
   el final de la sesión, no hay botón de confirmar.
 
@@ -19,8 +25,31 @@ El usuario consigue sus 4 fotos con la cámara del dispositivo, sin salir de la 
 | ----------- | ----------------------- |
 | Botón único | `Start taking photos!!` |
 
-No hay más texto en la pantalla. El icono de objetivo + destello de la cabecera es
-decorativo (`alt=""`).
+No hay más texto en la pantalla **cuando todo va bien**. El icono de objetivo + destello de
+la cabecera es decorativo (`alt=""`), y sale de `src/assets/camera.svg`.
+
+### El copy de los errores — vive en la página, y es para que lo cambies aquí
+
+**Ocho mensajes, uno por `kind` de `CameraErrorKind`.** Están en `CameraPage.tsx` porque el
+copy es de la página, no del hook (decisión de A6). Se listan aquí para que se lean y se
+cambien sin abrir un `.tsx`. **Solo el primero estaba aprobado**; los otros siete los
+escribió `ui-composer` al construir U1 y **son copy sin aprobar**.
+
+| `kind`        | Texto                                                                                              | Origen    |
+| ------------- | -------------------------------------------------------------------------------------------------- | --------- |
+| `denied`      | `We can't reach your camera. Check the browser permission, or upload photos instead.`              | **spec**  |
+| `not-found`   | `We couldn't find a camera on this device. Upload your photos instead.`                            | inventado |
+| `in-use`      | `Your camera is being used by another app. Close it and try again, or upload your photos instead.` | inventado |
+| `insecure`    | `Camera access needs a secure connection. Upload your photos instead.`                             | inventado |
+| `unsupported` | `This browser can't open your camera. Upload your photos instead.`                                 | inventado |
+| `ended`       | `Your camera turned off unexpectedly. Upload your photos instead.`                                 | inventado |
+| `capture`     | `That shot didn't come through — press Start taking photos!! to try again.`                        | inventado |
+| `unknown`     | `Something went wrong with your camera. Upload your photos instead.`                               | inventado |
+
+**`capture` es el único no fatal**: el stream sigue vivo, así que el botón se queda en
+`Start taking photos!!` para reintentar. Los otros siete cambian el botón a
+`Upload photos instead`, que despacha `SET_SOURCE: 'upload'` antes de navegar — si no, un
+`Retake` posterior en `/review` volvería a `/camera` con un `source` que ya no es cierto.
 
 ## Estado que lee / escribe
 

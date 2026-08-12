@@ -19,7 +19,7 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Taking over orchestration? Read this too    | [docs/orchestration/HANDOFF.md](docs/orchestration/HANDOFF.md)     |
 | Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`                 |
 
-**Twenty-one product decisions are CLOSED** in
+**Twenty-two product decisions are CLOSED** in
 [KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them, and don't invent
 geometry or copy — if a datum is missing, report and ask. What is still **open** is
 tracked in [DAG.md](docs/orchestration/DAG.md) §9.
@@ -51,20 +51,18 @@ CuteBooth — a browser-based photobooth web app (React + TypeScript + Vite). Us
 photo layout, capture or upload 4 photos, review the strip, decorate it in three steps
 (frame, background, stickers), and download the composited image.
 
-**Six routes, five of them built and clickable.** `/` → `/layout` → `/upload` →
-`/review` → `/final` works end to end in the browser. Only **`/camera` and
-`/decoration`** are still 0-byte `.tsx` stubs with their routes commented out in
-`src/App.tsx` — nodes **U1** and **U3**.
-
-Their CSS is **already written** (batch D3-D7): building them is writing TSX against
-existing classes, not designing screens. Structure cached in `docs/design/<screen>.md`.
+**All six routes are built, registered and clickable.** `/` → `/layout` →
+(`/camera` | `/upload`) → `/review` → `/decoration` → `/final` runs end to end in the
+browser, walked with real clicks and zero console errors on 2026-08-11.
 
 `src/assets/` is **not** empty: 343 art files — see
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
 holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-**26 nodes are closed.** What remains is exactly three: **C6** (persistence), **U1**
-(`/camera`) and **U3** (`/decoration`). Full table in [DAG.md](docs/orchestration/DAG.md).
+**28 nodes are closed.** What remains is **C6** (persistence), **C3b** (delete the hook's
+eight error messages), **A5** (`SHOT_GAP_MS` to 1500) and **D5b** — the only one that
+breaks a user: in the Backgrounds step the grid rows collapse and a click picks the wrong
+background. Full table in [DAG.md](docs/orchestration/DAG.md).
 
 `services/` **does not exist** — it was an untracked empty folder, so git never carried it.
 C6 creates it. Nothing is broken.
