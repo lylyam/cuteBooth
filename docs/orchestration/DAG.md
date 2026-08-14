@@ -239,6 +239,52 @@ Detalle en [../design/FIGMA.md](../design/FIGMA.md).
   acabado. `booth-reviewer` no puede exigir fidelidad de píxel contra un
   wireframe, ni nada fuera de los 1440 px de los artboards.
 
+## 4.4 · DAG-2 · Fondo blanco por defecto y fondo de color plano (A3)
+
+> **Alcance NUEVO, pedido por la propietaria el 2026-08-11.** No es un defecto ni un ajuste:
+> es una función que no existía. Se desglosa aquí antes de tocar nada, porque atraviesa las
+> cuatro capas y **ningún agente debe decidir su alcance por su cuenta**.
+
+Lo que pidió, literal: «la tira base sin fondo es blanca» y «hay que dejar un fondo posible
+que sea elegir un color plano, con un selector de color».
+
+**Por qué no es una línea.** Hoy `state.background` solo admite **un id de asset**
+(`'classic/3'`) o `null`. Un color plano no es un asset: no está en `import.meta.glob`, no
+tiene miniatura en disco y no se dibuja como patrón repetido sino como un relleno. Así que el
+tipo del estado tiene que ensancharse, y con él todo lo que lo consume.
+
+| ID       | Nodo                                               | Dueño               | Necesita   | Produce                                              |
+| -------- | -------------------------------------------------- | ------------------- | ---------- | ---------------------------------------------------- |
+| **S5**   | Ensanchar `background` para admitir un color plano | `booth-state`       | —          | `types/photobooth.ts`, reducer, `contracts/state.md` |
+| **C8**   | Pintar el fondo: blanco por defecto y color plano  | `canvas-media`      | S5         | `utils/canvasUtils.ts`                               |
+| **D10b** | CSS del selector de color en el panel del paso 2   | `figma-design-sync` | —          | `DecorationPage.module.css`, quizá un token          |
+| **U6**   | El selector en la rejilla de Backgrounds           | `ui-composer`       | S5,C8,D10b | `DecorationPage.tsx`                                 |
+
+**Orden:** `S5` primero y solo (todo lo demás depende de su tipo). Después `C8 + D10b` en
+paralelo, que son disjuntos. `U6` al final, que es la barrera.
+
+### Lo que hay que decidir antes de S5, y no lo decide un agente
+
+1. **Blanco: ¿solo en la descarga, o también en el preview?** Hoy sin fondo el lienzo es
+   transparente y por él se ve el `#DEDEDE` de la página. La frase de la propietaria —«se
+   verá transparente todo el proceso hasta que se llegue al momento decorativo»— apunta a que
+   el preview **siga como está** y que el blanco sea del resultado. **Pendiente de confirmar.**
+2. **Cómo se representa el color en el estado.** Un `background` que hoy es
+   `BackgroundId | null` pasa a admitir un color. La forma la propone `booth-state`, pero
+   tiene que sobrevivir a `storageService` (S4 ya persiste `background`) y a la validación que
+   C6 escribió, que **descarta un id desconocido**: un color plano no debe caer en esa red.
+3. **Dónde vive el selector en el panel**, y si el color elegido se recuerda. El wireframe
+   `102:319` **no dibuja** ningún selector: es geometría que no existe en Figma, así que la
+   propone `figma-design-sync` y la aprueba la propietaria.
+
+### La trampa que ya está avisada
+
+**Decisión 19: los fondos de imagen se repiten como patrón, no se estiran.** Un color plano no
+tiene patrón, así que `C8` no puede reutilizar el camino del tile sin más — y **el preview y
+la descarga tienen que coincidir**, que es justo lo que la decisión 19 protegía. Cualquier
+atajo que pinte el color en el preview por CSS en vez de en el lienzo **rompe la descarga**,
+porque lo que se descarga es el lienzo.
+
 ## 5. Camino crítico
 
 ```
@@ -342,15 +388,15 @@ todas las páginas a un patrón nuevo).
 
 ### Decisiones de producto pendientes
 
-| #      | Pregunta                                                                                                                                                                                                                                                                                                                                                                                                                         | Bloquea                           |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| ~~A1~~ | **Resuelta (decisión 19).** Los fondos se **repiten** como patrón. El tile va en unidades de dibujo, así que preview y descarga enseñan las mismas repeticiones — verificado a 218 y a 654                                                                                                                                                                                                                                       | —                                 |
-| ~~A2~~ | **Resuelta (decisión 18).** Pegatinas a **20×20 unidades**, `contain`, sin deformar (`STICKER_BOX_UNITS`)                                                                                                                                                                                                                                                                                                                        | —                                 |
-| A4     | **En `wide`/`spotlight` la pegatina de 20 se ve pequeña**: 4,3 % de la tira frente al 9,2 % en `classic`, porque el tamaño es fijo y esas tiras son más anchas. Aceptado al decidir, pero conviene mirarlo con una composición delante                                                                                                                                                                                           | Nada. Es una constante            |
-| A3     | **Sin fondo elegido, la tira se descarga con transparencia.** Es lo más honesto y conserva la opción; si se prefiere blanco, es una línea                                                                                                                                                                                                                                                                                        | Nada                              |
-| A7     | **La cuenta atrás es #222 sobre el vídeo en vivo y puede quedar invisible.** Medido el 2026-08-11: **5,18:1** sobre el gris plano de Figma, **1,09:1** sobre una escena oscura — WCAG pide 3:1 para texto grande. En el wireframe se lee porque el fondo es un gris fijo; una cámara no lo es. D3b es fiel al diseño: el problema es que el diseño no previó el caso                                                             | Nada. Se juzga mirando, en **U1** |
-| ~~A5~~ | **Resuelta (decisión 22), 2026-08-11.** `SHOT_GAP_MS` sube de **800 ms a 1500 ms**: era el único hueco para cambiar de pose entre fotos y no daba tiempo. `COUNTDOWN_SECONDS` se queda en 3. La sesión pasa de 14,4 s a **16,5 s**. Ninguno de los dos números salía del diseño: los eligió un agente en C3, y ahora son decisión suya. **El cambio en `useCamera.ts` lo hace `canvas-media`**, no estaba aplicado al resolverse | —                                 |
-| ~~A6~~ | **Resuelta (C3b), 2026-08-11.** `MESSAGES` fuera del hook y `CameraError` pasa a `{ kind }`. El copy vive solo en `CameraPage.tsx`, y la tabla de los ocho textos esta en `specs/camera.md` para leerla sin abrir codigo. **Siete de los ocho siguen sin aprobar**, pero ahora en un solo sitio                                                                                                                                  | —                                 |
+| #      | Pregunta                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Bloquea                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| ~~A1~~ | **Resuelta (decisión 19).** Los fondos se **repiten** como patrón. El tile va en unidades de dibujo, así que preview y descarga enseñan las mismas repeticiones — verificado a 218 y a 654                                                                                                                                                                                                                                                                                                                                     | —                                         |
+| ~~A2~~ | **Resuelta (decisión 18).** Pegatinas a **20×20 unidades**, `contain`, sin deformar (`STICKER_BOX_UNITS`)                                                                                                                                                                                                                                                                                                                                                                                                                      | —                                         |
+| A4     | **En `wide`/`spotlight` la pegatina de 20 se ve pequeña**: 4,3 % de la tira frente al 9,2 % en `classic`, porque el tamaño es fijo y esas tiras son más anchas. Aceptado al decidir, pero conviene mirarlo con una composición delante                                                                                                                                                                                                                                                                                         | Nada. Es una constante                    |
+| **A3** | **Resuelta en direccion, y ABRE ALCANCE NUEVO. 2026-08-11.** La tira base sin fondo **es blanca**, no transparente. Y ademas: **debe poder elegirse un fondo de color plano con un selector de color**. Esto ultimo no es un ajuste — el estado hoy solo admite un id de asset en `background`, asi que toca `types/` + reducer (`booth-state`), `canvasUtils` (`canvas-media`), el panel del paso 2 (`ui-composer`) y su CSS (`figma-design-sync`): **los cuatro agentes**. Desglosado en los nodos `S5`, `C8`, `U6` y `D10b` | Nada. Es una feature nueva, no un defecto |
+| ~~A7~~ | **Resuelta, 2026-08-11.** La propietaria ve el digito sobre el video y lo aprueba tal cual: «pon el numero conforme esta». Queda **fiel a Figma** (#222, `Pixelify Sans`, sin fondo propio) aunque sobre una escena oscura baje a 1,09:1 de contraste. **No es un descuido: es su decision, tomada con la medida delante.** No añadir sombra ni velo sin que ella lo pida                                                                                                                                                      | —                                         |
+| ~~A5~~ | **Resuelta (decisión 22), 2026-08-11.** `SHOT_GAP_MS` sube de **800 ms a 1500 ms**: era el único hueco para cambiar de pose entre fotos y no daba tiempo. `COUNTDOWN_SECONDS` se queda en 3. La sesión pasa de 14,4 s a **16,5 s**. Ninguno de los dos números salía del diseño: los eligió un agente en C3, y ahora son decisión suya. **El cambio en `useCamera.ts` lo hace `canvas-media`**, no estaba aplicado al resolverse                                                                                               | —                                         |
+| ~~A6~~ | **Resuelta (C3b), 2026-08-11.** `MESSAGES` fuera del hook y `CameraError` pasa a `{ kind }`. El copy vive solo en `CameraPage.tsx`, y la tabla de los ocho textos esta en `specs/camera.md` para leerla sin abrir codigo. **Siete de los ocho siguen sin aprobar**, pero ahora en un solo sitio                                                                                                                                                                                                                                | —                                         |
 
 ### Deuda técnica encontrada, con dueño
 

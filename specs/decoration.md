@@ -131,9 +131,10 @@ arrastre torpe pierde una pegatina sin vuelta atrás.
 
 **Decisión 21, del orquestador el 2026-08-11**, al encontrar dos geometrías para lo mismo.
 
-`DecorationPage.module.css` (D5) trae `.stickerLayer` y `.sticker { width: 48px }`, una
+`DecorationPage.module.css` (D5) **traía** `.stickerLayer` y `.sticker { width: 48px }`, una
 capa de _handles_ DOM sobre el canvas. Pero `canvasUtils` (C2) **ya pinta las pegatinas
-dentro del lienzo**, y 60 px de canvas son ~20 px CSS en un preview de 217 — no 48.
+dentro del lienzo**, y 60 px de canvas son ~20 px CSS en un preview de 217 — no 48. Esas dos
+clases **ya no existen**: se borraron el 2026-08-11 en D5b.
 
 **Manda el canvas.** `useStickers` (C5) solo hace hit-test contra coordenadas de canvas, y
 U3 **no** monta ninguna capa DOM de pegatinas. Dos motivos: una capa encima las dibujaría

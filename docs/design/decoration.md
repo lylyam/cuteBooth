@@ -55,5 +55,9 @@ botones; solo cambia el contenido de `.grid`:
 
 `windowContent`, `layout`, `panel`, `panelTitle`, `tabs`, `tab`, `tabActive`,
 `grid`, `swatch`, `swatchSelected`, `backgroundSwatch`, `preview`,
-`previewClassic`, `previewWide`, `previewSpotlight`, `canvas`, `stickerLayer`,
-`sticker`, `footerActions`.
+`previewClassic`, `previewWide`, `previewSpotlight`, `canvas`, `footerActions`.
+
+**`stickerLayer` y `sticker` ya no existen.** Estaban en esta lista y se borraron el
+2026-08-11 (nodo D5b): eran una capa de _handles_ DOM que la decisión 21 dejó sin sentido,
+porque las pegatinas las pinta el canvas. **No las esperes en el CSS ni las montes.** El
+motivo está en [../../specs/decoration.md](../../specs/decoration.md) §3.2.
