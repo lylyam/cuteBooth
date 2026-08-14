@@ -9,9 +9,8 @@
  *
  * The preview is a single `<canvas>` (`useCanvas`, C4) painted straight, with no tilt —
  * unlike `/review` and `/final`, this screen is not `rotation: 'css'`. Stickers are
- * painted by the canvas too (decision 21): there is no DOM layer of draggable handles,
- * so `.stickerLayer`/`.sticker` in `DecorationPage.module.css` are dead CSS this page
- * does not mount.
+ * painted by the canvas too (decision 21): this page mounts no DOM layer of draggable
+ * handles on top of it. See specs/decoration.md §3.2.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

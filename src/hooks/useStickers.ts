@@ -7,11 +7,15 @@
  *
  * ## What it is not
  *
- * **There is no DOM layer of draggable stickers.** The stickers are painted by the canvas
+ * **There is no DOM layer of draggable stickers**, and there must not be one — decision 21,
+ * written up in `specs/decoration.md` §3.2. The stickers are painted by the canvas
  * (`canvasUtils`, layer 4) at export geometry, which is what makes the preview and the
- * downloaded PNG the same picture. This hook only hit-tests against those painted
- * coordinates. `DecorationPage.module.css` carries a `.stickerLayer`/`.sticker` pair from an
- * earlier sketch of the screen; it is dead CSS and nothing here uses it.
+ * downloaded PNG the same picture. So this hook moves no elements: it only hit-tests against
+ * those painted coordinates.
+ *
+ * An earlier sketch of the screen did plan a 48 px DOM layer in CSS. It was never mounted and
+ * the classes have since been deleted. Reintroducing it would draw every sticker twice, at two
+ * different sizes — 60 canvas px is ~20 CSS px in a 217-wide preview, not 48.
  *
  * ## How a page uses it
  *
