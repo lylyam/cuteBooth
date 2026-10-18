@@ -2,7 +2,8 @@
  * SelectedPicturesPage — `/review`, node U5, Figma 91:1346. See specs/review.md.
  *
  * The user sees the strip they just shot or uploaded and decides: keep going to
- * `/decoration`, or retake the four photos (back to wherever they came from).
+ * `/decoration`, or retake — which now resets the whole session and sends them back to
+ * `/layout` to choose again, not just to the four photos.
  */
 import { startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,25 +17,29 @@ import styles from './ReviewPage.module.css';
 
 function ReviewPage() {
   const navigate = useNavigate();
-  const { state, dispatch } = usePhotoBooth();
+  const { dispatch } = usePhotoBooth();
   const redirect = useRouteGuard('layoutAndPhotos');
 
   if (redirect) return redirect;
 
   const handleRetake = () => {
-    // specs/review.md: repeat all four, don't ask for layout or source again.
+    // specs/review.md (revised): "Retake photos" resets the whole session and sends the
+    // user back to `/layout` to choose again — not just the four photos, the layout too.
+    // The decoration is lost regardless of what they pick next; that's the accepted
+    // trade-off of letting them change layout here.
     //
-    // Both updates go through the SAME `startTransition`, deliberately. React
-    // Router wraps its own navigation state in one internally, so calling
-    // `dispatch` outside of it makes it the higher-priority update: this page's
-    // own guard would then see `photos.length === 0` on an intermediate render
-    // that is still at "/review", fire its own (untransitioned, so higher
-    // priority again) redirect to "/", and win the race against this call —
-    // "Retake photos" would land on "/" instead of the source page. Matching
-    // the transition on both keeps them one commit, one destination.
+    // Both updates go through the SAME `startTransition`, deliberately, and now more than
+    // ever: `RESET` clears `selectedLayout` as well as `photos`, so after it lands, BOTH
+    // conditions of this page's own `'layoutAndPhotos'` guard fail, not just one. React
+    // Router wraps its own navigation state in one internally, so calling `dispatch`
+    // outside of it makes it the higher-priority update: this page's own guard would then
+    // see the reset state on an intermediate render that is still at "/review", fire its
+    // own (untransitioned, so higher priority again) redirect to "/", and win the race
+    // against this call — "Retake photos" would land on "/" instead of "/layout".
+    // Matching the transition on both keeps them one commit, one destination.
     startTransition(() => {
-      dispatch({ type: 'CLEAR_PHOTOS' });
-      navigate(state.source === 'camera' ? '/camera' : '/upload');
+      dispatch({ type: 'RESET' });
+      navigate('/layout');
     });
   };
 

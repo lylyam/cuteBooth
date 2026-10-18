@@ -11,8 +11,15 @@ El usuario ve su tira montada y decide: seguir a decorar, o repetir las fotos.
 
 - **Entra con** `selectedLayout !== null` y `photos.length === 4`. Si no, guard (S3) → `/`.
 - **Sale a** `/decoration` con `Start decorating`.
-- **Sale a** `/camera` o `/upload` con `Retake photos`, según `state.source`: se dispara
-  `CLEAR_PHOTOS` y se navega al origen. No se vuelve a elegir layout ni origen.
+- **Sale a** `/layout` con `Retake photos`: se dispara `RESET` y el usuario vuelve a elegir
+  layout y origen. La decoración se pierde siempre.
+
+  ⚠️ **Cambiado el 2026-08-18** (decisión 12 revisada por la propietaria). Antes volvía a
+  `/camera` o `/upload` según `state.source`, conservando layout y decoración. El motivo del
+  cambio: `Retake` era el único camino de vuelta que ofrecía la app, y no dejaba cambiar de
+  layout — para eso había que tirar del botón atrás del navegador. La decoración no puede
+  sobrevivir a un cambio de layout (los ids de marco están acotados al layout, decisión 15),
+  así que se descarta siempre y no solo cuando el layout cambia: es más simple de explicar.
 
 ## Copy — literal de Figma `91:1346`
 
@@ -25,8 +32,9 @@ El usuario ve su tira montada y decide: seguir a decorar, o repetir las fotos.
 
 ## Estado que lee / escribe
 
-- **Lee** `state.selectedLayout`, `state.photos`, `state.source`.
-- **Escribe** `CLEAR_PHOTOS`, solo al repetir.
+- **Lee** `state.selectedLayout` y `state.photos`. Ya **no** lee `state.source`: desde el
+  cambio del 2026-08-18 el destino de `Retake photos` es fijo.
+- **Escribe** `RESET`, solo al repetir.
 
 ## `PhotoResult` — el componente compartido
 
@@ -57,9 +65,9 @@ si algún día divergen las dos pantallas, divergen sus props, no el componente.
 
 - [x] Se ven las 4 fotos en el layout elegido, en el orden en que se capturaron
 - [x] La tira se ve nítida en pantalla retina (`devicePixelRatio`), no borrosa
-- [x] `Retake photos` con `source === 'camera'` va a `/camera`; con `'upload'`, a
-      `/upload`. Nunca a `/layout` ni a `/`
-- [x] Tras `Retake photos`, `selectedLayout` sigue puesto y no se pide otra vez
+- [x] `Retake photos` va a `/layout`, sea cual sea `state.source`. Nunca a `/`
+- [x] Tras `Retake photos` el estado queda a cero: sin layout, sin fotos, sin marco, sin
+      fondo y sin pegatinas
 - [x] `Start decorating` va a `/decoration`
 - [x] `PhotoResult` no contiene ningún literal de copy de esta pantalla
 - [x] Entrar en frío redirige a `/`

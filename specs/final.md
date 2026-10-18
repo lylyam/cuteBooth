@@ -11,7 +11,8 @@ El usuario ve su tira decorada, se la descarga, y si no le gusta repite las foto
 
 - **Entra con** `selectedLayout !== null` y `photos.length === 4`. Si no, guard (S3) → `/`.
   **No** exige frame, fondo ni stickers: decorar es opcional.
-- **Sale a** `/camera` o `/upload` con `Retake`, según `state.source`.
+- **Sale a** `/layout` con `Retake`: se dispara `RESET`. Misma semántica que el
+  `Retake photos` de `/review` — ver ese spec para el porqué del cambio del 2026-08-18.
 - **No sale** con `Download`: descargar no navega.
 
 ## Copy — DECIDIDO, no es el de Figma
@@ -28,13 +29,14 @@ El nodo `2074:52` sigue con el copy de `/review` sin actualizar. **Manda este sp
 Los dos botones **sí** son literales de Figma. Los dos textos son nuevos, para que el
 usuario note que ha avanzado: en `/review` la tira está cruda, aquí está terminada.
 
-⚠️ El subtítulo dice _"start over"_ pero `Retake` conserva la decoración (ver abajo). Si
-se prefiere `Download it, or retake your photos.`, es un cambio de una línea.
+✅ El subtítulo dice _"start over"_ y desde el 2026-08-18 eso es **literalmente** lo que
+hace `Retake`: reiniciar. El aviso que había aquí —que el copy prometía más de lo que el
+botón cumplía— queda resuelto sin tocar el copy.
 
 ## Estado que lee / escribe
 
 - **Lee** el estado completo — es la única pantalla que necesita los seis campos.
-- **Escribe** `CLEAR_PHOTOS`, solo al pulsar `Retake`.
+- **Escribe** `RESET`, solo al pulsar `Retake`.
 
 ## Comportamiento
 
@@ -44,9 +46,10 @@ se prefiere `Download it, or retake your photos.`, es un cambio de una línea.
 (`651×1911` para `classic`, `1404×1257` para `wide` y `spotlight`), con frame, fondo y
 pegatinas incluidos.
 
-**`Retake`** dispara `CLEAR_PHOTOS` y navega al origen. Conserva layout, marco, fondo
-y stickers: el usuario quería otras cuatro fotos, no volver a decorar. Es la misma
-semántica que el `Retake photos` de `/review`, y por eso comparten acción.
+**`Retake`** dispara `RESET` y navega a `/layout`. **No conserva nada**: ni layout, ni
+fotos, ni marco, ni fondo, ni pegatinas. El usuario vuelve al principio del flujo y elige
+otra vez layout y origen. Es la misma semántica que el `Retake photos` de `/review`, y por
+eso comparten acción.
 
 ## Dependencias
 
@@ -62,7 +65,7 @@ semántica que el `Retake photos` de `/review`, y por eso comparten acción.
 - [x] `Download` baja un PNG al tamaño de `layouts.ts`, no al tamaño en pantalla
 - [x] El PNG incluye recorte de frame, fondo y pegatinas en su sitio
 - [x] Descargar dos veces seguidas funciona y no fuga object URLs
-- [x] `Retake` vuelve al origen correcto según `source` y **mantiene** la decoración
+- [x] `Retake` va a `/layout` y deja el estado a cero, decoración incluida
 - [x] `PhotoResult` se reutiliza sin cambiarlo: solo cambian props
 - [x] Entrar en frío redirige a `/`
 - [x] `npm run build` y `npm run lint` limpios
@@ -76,8 +79,12 @@ calidad. Volver a `/decoration` a retocar. Galería de tiras anteriores.
 
 1. **Nombre de fichero** `cutebooth-<layout>.png`, sin fecha. Descargar dos veces deja
    que el navegador añada `(1)`, que es el comportamiento que la gente espera.
-2. **Sin diálogo de confirmación en `Retake`.** Se pierden 4 fotos, pero la decoración se
-   conserva y el camino de vuelta es corto.
+2. ⚠️ **Sin diálogo de confirmación en `Retake`** — supuesto que el cambio del 2026-08-18
+   deja cojo, y que hay que volver a decidir. Se escribió cuando `Retake` solo perdía las 4
+   fotos y la decoración se conservaba, así que el camino de vuelta era corto. Ahora **se
+   pierde todo de un clic**, sin aviso y sin deshacer: fotos, layout, marco, fondo y
+   pegatinas. **Abierto**: o se acepta a sabiendas, o `Retake` pide confirmación con el
+   `Modal` que ya existe.
 
 ## Nodo Figma
 

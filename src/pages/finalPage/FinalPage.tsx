@@ -1,8 +1,9 @@
 /**
  * FinalPage — `/final`, node U4, Figma 2074:52. See specs/final.md.
  *
- * The end of the flow: the user downloads their decorated strip, or retakes the four
- * photos while keeping the decoration (frame, background, stickers all stay put).
+ * The end of the flow: the user downloads their decorated strip, or retakes — which now
+ * resets the whole session and sends them back to `/layout` to choose again, losing the
+ * decoration (frame, background, stickers) no matter what they pick next.
  */
 import { startTransition, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -34,16 +35,22 @@ function FinalPage() {
   };
 
   const handleRetake = () => {
-    // specs/final.md, decision 12: CLEAR_PHOTOS and back to the origin, keeping the
-    // decoration. Same race as `/review`'s "Retake photos" — dispatch and navigate must
-    // land in the SAME startTransition. React Router wraps its own navigation in one
-    // internally; a `dispatch` outside of it would be the higher-priority update, so this
-    // page's own guard would see photos.length === 0 on an intermediate render that is
-    // still at "/final", fire its own (untransitioned, so higher priority again) redirect
-    // to "/", and win the race — "Retake" would land on "/" instead of the source page.
+    // specs/final.md (revised): "Retake" resets the whole session — RESET, not just
+    // CLEAR_PHOTOS — and sends the user back to `/layout` to choose again. The decoration
+    // (frame, background, stickers) is lost regardless of what they pick next; that's the
+    // accepted trade-off of letting them change layout here.
+    //
+    // Same race as `/review`'s "Retake photos" — dispatch and navigate must land in the
+    // SAME startTransition, and now more than ever: `RESET` clears `selectedLayout` as
+    // well as `photos`, so after it lands, BOTH conditions of this page's own
+    // `'layoutAndPhotos'` guard fail, not just one. React Router wraps its own navigation
+    // in one internally; a `dispatch` outside of it would be the higher-priority update,
+    // so this page's own guard would see the reset state on an intermediate render that
+    // is still at "/final", fire its own (untransitioned, so higher priority again)
+    // redirect to "/", and win the race — "Retake" would land on "/" instead of "/layout".
     startTransition(() => {
-      dispatch({ type: 'CLEAR_PHOTOS' });
-      navigate(state.source === 'camera' ? '/camera' : '/upload');
+      dispatch({ type: 'RESET' });
+      navigate('/layout');
     });
   };
 
