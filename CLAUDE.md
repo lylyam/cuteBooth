@@ -59,18 +59,14 @@ browser, walked with real clicks and zero console errors on 2026-08-11.
 [docs/contracts/assets.md](docs/contracts/assets.md). The 24 frame SVGs carry their four
 holes as **closed filled paths**, which is what makes shaped clipping possible.
 
-**DAG-1 is closed: 32 nodes, and no known defect breaks a user.** The only planned node
-left is `D2` (Code Connect), which was always optional. Full table in
-[DAG.md](docs/orchestration/DAG.md).
+**DAG-1 is closed, `S4` included** (persistence survives a reload since 2026-08-11), and no
+known defect breaks a user. Only `D2` (Code Connect, optional) is left. Next planned work
+is **DAG-2** (white default + flat-colour background: `S5 → C8 + D10b → U6`), blocked on
+three owner decisions — [DAG.md](docs/orchestration/DAG.md) §4.4. `R*` is unblocked, but
+**no screen has been reviewed yet** by `booth-reviewer`.
 
-**One thing is open and it is not cosmetic: `S4`.** C6 delivered
-`services/storageService.ts` and proved it survives a real reload, but **nothing consumes
-it** — wiring it means editing `PhotoBoothContext`, so `canvas-media` reported instead of
-touching another owner's file. Two lines, and they change what the user sees after a
-refresh.
-
-`booth-reviewer` exists since 2026-08-11, so `R*` is unblocked — but **no screen has been
-reviewed yet**: five were built before the reviewer existed.
+**`Retake` resets everything** (decision 12, revised 2026-08-18): `RESET` → `/layout`, the
+decoration is lost. Docs saying `CLEAR_PHOTOS` + back to the source are the old behaviour.
 
 **All user-facing text is in English**, including `alt` attributes. The project docs are
 in Spanish; the product is not.
@@ -142,8 +138,8 @@ Layer-based structure under `src/`:
 - `hooks/` — `useRouteGuard.ts` (the six route guards), `useCamera.ts`, `useCanvas.ts` and
   `useStickers.ts`. A hook never imports a component.
 - `services/storageService.ts` — the one service. Saves state to `sessionStorage` under
-  `cutebooth:v1`, validates or discards on read, and never throws. **Nothing wires it yet**
-  — that is node `S4`, and it belongs to `booth-state` because it edits the context.
+  `cutebooth:v1`, validates or discards on read, and never throws. `PhotoBoothContext`
+  consumes it (node `S4`).
 - `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
   hooks and permissions (`settings.json`).
 
