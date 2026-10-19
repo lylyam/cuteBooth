@@ -1,8 +1,13 @@
 /* DecorationPage — nodo D5, Figma 102:319 ("Decorarion"), plantilla de los tres pasos */
 
+/* Side padding, asked by the owner: panel on the left, strip on the right,
+   ~100px from the window's border. WebAppOldStyle's own 10px left both
+   touching it. The footer buttons share this padding, so they line up with
+   the panel's and the strip's outer edges. */
 .windowContent {
   justify-content: space-between;
   gap: clamp(1.5rem, 3vh, 40px);
+  padding-inline: clamp(10px, 7vw, 100px);
 }
 
 .layout {
@@ -118,12 +123,12 @@
   object-fit: cover;
 }
 
-/* Right side: the live strip preview, painted by useCanvas (C4) */
+/* Right side: the live strip preview, painted by useCanvas (C4).
+   No border/border-radius (C2b, same as PhotoResult's .strip): the canvas
+   always draws the strip's frame, so a CSS ring here showed as a double edge. */
 .preview {
   position: relative;
   flex: 0 0 auto;
-  border: var(--border-width) solid var(--dark-secondary);
-  border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
 
