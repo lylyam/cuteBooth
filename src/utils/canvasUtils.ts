@@ -492,7 +492,15 @@ function paint(
     applyUnitTransform(context, unit, output, rotation);
 
     if (prepared.background) {
-      drawTiled(context, prepared.background, unit);
+      // Inside the frame's rounded border only: the canvas is a rectangle, the strip is not,
+      // and an unclipped pattern pokes out past the four corners.
+      context.save();
+      try {
+        if (prepared.frame?.outline) context.clip(prepared.frame.outline);
+        drawTiled(context, prepared.background, unit);
+      } finally {
+        context.restore();
+      }
     }
 
     prepared.targets.forEach((target, index) => {

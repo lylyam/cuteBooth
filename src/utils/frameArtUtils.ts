@@ -45,6 +45,13 @@ export type FrameLayer = {
   viewBox: Rect;
   /** In slot order — `holes[i]` is where `photos[i]` goes. Normally 4. */
   holes: FrameHole[];
+  /**
+   * The strip's outer border, in canvas pixels — the stroke-only `<rect>` that spans the
+   * art, rounded corners included. The background is clipped to it, or the pattern pokes
+   * out past the rounded corners. `null` if the art has no such shape: the background then
+   * fills the whole canvas, as before.
+   */
+  outline: Path2D | null;
   /** The frame with its hole fills neutralised, rasterised at `LAYOUTS[layout].canvas`. */
   raster: HTMLCanvasElement;
 };
@@ -100,9 +107,46 @@ async function buildFrameLayer(frame: FrameDef): Promise<FrameLayer> {
   const canvas = LAYOUTS[frame.layout].canvas;
 
   const holes = extractHoles(document, viewBox, canvas, frame);
+  const outline = extractOutline(document, viewBox, canvas);
   const raster = await rasterize(document, canvas);
 
-  return { id: frame.id, viewBox, holes, raster };
+  return { id: frame.id, viewBox, holes, outline, raster };
+}
+
+/** A border has to cover at least this much of the art to count as the strip's outline. */
+const OUTLINE_MIN_COVERAGE = 0.9;
+
+/**
+ * The biggest stroke-only `<rect>` of the art, if it covers nearly all of it. All 24 frames
+ * draw their outer border that way: inset by half the stroke, `rx` 16.62.
+ *
+ * The clip follows the stroke's **centre line**, like the holes do: the opaque outer half of
+ * the stroke is painted on top, so no background can show past it, and none is left out
+ * under its inner half either.
+ */
+function extractOutline(document: Document, viewBox: Rect, canvas: Size): Path2D | null {
+  let best: { pathData: string; area: number } | null = null;
+
+  for (const element of document.querySelectorAll('rect')) {
+    if (isFilled(element)) continue;
+
+    const segments = shapeSegments(element);
+    if (!segments) continue;
+
+    const inCanvasUnits = scalePathSegments(
+      translatePathSegments(segments, -viewBox.x, -viewBox.y),
+      canvas.width / viewBox.width,
+      canvas.height / viewBox.height,
+    );
+    const box = pathBounds(inCanvasUnits);
+    if (!box) continue;
+
+    const area = box.width * box.height;
+    if (!best || area > best.area) best = { pathData: serializePathData(inCanvasUnits), area };
+  }
+
+  if (!best || best.area < canvas.width * canvas.height * OUTLINE_MIN_COVERAGE) return null;
+  return new Path2D(best.pathData);
 }
 
 function parseSvg(text: string, id: FrameId): Document {
