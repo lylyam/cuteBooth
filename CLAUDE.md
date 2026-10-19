@@ -110,7 +110,7 @@ looking, and don't fix it as a side errand: it changes imports everywhere.
 - **Vite 8** (Rolldown). The React Compiler is wired manually as a Babel preset in `vite.config.ts` via `@rolldown/plugin-babel` — don't "simplify" it to `vite-plugin-react-compiler` without checking it still works with Rolldown.
 - **TypeScript** is project-referenced; `npm run build` runs `tsc -b` across both configs before `vite build`.
 - **React Router v7** with `BrowserRouter`. ⚠️ It wraps its navigations in `startTransition` — see LECCIONES §4 before dispatching-and-navigating in one handler.
-- No global state library: a `useReducer` in Context, 6 fields, 11 actions. Contract: [docs/contracts/state.md](docs/contracts/state.md).
+- No global state library: a `useReducer` in Context, 6 fields, 12 actions. Contract: [docs/contracts/state.md](docs/contracts/state.md).
 - CSS Modules per component/page, no Tailwind/styled-components.
 
 ## Architecture
@@ -123,7 +123,7 @@ Layer-based structure under `src/`:
 - `components/result/PhotoResult.tsx` — **shared by `/review` and `/final`**. Three props, zero copy literals inside. `/final` consumes it unmodified; keep it that way.
 - `context/PhotoBoothContext.tsx` — the one global state container, exposing
   `usePhotoBooth()`, which returns `{ state, dispatch }` and throws outside the provider.
-  6 fields, 11 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
+  6 fields, 12 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
   unhandled action. No convenience setters. Extend this context; never create a second one.
 - `types/photobooth.ts` — state shape and the `PhotoBoothAction` union.
 - `constants/` — `layouts.ts` (`LayoutId`, slot geometry, `LAYOUT_LIST`; **`LayoutId` lives
@@ -138,7 +138,7 @@ Layer-based structure under `src/`:
 - `hooks/` — `useRouteGuard.ts` (the six route guards), `useCamera.ts`, `useCanvas.ts` and
   `useStickers.ts`. A hook never imports a component.
 - `services/storageService.ts` — the one service. Saves state to `sessionStorage` under
-  `cutebooth:v1`, validates or discards on read, and never throws. `PhotoBoothContext`
+  `cutebooth:v2`, validates or discards on read, and never throws. `PhotoBoothContext`
   consumes it (node `S4`).
 - `.claude/` — the fleet (`agents/`), the `/nueva-pagina` skill (`skills/`), and the
   hooks and permissions (`settings.json`).

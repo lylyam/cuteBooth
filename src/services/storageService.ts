@@ -64,13 +64,14 @@ import type { LayoutDef } from '../constants/layouts';
 import { getBackgroundForLayout } from '../constants/backgrounds';
 import { getFrameForLayout } from '../constants/frames';
 import { getSticker } from '../constants/stickers';
+import { clampStickerScale } from '../utils/canvasUtils';
 import type { Photo, PhotoBoothState, PhotoSource, StickerInstance } from '../types/photobooth';
 
 /**
  * The version lives in the key and there are no migrations: change the shape, change the
  * key, and the old entry is simply never read again (and dies with the tab anyway).
  */
-export const STORAGE_KEY = 'cutebooth:v1';
+export const STORAGE_KEY = 'cutebooth:v2'; // v2: stickers gained `rotation` and `scale`
 
 /**
  * How long a burst of changes is allowed to coalesce into one write. Trailing edge, and the
@@ -408,9 +409,10 @@ function validateStickers(value: unknown[]): StickerInstance[] {
 
   for (const entry of value) {
     if (!isRecord(entry)) continue;
-    const { instanceId, assetId, x, y } = entry;
+    const { instanceId, assetId, x, y, rotation, scale } = entry;
     if (typeof instanceId !== 'string' || instanceId.length === 0 || seen.has(instanceId)) continue;
     if (!isFiniteNumber(x) || !isFiniteNumber(y)) continue;
+    if (!isFiniteNumber(rotation) || !isFiniteNumber(scale)) continue;
 
     // The manifest is the source of the narrow `StickerId`, so `sticker.id` is typed and an
     // asset that no longer exists is dropped instead of being drawn as a hole.
@@ -418,7 +420,15 @@ function validateStickers(value: unknown[]): StickerInstance[] {
     if (!sticker) continue;
 
     seen.add(instanceId);
-    stickers.push({ instanceId, assetId: sticker.id, x, y });
+    // Clamped, not rejected: an out-of-range size is still the sticker the user placed.
+    stickers.push({
+      instanceId,
+      assetId: sticker.id,
+      x,
+      y,
+      rotation,
+      scale: clampStickerScale(scale),
+    });
   }
 
   return stickers;

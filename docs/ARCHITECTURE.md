@@ -69,7 +69,7 @@ src/
 │   ├── layouts/               ← PageShell, WebAppOldStyle, AppFooter
 │   └── result/                ← PhotoResult · COMPARTIDO por /review y /final
 ├── context/
-│   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 11 acciones
+│   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 12 acciones
 ├── types/
 │   └── photobooth.ts          ← estado + unión de acciones · reexporta los ids de constants/
 ├── constants/
@@ -88,7 +88,7 @@ src/
 │   ├── useCanvas.ts           ← draw/export/download · el último draw() gana
 │   └── useStickers.ts         ← C5: arrastre de pegatinas · 1 MOVE_STICKER por gesto
 ├── services/
-│   └── storageService.ts      ← C6: sessionStorage 'cutebooth:v1' · valida o descarta
+│   └── storageService.ts      ← C6: sessionStorage 'cutebooth:v2' · valida o descarta
 └── pages/
     └── homePage/ layoutPage/ cameraPage/ uploadPage/ reviewPage/
         decorationPage/ finalPage/            ← las 7 implementadas (6 rutas + home)
@@ -137,13 +137,13 @@ Léela antes de crear cualquier página.
 // context/PhotoBoothContext.tsx
 const { state, dispatch } = usePhotoBooth();
 // state: { selectedLayout, source, photos[], frame, background, stickers[] }
-// dispatch: unión discriminada de 11 acciones · types/photobooth.ts
+// dispatch: unión discriminada de 12 acciones · types/photobooth.ts
 
 // constants/layouts.ts (S2)
 type LayoutId = 'classic' | 'wide' | 'spotlight';
 ```
 
-Un `useReducer` con los 6 campos del flujo completo y las 11 acciones del contrato.
+Un `useReducer` con los 6 campos del flujo completo y las 12 acciones del contrato.
 `usePhotoBooth()` sigue lanzando fuera del provider (buena decisión, mantenida), y no
 expone setters de conveniencia: cada uno sería una segunda forma de mutar lo mismo.
 
@@ -157,7 +157,7 @@ manifiestos no entran en el módulo del estado (deuda D9, cerrada el 2026-07-27)
 la composición dibuja el rectangular simple del layout. **No existe ningún valor que
 signifique «tira sin marco»** — decisión de la propietaria, cerrada.
 
-**No** introducir Zustand ni Redux. Seis campos y once acciones no lo justifican.
+**No** introducir Zustand ni Redux. Seis campos y doce acciones no lo justifican.
 Contrato completo — forma, acciones, guards, persistencia — en
 [contracts/state.md](contracts/state.md).
 

@@ -57,7 +57,7 @@ docs/
 ├── README.md                  ✅ índice + reglas de carga de contexto
 ├── ARCHITECTURE.md            ✅ arquitectura real
 ├── contracts/                 ✅ P3 — lo que los agentes se intercambian
-│   ├── state.md               ✅ 6 campos, 11 acciones, guards, persistencia
+│   ├── state.md               ✅ 6 campos, 12 acciones, guards, persistencia
 │   ├── layouts.md             ✅ geometría de los 3 layouts
 │   └── design-tokens.md       ✅ 21 tokens, reglas de mapeo, deuda T1-T8
 ├── design/                    ⬜ caché de specs de Figma (una por pantalla)

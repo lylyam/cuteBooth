@@ -33,7 +33,14 @@
  * Layer rule: `utils/` imports `constants/` and `utils/`, nothing above.
  */
 import { LAYOUTS, type LayoutId } from '../constants/layouts';
-import { getStickerBox, type StickerPlacement } from './canvasUtils';
+import {
+  canvasToSticker,
+  getStickerCorners,
+  getStickerHandles,
+  getStickerSide,
+  STICKER_HANDLE_HIT_RADIUS,
+  type StickerPlacement,
+} from './canvasUtils';
 
 /** A point in the layout's canvas units — the same space `StickerInstance.x/y` live in. */
 export type CanvasPoint = { x: number; y: number };
@@ -78,10 +85,10 @@ export function toCanvasPoint(
  * **Topmost wins**: `canvasUtils` paints the array in order, so the last entry is the one on
  * top and therefore the one the user is pointing at. Hence the backwards loop.
  *
- * The target is `getStickerBox` — the **full square**, not the drawn image. That is spelled
- * out in `specs/decoration.md` (§3, decisión 18) and in `getStickerBox` itself: the box is
- * about 20 CSS px across in the preview, so tracing the artwork of a 20 × 13 sticker would
- * leave a 10 px tall target. Edges count as inside.
+ * The target is the **full square** turned with the sticker, not the drawn image — spelled
+ * out in `specs/decoration.md` (§3, decisión 18) and in `getStickerCorners`: tracing the
+ * artwork of a 20 × 13 sticker would leave a thin target. The point is turned into the
+ * sticker's own frame, where the square is upright again. Edges count as inside.
  */
 export function hitTestStickers<T extends StickerPlacement>(
   layout: LayoutId,
@@ -90,17 +97,59 @@ export function hitTestStickers<T extends StickerPlacement>(
 ): T | null {
   for (let index = stickers.length - 1; index >= 0; index -= 1) {
     const sticker = stickers[index];
-    const box = getStickerBox(layout, sticker);
-    if (
-      point.x >= box.x &&
-      point.x <= box.x + box.width &&
-      point.y >= box.y &&
-      point.y <= box.y + box.height
-    ) {
+    const half = getStickerSide(layout, sticker) / 2;
+    const local = canvasToSticker(sticker, point);
+    if (Math.abs(local.x) <= half && Math.abs(local.y) <= half) {
       return sticker;
     }
   }
   return null;
+}
+
+export type StickerHandle = 'rotate' | 'scale';
+
+/**
+ * Which handle of the selected sticker is under `point`, or `null`. Asked **before**
+ * `hitTestStickers`: a handle sits on the box's corner or outside it, often over another
+ * sticker, and grabbing the handle is what the user meant.
+ */
+export function hitTestHandle(
+  layout: LayoutId,
+  sticker: StickerPlacement,
+  point: CanvasPoint,
+): StickerHandle | null {
+  const handles = getStickerHandles(layout, sticker);
+  const near = (handle: CanvasPoint) =>
+    Math.hypot(point.x - handle.x, point.y - handle.y) <= STICKER_HANDLE_HIT_RADIUS;
+
+  // The resize corner first: it overlaps the box, and the rotate handle never does.
+  if (near(handles.scale)) return 'scale';
+  if (near(handles.rotate)) return 'rotate';
+  return null;
+}
+
+/** Angle of `point` around `centre`, in degrees, clockwise from the +x axis. */
+export function angleAround(centre: CanvasPoint, point: CanvasPoint): number {
+  return (Math.atan2(point.y - centre.y, point.x - centre.x) * 180) / Math.PI;
+}
+
+/** Distance from `centre` to `point`, in canvas units. */
+export function distanceFrom(centre: CanvasPoint, point: CanvasPoint): number {
+  return Math.hypot(point.x - centre.x, point.y - centre.y);
+}
+
+/** Within this many degrees of upright, sideways or upside down, a turn snaps to it. */
+export const ROTATION_SNAP_DEGREES = 4;
+
+/** `degrees` folded into (−180, 180], snapped to the nearest quarter turn when close to one. */
+export function normalizeRotation(degrees: number): number {
+  let value = degrees % 360;
+  if (value > 180) value -= 360;
+  if (value <= -180) value += 360;
+
+  const quarter = Math.round(value / 90) * 90;
+  if (Math.abs(value - quarter) <= ROTATION_SNAP_DEGREES) value = quarter === -180 ? 180 : quarter;
+  return value;
 }
 
 /**
@@ -115,11 +164,20 @@ export function hitTestStickers<T extends StickerPlacement>(
  *
  * Strict comparisons on purpose: a box that merely shares an edge with the strip overlaps in
  * zero area, i.e. nothing of it is visible, i.e. it goes.
+ *
+ * A turned sticker is tested by the axis-aligned envelope of its turned square. That can keep
+ * one whose corner region alone grazes the strip — it errs on the side of keeping, which is
+ * the side this threshold exists for (there is no undo).
  */
 export function isStickerOnStrip(layout: LayoutId, placement: StickerPlacement): boolean {
-  const box = getStickerBox(layout, placement);
+  const corners = getStickerCorners(layout, placement);
+  const xs = corners.map((corner) => corner.x);
+  const ys = corners.map((corner) => corner.y);
   const { canvas } = LAYOUTS[layout];
   return (
-    box.x < canvas.width && box.x + box.width > 0 && box.y < canvas.height && box.y + box.height > 0
+    Math.min(...xs) < canvas.width &&
+    Math.max(...xs) > 0 &&
+    Math.min(...ys) < canvas.height &&
+    Math.max(...ys) > 0
   );
 }

@@ -38,7 +38,7 @@ dónde está X") va a hook, skill, o al agente `Explore` que ya viene de serie.
 ### 1 · `booth-state` — dueño del contrato de estado
 
 - **Responsabilidad.** Única fuente de verdad de `PhotoBoothContext`, los tipos y la
-  geometría de layouts. Migra `useState` → `useReducer` (6 campos, 11 acciones), define
+  geometría de layouts. Migra `useState` → `useReducer` (6 campos, 12 acciones), define
   los guards de las 6 rutas, y saca `cardData` de `LayoutPage.tsx` a
   `constants/layouts.ts`.
 - **Contexto.** `CLAUDE.md`, `docs/contracts/state.md`, `docs/contracts/layouts.md`.

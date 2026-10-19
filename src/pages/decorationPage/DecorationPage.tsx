@@ -206,21 +206,35 @@ function DecorationPage() {
     [dispatch],
   );
 
-  const { stickers, onPointerDown, onPointerMove, onPointerUp, onPointerCancel } = useStickers(
-    canvasRef,
-    {
-      layout: state.selectedLayout,
-      stickers: state.stickers,
-      onMove: handleMoveSticker,
-      onRemove: handleRemoveSticker,
+  const handleTransformSticker = useCallback(
+    (instanceId: string, rotation: number, scale: number) => {
+      dispatch({ type: 'TRANSFORM_STICKER', instanceId, rotation, scale });
     },
+    [dispatch],
   );
+
+  const {
+    stickers,
+    selectedId,
+    select,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel,
+  } = useStickers(canvasRef, {
+    layout: state.selectedLayout,
+    stickers: state.stickers,
+    onMove: handleMoveSticker,
+    onRemove: handleRemoveSticker,
+    onTransform: handleTransformSticker,
+  });
 
   // `stickers` (from the hook), not `state.stickers`: it is the same array when nothing
   // is being dragged, so this does not loop, and it is what shows the live drag position.
+  // `selectedStickerId` only paints the selection box here; the download never carries it.
   useEffect(() => {
-    void draw({ ...state, stickers });
-  }, [draw, state, stickers]);
+    void draw({ ...state, stickers, selectedStickerId: selectedId });
+  }, [draw, state, stickers, selectedId]);
 
   if (redirect) return redirect;
 
@@ -243,18 +257,24 @@ function DecorationPage() {
 
   const handleAddSticker = (assetId: StickerId) => {
     const canvas = LAYOUTS[layout].canvas;
+    const instanceId = newStickerInstanceId();
     dispatch({
       type: 'ADD_STICKER',
       sticker: {
-        instanceId: newStickerInstanceId(),
+        instanceId,
         assetId,
         x: Math.round(canvas.width / 2),
         y: Math.round(canvas.height / 2),
+        rotation: 0,
+        scale: 1,
       },
     });
+    // Selected straight away, so its handles show and it can be turned or resized at once.
+    select(instanceId);
   };
 
   const handlePrevious = () => {
+    select(null);
     if (stepIndex === 0) {
       navigate('/review');
       return;
@@ -263,6 +283,7 @@ function DecorationPage() {
   };
 
   const handleNext = () => {
+    select(null);
     if (stepIndex === STEPS.length - 1) {
       navigate('/final');
       return;

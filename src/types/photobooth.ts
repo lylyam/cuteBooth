@@ -26,8 +26,10 @@ export type Photo = {
 export type StickerInstance = {
   instanceId: string;
   assetId: StickerId;
-  x: number; // px of the active layout's canvas, NOT css px nor %
+  x: number; // px of the active layout's canvas, NOT css px nor % · the CENTRE
   y: number;
+  rotation: number; // degrees, clockwise, around the centre · 0 = upright
+  scale: number; // × the base box (getStickerSize) · 1 = as added
 };
 
 export type PhotoBoothState = {
@@ -49,5 +51,6 @@ export type PhotoBoothAction =
   | { type: 'SET_BACKGROUND'; background: BackgroundId | null }
   | { type: 'ADD_STICKER'; sticker: StickerInstance }
   | { type: 'MOVE_STICKER'; instanceId: string; x: number; y: number }
+  | { type: 'TRANSFORM_STICKER'; instanceId: string; rotation: number; scale: number }
   | { type: 'REMOVE_STICKER'; instanceId: string }
   | { type: 'RESET' };

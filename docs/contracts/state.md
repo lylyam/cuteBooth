@@ -23,8 +23,10 @@ export type Photo = {
 export type StickerInstance = {
   instanceId: string;
   assetId: StickerId;
-  x: number; // px del canvas del layout activo, NO px CSS ni %
+  x: number; // px del canvas del layout activo, NO px CSS ni % · el CENTRO
   y: number;
+  rotation: number; // grados, horario, alrededor del centro · 0 = derecha
+  scale: number; // × la caja base (getStickerSize) · 1 = como se añadió · 0,5..3
 };
 
 export type PhotoBoothState = {
@@ -61,21 +63,27 @@ de la página, no se persiste y no debe sobrevivir a un refresco.
 declaran como `string` con un `TODO` que nombre X1, y X1 los estrecha al llegar. Lo que
 **no** se hace es duplicar aquí las listas de IDs.
 
-## Las once acciones
+## Las doce acciones
 
-| Acción           | Payload                                        | Quién la dispara    | Efecto                                                                |
-| ---------------- | ---------------------------------------------- | ------------------- | --------------------------------------------------------------------- |
-| `SET_LAYOUT`     | `{ layout: LayoutId }`                         | `/layout`           |                                                                       |
-| `SET_SOURCE`     | `{ source: PhotoSource }`                      | modal de `/layout`  | Lo necesitan los "repetir" de `/review` y `/final`                    |
-| `ADD_PHOTO`      | `{ photo: Photo }`                             | `/camera`           | **No-op si ya hay 4**                                                 |
-| `SET_PHOTOS`     | `{ photos: Photo[] }`                          | `/upload`           | Reemplaza el lote. Trunca a 4                                         |
-| `CLEAR_PHOTOS`   | —                                              | `/review`, `/final` | Vacía `photos`. **Conserva todo lo demás**                            |
-| `SET_FRAME`      | `{ frame: FrameId \| null }`                   | `/decoration` 1     | `null` = **sin elección** → se dibuja el rectangular del layout (C2b) |
-| `SET_BACKGROUND` | `{ background: BackgroundId \| null }`         | `/decoration` 2     | `null` = sin fondo                                                    |
-| `ADD_STICKER`    | `{ sticker: StickerInstance }`                 | `/decoration` 3     |                                                                       |
-| `MOVE_STICKER`   | `{ instanceId: string; x: number; y: number }` | `/decoration` 3     | Posición absoluta, no delta                                           |
-| `REMOVE_STICKER` | `{ instanceId: string }`                       | `/decoration` 3     |                                                                       |
-| `RESET`          | —                                              | ninguno hoy         | Vuelve a `initialState`                                               |
+| Acción              | Payload                                                   | Quién la dispara                                              | Efecto                                                                 |
+| ------------------- | --------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `SET_LAYOUT`        | `{ layout: LayoutId }`                                    | `/layout`                                                     |                                                                        |
+| `SET_SOURCE`        | `{ source: PhotoSource }`                                 | modal de `/layout`                                            | Lo necesitan los "repetir" de `/review` y `/final`                     |
+| `ADD_PHOTO`         | `{ photo: Photo }`                                        | `/camera`                                                     | **No-op si ya hay 4**                                                  |
+| `SET_PHOTOS`        | `{ photos: Photo[] }`                                     | `/upload`                                                     | Reemplaza el lote. Trunca a 4                                          |
+| `CLEAR_PHOTOS`      | —                                                         | ninguno hoy                                                   | Vacía `photos`. **Conserva todo lo demás**                             |
+| `SET_FRAME`         | `{ frame: FrameId \| null }`                              | `/decoration` 1                                               | `null` = **sin elección** → se dibuja el rectangular del layout (C2b)  |
+| `SET_BACKGROUND`    | `{ background: BackgroundId \| null }`                    | `/decoration` 2                                               | `null` = sin fondo                                                     |
+| `ADD_STICKER`       | `{ sticker: StickerInstance }`                            | `/decoration` 3                                               |                                                                        |
+| `MOVE_STICKER`      | `{ instanceId: string; x: number; y: number }`            | `/decoration` 3                                               | Posición absoluta, no delta                                            |
+| `TRANSFORM_STICKER` | `{ instanceId: string; rotation: number; scale: number }` | `/decoration` 3                                               | Giro y tamaño absolutos, no delta. Uno por gesto, al soltar el tirador |
+| `REMOVE_STICKER`    | `{ instanceId: string }`                                  | `/decoration` 3                                               |                                                                        |
+| `RESET`             | —                                                         | `Retake` de `/review` y `/final`, la cruz de `WebAppOldStyle` | Vuelve a `initialState`                                                |
+
+**2026-10-18:** `TRANSFORM_STICKER` es nueva — los tiradores de girar y reescalar que pidió la
+propietaria. Y `CLEAR_PHOTOS` se ha quedado **sin consumidor**: desde la revisión de la decisión
+12 los dos `Retake` despachan `RESET`. Se mantiene en el contrato, pero el párrafo de abajo
+es historia.
 
 **Dos acciones nuevas respecto al plan de nueve.** `SET_FRAME`, porque los frames no
 estaban en el flujo cuando se escribió. Y `CLEAR_PHOTOS`, que exigen el "repetir" de
@@ -83,8 +91,8 @@ estaban en el flujo cuando se escribió. Y `CLEAR_PHOTOS`, que exigen el "repeti
 volver a decorar. `RESET` lo mandaría al principio; esto lo devuelve a `/camera` o
 `/upload` según `source`, con layout, frame, fondo y stickers intactos.
 
-`RESET` sigue en el contrato sin consumidor: es lo que necesitará el botón de cerrar de
-`WebAppOldStyle` cuando se le cablee `onCloseClick`.
+`RESET` ya tiene consumidores: los dos `Retake` y, desde el 2026-10-18, la cruz de
+`WebAppOldStyle`, que vuelve a `/` y empieza de cero en todas las pantallas.
 
 `PhotoBoothAction` es una unión discriminada por `type`. El `switch` del reducer es
 exhaustivo y **sin `default`**, para que `tsc` avise cuando alguien añada una acción y
@@ -119,7 +127,7 @@ una capa al árbol. El `Navigate` sale del `return` de la página, nunca de un e
 
 ## Persistencia · nodo C6
 
-`services/storageService.ts`, `sessionStorage`, clave `cutebooth:v1`. `sessionStorage` y
+`services/storageService.ts`, `sessionStorage`, clave `cutebooth:v2`. `sessionStorage` y
 no `localStorage`: una sesión de photobooth no sobrevive al cierre de la pestaña.
 
 1. Se persiste el estado entero, **fotos incluidas**. Si `setItem` falla, reintentar sin

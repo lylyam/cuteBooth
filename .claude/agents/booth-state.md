@@ -12,7 +12,7 @@ se concentra en S1, S2 y S3, y después casi desaparece.
 
 ## Lee antes de escribir
 
-- `docs/contracts/state.md` — tu contrato. Forma, 11 acciones, guards, persistencia.
+- `docs/contracts/state.md` — tu contrato. Forma, 12 acciones, guards, persistencia.
 - `docs/contracts/layouts.md` — geometría real, ya extraída de Figma.
 - `specs/*.md` solo si necesitas saber quién dispara qué acción.
 

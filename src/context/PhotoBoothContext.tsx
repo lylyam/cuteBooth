@@ -51,6 +51,16 @@ function photoBoothReducer(state: PhotoBoothState, action: PhotoBoothAction): Ph
         ),
       };
 
+    case 'TRANSFORM_STICKER':
+      return {
+        ...state,
+        stickers: state.stickers.map((sticker) =>
+          sticker.instanceId === action.instanceId
+            ? { ...sticker, rotation: action.rotation, scale: action.scale }
+            : sticker,
+        ),
+      };
+
     case 'REMOVE_STICKER':
       return {
         ...state,

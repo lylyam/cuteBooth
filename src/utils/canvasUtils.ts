@@ -54,25 +54,67 @@ import { computeCoverRect, getSourceSize, loadImage, type Size } from './imageUt
 export type CompositionState = Pick<
   PhotoBoothState,
   'selectedLayout' | 'photos' | 'frame' | 'background' | 'stickers'
->;
+> & {
+  /**
+   * **Preview only.** The sticker whose selection box and handles are drawn on top — the
+   * rotate and resize gesture of `/decoration`. `exportStripAsBlob` always drops it, so the
+   * box can never end up in a download.
+   */
+  selectedStickerId?: string | null;
+};
 
-/** A placed sticker, as far as drawing is concerned: a centre in canvas pixels. */
-export type StickerPlacement = { x: number; y: number };
+/** A point in the active layout's canvas units. */
+export type StickerPoint = { x: number; y: number };
+
+/**
+ * A placed sticker, as far as drawing is concerned: a **centre** in canvas pixels, a turn in
+ * degrees clockwise around that centre, and a size as a multiple of the base box.
+ */
+export type StickerPlacement = { x: number; y: number; rotation: number; scale: number };
 
 /**
  * A sticker fits inside a square box measuring this fraction of the strip's **short side**.
  * The longer side of the image fills the box and the shorter one keeps its proportion:
  * stickers are never stretched and never cropped.
  *
- * The fraction is the 20 viewBox units the owner approved on `classic` written as a
- * fraction of `classic` itself, which is what pins it: **`classic` comes out at exactly the
- * approved size** and the other two scale up to look the same size in proportion, instead
- * of the speck a fixed 20 units made of them on a 468-unit-wide strip.
+ * The fraction is **40 viewBox units** on `classic` — decision 18 as revised by the owner on
+ * 2026-10-18, double the 20 first approved — written as a fraction of `classic` itself, so
+ * `classic` comes out at exactly that size and the other two scale up to look the same size
+ * in proportion. This is the size a sticker is **added** at; `scale` resizes it from there.
  *
  * The short side, and not the width or the area, because it is the reference that moves
- * least between a tall strip and a landscape one — the same one this used before.
+ * least between a tall strip and a landscape one.
  */
-export const STICKER_BOX_RATIO = (20 * EXPORT_SCALE) / shortSide('classic');
+export const STICKER_BOX_RATIO = (40 * EXPORT_SCALE) / shortSide('classic');
+
+/** How far the resize handle can shrink or grow a sticker, as a multiple of its base box. */
+export const STICKER_MIN_SCALE = 0.5;
+export const STICKER_MAX_SCALE = 3;
+
+/**
+ * One CSS pixel of the `/decoration` preview, in canvas units. Both previews are drawn at
+ * about one CSS px per viewBox unit (217 px for `classic`'s 218, 468 for the others' 468), so
+ * a viewBox unit — `EXPORT_SCALE` canvas units — is the size the handles below are measured
+ * in. It keeps them the same size on screen in all three layouts.
+ */
+const PREVIEW_CSS_PX = EXPORT_SCALE;
+
+/** Radius of a drawn handle. */
+export const STICKER_HANDLE_RADIUS = 7 * PREVIEW_CSS_PX;
+/** Radius a pointer counts as being on a handle: twice the drawing, it is a finger target. */
+export const STICKER_HANDLE_HIT_RADIUS = 14 * PREVIEW_CSS_PX;
+/** Distance from the box's edge to the rotate handle. */
+const ROTATE_HANDLE_OFFSET = 22 * PREVIEW_CSS_PX;
+const SELECTION_LINE_WIDTH = 1.5 * PREVIEW_CSS_PX;
+/** `--dark-secondary` and white: the box has to read on a dark photo and on a light one. */
+const SELECTION_DARK = '#222222';
+const SELECTION_LIGHT = '#ffffff';
+
+/** Keeps a scale inside the handle's range. Also what storage clamps a rehydrated one to. */
+export function clampStickerScale(scale: number): number {
+  if (!Number.isFinite(scale)) return 1;
+  return Math.min(STICKER_MAX_SCALE, Math.max(STICKER_MIN_SCALE, scale));
+}
 
 /** Decoded images kept around. Bounded, or a session of sticker browsing never gives memory back. */
 export const IMAGE_CACHE_SIZE = 32;
@@ -128,56 +170,129 @@ function shortSide(layout: LayoutId): number {
 }
 
 /**
- * Side of the sticker box in **canvas pixels**: 60 on `classic`, 115 on `wide` and
- * `spotlight`. It depends on the layout — a sticker is a proportion of the strip, not a
- * fixed size, so it looks equally big on all three.
+ * Side of the **base** sticker box in canvas pixels — the size a sticker is added at: 120 on
+ * `classic`, 231 on `wide` and `spotlight`. It depends on the layout — a sticker is a
+ * proportion of the strip, not a fixed size, so it looks equally big on all three.
  */
 export function getStickerSize(layout: LayoutId): number {
   return Math.round(shortSide(layout) * STICKER_BOX_RATIO);
 }
 
-/**
- * The **hit box** of a sticker: the full square, centred on its stored position.
- *
- * **`x` and `y` are the centre**, not the top-left — that is what makes "drop it where the
- * pointer is" work, and what `ADD_STICKER` means by "the middle of the strip".
- *
- * **This is the function `useStickers` (C5) hit-tests with, and the only one.** It stays the
- * square rather than following the drawn image, deliberately: the box is about 20 CSS px in
- * the preview, so a sticker shaped 20 × 13 would otherwise offer a target barely a finger
- * wide. The square is a superset of the art — you can grab a sticker just above or just
- * below its drawing, which on a target this small is a feature. What must never happen is
- * the two rules diverging: draw with `getStickerDrawRect`, hit-test with `getStickerBox`,
- * both centred on the same point.
- */
-export function getStickerBox(layout: LayoutId, sticker: StickerPlacement): Rect {
-  const size = getStickerSize(layout);
-  return { x: sticker.x - size / 2, y: sticker.y - size / 2, width: size, height: size };
+/** Side of this sticker's box: the base box times its own `scale`. */
+export function getStickerSide(layout: LayoutId, sticker: StickerPlacement): number {
+  return getStickerSize(layout) * clampStickerScale(sticker.scale);
 }
 
 /**
- * Where a sticker is actually painted: its image scaled to `contain` inside the hit box,
- * centred. The long side fills the box, the short one keeps the image's proportion, and
- * nothing is ever distorted or cut.
+ * `local` — a point in the sticker's own frame, origin at its centre, axes turned with it —
+ * in canvas units. The one rotation every drawing and hit test of a sticker goes through.
  */
-export function getStickerDrawRect(
+export function stickerToCanvas(sticker: StickerPlacement, local: StickerPoint): StickerPoint {
+  const radians = (sticker.rotation * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: sticker.x + local.x * cos - local.y * sin,
+    y: sticker.y + local.x * sin + local.y * cos,
+  };
+}
+
+/** The inverse of `stickerToCanvas`: a canvas point in the sticker's own frame. */
+export function canvasToSticker(sticker: StickerPlacement, point: StickerPoint): StickerPoint {
+  const radians = (sticker.rotation * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const dx = point.x - sticker.x;
+  const dy = point.y - sticker.y;
+  return { x: dx * cos + dy * sin, y: -dx * sin + dy * cos };
+}
+
+/**
+ * The four corners of the **hit box** — the full square, turned with the sticker — in canvas
+ * units, clockwise from the top-left of the upright sticker.
+ *
+ * **`x` and `y` are the centre**, not the top-left — that is what makes "drop it where the
+ * pointer is" work, and what turning around the middle means.
+ *
+ * The hit box stays the square rather than following the drawn image: a sticker shaped
+ * 20 × 13 would otherwise offer a target barely a finger wide. What must never happen is the
+ * two rules diverging, so both go through `stickerToCanvas` around the same centre.
+ */
+export function getStickerCorners(
+  layout: LayoutId,
+  sticker: StickerPlacement,
+): [StickerPoint, StickerPoint, StickerPoint, StickerPoint] {
+  const half = getStickerSide(layout, sticker) / 2;
+  return [
+    stickerToCanvas(sticker, { x: -half, y: -half }),
+    stickerToCanvas(sticker, { x: half, y: -half }),
+    stickerToCanvas(sticker, { x: half, y: half }),
+    stickerToCanvas(sticker, { x: -half, y: half }),
+  ];
+}
+
+/**
+ * The size a sticker's image is painted at: `contain` inside its box, so the long side fills
+ * it, the short one keeps the image's proportion, and nothing is ever distorted or cut.
+ * Centred on the sticker and turned with it by the caller.
+ */
+export function getStickerDrawSize(
   layout: LayoutId,
   sticker: StickerPlacement,
   source: Size,
-): Rect {
-  const box = getStickerBox(layout, sticker);
-  if (source.width <= 0 || source.height <= 0) return box;
+): Size {
+  const side = getStickerSide(layout, sticker);
+  if (source.width <= 0 || source.height <= 0) return { width: side, height: side };
 
-  const scale = Math.min(box.width / source.width, box.height / source.height);
-  const width = source.width * scale;
-  const height = source.height * scale;
+  const fit = Math.min(side / source.width, side / source.height);
+  return { width: source.width * fit, height: source.height * fit };
+}
+
+/** Where a selected sticker's two handles are, in canvas units. */
+export type StickerHandles = {
+  /** Drag it around the centre to turn the sticker. */
+  rotate: StickerPoint;
+  /** Where the line to `rotate` leaves the box: the middle of the edge facing it. */
+  rotateAnchor: StickerPoint;
+  /** Drag it towards or away from the centre to resize the sticker. A corner of the box. */
+  scale: StickerPoint;
+};
+
+/**
+ * The handles of a selected sticker. **The drawing and the hit test both read this**, so they
+ * cannot disagree about where a handle is.
+ *
+ * The rotate handle sits above the sticker (in its own frame); the resize handle on its
+ * bottom-right corner. Each falls back to the opposite side, or the next corner, when its
+ * usual place is off the strip — a sticker pushed against the top edge must still be
+ * turnable, and a handle outside the canvas can be neither seen nor grabbed.
+ */
+export function getStickerHandles(layout: LayoutId, sticker: StickerPlacement): StickerHandles {
+  const half = getStickerSide(layout, sticker) / 2;
+  const reach = half + ROTATE_HANDLE_OFFSET;
+  const inside = (point: StickerPoint) => isInsideCanvas(layout, point);
+
+  const above = stickerToCanvas(sticker, { x: 0, y: -reach });
+  const rotateBelow = !inside(above) && inside(stickerToCanvas(sticker, { x: 0, y: reach }));
+  const side = rotateBelow ? 1 : -1;
+
+  const corners: StickerPoint[] = [
+    { x: half, y: half },
+    { x: -half, y: half },
+    { x: half, y: -half },
+    { x: -half, y: -half },
+  ].map((corner) => stickerToCanvas(sticker, corner));
 
   return {
-    x: box.x + (box.width - width) / 2,
-    y: box.y + (box.height - height) / 2,
-    width,
-    height,
+    rotate: stickerToCanvas(sticker, { x: 0, y: side * reach }),
+    rotateAnchor: stickerToCanvas(sticker, { x: 0, y: side * half }),
+    scale: corners.find(inside) ?? corners[0],
   };
+}
+
+function isInsideCanvas(layout: LayoutId, point: StickerPoint): boolean {
+  const { canvas } = LAYOUTS[layout];
+  return point.x >= 0 && point.x <= canvas.width && point.y >= 0 && point.y <= canvas.height;
 }
 
 /**
@@ -242,8 +357,9 @@ export async function exportStripAsBlob(
   canvas.height = layout.canvas.height;
 
   try {
-    // Same path as the preview on purpose: what you saw is what you download.
-    await composeStrip(canvas, state);
+    // Same path as the preview on purpose: what you saw is what you download — minus the
+    // selection box, which is a tool on screen and not part of the picture.
+    await composeStrip(canvas, { ...state, selectedStickerId: null });
     return await canvasToBlob(canvas, mimeType);
   } finally {
     // Release the backing store now rather than at the next GC (Safari holds on to it).
@@ -260,7 +376,7 @@ export function clearCompositionCaches(): void {
 
 type PhotoTarget = { box: Rect; clip: Path2D | null };
 
-type DrawableSticker = { image: HTMLImageElement; rect: Rect };
+type DrawableSticker = { image: HTMLImageElement; placement: StickerPlacement; size: Size };
 
 type Prepared = {
   layout: LayoutDef;
@@ -269,6 +385,8 @@ type Prepared = {
   targets: PhotoTarget[];
   photos: (HTMLImageElement | null)[];
   stickers: DrawableSticker[];
+  /** The selected sticker, to draw its box and handles over everything. Preview only. */
+  selection: StickerPlacement | null;
 };
 
 function layoutOf(state: CompositionState): LayoutDef | null {
@@ -311,7 +429,7 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
 
   const stickers = (
     await Promise.all(
-      state.stickers.map(async (sticker) => {
+      state.stickers.map(async (sticker): Promise<DrawableSticker | null> => {
         const definition = getSticker(sticker.assetId);
         if (!definition) return null; // Unknown asset: drop it, do not draw a hole.
 
@@ -319,12 +437,20 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
         if (!image) return null;
 
         // Geometry resolved here, once: paint stays a straight sequence of drawImage calls.
-        return { image, rect: getStickerDrawRect(layout.id, sticker, getSourceSize(image)) };
+        return {
+          image,
+          placement: sticker,
+          size: getStickerDrawSize(layout.id, sticker, getSourceSize(image)),
+        };
       }),
     )
   ).filter((entry): entry is DrawableSticker => entry !== null);
 
-  return { layout, background, frame, targets, photos, stickers };
+  const selection = state.selectedStickerId
+    ? (state.stickers.find((sticker) => sticker.instanceId === state.selectedStickerId) ?? null)
+    : null;
+
+  return { layout, background, frame, targets, photos, stickers, selection };
 }
 
 /**
@@ -386,9 +512,65 @@ function paint(
       context.drawImage(prepared.frame.raster, 0, 0, unit.width, unit.height);
     }
 
-    for (const { image, rect } of prepared.stickers) {
-      context.drawImage(image, rect.x, rect.y, rect.width, rect.height);
+    for (const { image, placement, size } of prepared.stickers) {
+      context.save();
+      try {
+        context.translate(placement.x, placement.y);
+        context.rotate((placement.rotation * Math.PI) / 180);
+        context.drawImage(image, -size.width / 2, -size.height / 2, size.width, size.height);
+      } finally {
+        context.restore();
+      }
     }
+
+    if (prepared.selection) {
+      paintSelection(context, prepared.layout.id, prepared.selection);
+    }
+  } finally {
+    context.restore();
+  }
+}
+
+/**
+ * The selected sticker's box, the line to its rotate handle, and the two handles. Every
+ * stroke twice — a wide white one under a thin dark one — so it reads on any photo.
+ */
+function paintSelection(
+  context: CanvasRenderingContext2D,
+  layout: LayoutId,
+  sticker: StickerPlacement,
+): void {
+  const corners = getStickerCorners(layout, sticker);
+  const handles = getStickerHandles(layout, sticker);
+
+  const outline = new Path2D();
+  corners.forEach((corner, index) => {
+    if (index === 0) outline.moveTo(corner.x, corner.y);
+    else outline.lineTo(corner.x, corner.y);
+  });
+  outline.closePath();
+  outline.moveTo(handles.rotateAnchor.x, handles.rotateAnchor.y);
+  outline.lineTo(handles.rotate.x, handles.rotate.y);
+
+  const knobs = new Path2D();
+  for (const handle of [handles.rotate, handles.scale]) {
+    knobs.moveTo(handle.x + STICKER_HANDLE_RADIUS, handle.y);
+    knobs.arc(handle.x, handle.y, STICKER_HANDLE_RADIUS, 0, Math.PI * 2);
+  }
+
+  context.save();
+  try {
+    context.lineJoin = 'round';
+    context.strokeStyle = SELECTION_LIGHT;
+    context.lineWidth = SELECTION_LINE_WIDTH * 3;
+    context.stroke(outline);
+    context.strokeStyle = SELECTION_DARK;
+    context.lineWidth = SELECTION_LINE_WIDTH;
+    context.stroke(outline);
+
+    context.fillStyle = SELECTION_LIGHT;
+    context.fill(knobs);
+    context.stroke(knobs);
   } finally {
     context.restore();
   }

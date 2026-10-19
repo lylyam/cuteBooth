@@ -99,8 +99,16 @@ Hay **273 pegatinas en cuatro estilos** — `3dStyle` (102), `drawStyle` (75),
 ficheros y **no** entran dentro del JS. Cómo se agrupan los cuatro estilos en el panel
 (pestañas, secciones o una lista sola) **no está dibujado**: ver supuesto 5.
 
-**Tamaño (decisión 18):** cada pegatina entra en una caja de **20×20 unidades de dibujo**
-(60 px en el PNG exportado, la constante `STICKER_BOX_UNITS`). No todas son cuadradas y
+**Tamaño, giro y escala (decisión 18, revisada el 2026-10-18).** Una pegatina se añade en
+una caja de **40×40 unidades de dibujo** en `classic` (`STICKER_BOX_RATIO`; en `wide` y
+`spotlight` en proporción). Al pulsarla queda **seleccionada**: el canvas pinta un recuadro
+con dos tiradores, solo en el preview (`selectedStickerId`; la descarga lo descarta siempre).
+El tirador redondo de encima **gira** alrededor del centro, con imán a 0/90/180/270° a menos
+de 4°. El de la esquina **reescala** entre ×0,5 y ×3. Cada gesto es un solo
+`TRANSFORM_STICKER` al soltar. Si un tirador cae fuera de la tira, se pasa al lado contrario
+o a otra esquina. Pulsar la tira vacía o cambiar de paso deselecciona.
+
+Lo de abajo describía la caja de 20×20 y sigue valiendo para la forma de agarre. No todas son cuadradas y
 **no se deforman**: se aplica `contain`, el lado largo mide 20 y el corto sale de su
 proporción. La caja de **agarre** sigue siendo el cuadrado completo aunque el dibujo sea más
 estrecho — a 20 px CSS en el preview, ceñirla al dibujo dejaría objetivos de 10 px.

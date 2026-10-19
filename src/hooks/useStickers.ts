@@ -1,9 +1,19 @@
 /**
- * Dragging a sticker across the strip — node **C5**.
+ * Dragging, turning and resizing a sticker on the strip — node **C5**, plus the rotate and
+ * resize handles the owner asked for on 2026-10-18.
  *
  * Step 3 of `/decoration` lets the user push the stickers they added around the preview and
  * throw the ones they regret off the edge. This hook is the whole gesture: hit test, live
  * position, one `MOVE_STICKER` at the end, one `REMOVE_STICKER` if it left.
+ *
+ * ## Selection, turning and resizing
+ *
+ * Pressing a sticker **selects** it: `selectedId` comes back, the page hands it to `draw` as
+ * `selectedStickerId`, and the canvas paints a box with two handles around it (preview only —
+ * the export drops it). Dragging the round handle above the box turns the sticker around its
+ * centre; dragging the corner one resizes it, between `STICKER_MIN_SCALE` and
+ * `STICKER_MAX_SCALE`. Same rule as the drag: the live values stay here, and one
+ * `TRANSFORM_STICKER` goes out on release. Pressing empty strip clears the selection.
  *
  * ## What it is not
  *
@@ -82,7 +92,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import { LAYOUTS, type LayoutId } from '../constants/layouts';
 import type { StickerInstance } from '../types/photobooth';
-import { hitTestStickers, isStickerOnStrip, toCanvasPoint } from '../utils/stickerGeometry';
+import { clampStickerScale } from '../utils/canvasUtils';
+import {
+  angleAround,
+  distanceFrom,
+  hitTestHandle,
+  hitTestStickers,
+  isStickerOnStrip,
+  normalizeRotation,
+  toCanvasPoint,
+} from '../utils/stickerGeometry';
 
 /** Relative drift between the horizontal and vertical scale tolerated before warning in dev. */
 const ASPECT_TOLERANCE = 0.02;
@@ -107,6 +126,12 @@ export type UseStickersOptions = {
    * corner, counts as a placement the user meant and is kept — see `isStickerOnStrip`.
    */
   onRemove: (instanceId: string) => void;
+  /**
+   * Fired **once**, on `pointerup`, at the end of a turn or a resize, with the final
+   * `rotation` (degrees, one decimal) and `scale`. Wire it to `TRANSFORM_STICKER`. Not fired
+   * when neither changed.
+   */
+  onTransform: (instanceId: string, rotation: number, scale: number) => void;
 };
 
 export type UseStickersResult = {
@@ -118,7 +143,14 @@ export type UseStickersResult = {
    * effect's dependency list is safe.
    */
   stickers: StickerInstance[];
-  /** `instanceId` of the sticker being dragged, or `null`. */
+  /**
+   * The sticker showing its box and handles, or `null`. Hand it to `draw` as
+   * `selectedStickerId`. Never names a sticker that is no longer in `options.stickers`.
+   */
+  selectedId: string | null;
+  /** Selects a sticker — the page selects the one it just added — or clears with `null`. */
+  select: (instanceId: string | null) => void;
+  /** `instanceId` of the sticker being dragged, turned or resized, or `null`. */
   draggingId: string | null;
   /**
    * The drag, as it stands right now, would delete the sticker: it is entirely off the strip.
@@ -137,31 +169,57 @@ export type UseStickersResult = {
   onPointerCancel: (event: ReactPointerEvent<HTMLCanvasElement>) => void;
 };
 
+/** What a gesture does: the body moves the sticker, each handle does its own thing. */
+type Gesture = 'move' | 'rotate' | 'scale';
+
 /** The gesture in flight. Mutated in place: this, and not React state, is the authority. */
 type Drag = {
   pointerId: number;
   instanceId: string;
+  gesture: Gesture;
   /** Frozen at `pointerdown`: one gesture, one coordinate space. */
   layout: LayoutId;
   /** Pointer → centre, in canvas units. Keeps the sticker from jumping under the finger. */
   grabX: number;
   grabY: number;
-  /** Where it was before the gesture, so an unmoved sticker dispatches nothing. */
+  /** Where it was before the gesture, so an untouched sticker dispatches nothing. */
   originX: number;
   originY: number;
-  /** Live centre in canvas units. `live` state trails this by at most one animation frame. */
+  originRotation: number;
+  originScale: number;
+  /** Pointer angle and distance around the centre at `pointerdown`: the turn and resize zero. */
+  startAngle: number;
+  startDistance: number;
+  /** Live values in canvas units. `live` state trails these by at most one animation frame. */
   x: number;
   y: number;
+  rotation: number;
+  scale: number;
 };
 
 /** What the render sees. A snapshot of `Drag`, published once per animation frame. */
-type LiveDrag = { instanceId: string; x: number; y: number; onStrip: boolean };
+type LiveDrag = {
+  instanceId: string;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  onStrip: boolean;
+};
 
 export function useStickers(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   options: UseStickersOptions,
 ): UseStickersResult {
   const [live, setLive] = useState<LiveDrag | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Mirror of `selectedId` for the stable handlers, written together with it. */
+  const selectedRef = useRef<string | null>(null);
+
+  const select = useCallback((instanceId: string | null) => {
+    selectedRef.current = instanceId;
+    setSelectedId(instanceId);
+  }, []);
 
   // The handlers are stable, so they read the current options through a ref rather than
   // closing over them. Written in an effect and not during render: a pointer event can only
@@ -185,12 +243,16 @@ export function useStickers(
       instanceId: current.instanceId,
       x: current.x,
       y: current.y,
+      rotation: current.rotation,
+      scale: current.scale,
       // Rounded, exactly as `finish` will round it. Unrounded, the hint and the outcome can
       // disagree in the half unit either side of the threshold — measured: a live centre of
       // −29.87 reads as "still on the strip" and then commits at −30, which is a delete.
       onStrip: isStickerOnStrip(current.layout, {
         x: Math.round(current.x),
         y: Math.round(current.y),
+        rotation: current.rotation,
+        scale: current.scale,
       }),
     });
   }, []);
@@ -247,19 +309,37 @@ export function useStickers(
       }
       if (!commit) return;
 
+      if (current.gesture !== 'move') {
+        // One decimal of a degree and three of a scale: below anything the eye can see, and
+        // it keeps the stored state free of float noise.
+        const rotation = Math.round(current.rotation * 10) / 10;
+        const scale = Math.round(current.scale * 1000) / 1000;
+        if (rotation === current.originRotation && scale === current.originScale) return;
+        latest.current.onTransform(current.instanceId, rotation, scale);
+        return;
+      }
+
       // Whole canvas units. The state is written once per gesture, so there is no drift to
       // accumulate, and the sub-unit the rounding drops is 0.16 CSS px in a `classic` preview.
       const x = Math.round(current.x);
       const y = Math.round(current.y);
 
-      if (!isStickerOnStrip(current.layout, { x, y })) {
+      if (
+        !isStickerOnStrip(current.layout, {
+          x,
+          y,
+          rotation: current.rotation,
+          scale: current.scale,
+        })
+      ) {
+        if (selectedRef.current === current.instanceId) select(null);
         latest.current.onRemove(current.instanceId);
         return;
       }
       if (x === current.originX && y === current.originY) return;
       latest.current.onMove(current.instanceId, x, y);
     },
-    [cancelFrame],
+    [cancelFrame, select],
   );
 
   const onPointerDown = useCallback(
@@ -276,23 +356,41 @@ export function useStickers(
       const point = pointerPoint(event, canvas, layout);
       if (!point) return;
 
-      const hit = hitTestStickers(layout, stickers, point);
-      if (!hit) return; // empty strip under the pointer: leave the event to the page
+      // The selected sticker's handles first: they sit on its corner or outside its box, often
+      // over another sticker, and grabbing the handle is what the user meant.
+      const selected = stickers.find((sticker) => sticker.instanceId === selectedRef.current);
+      const handle = selected ? hitTestHandle(layout, selected, point) : null;
+      const hit = handle && selected ? selected : hitTestStickers(layout, stickers, point);
+
+      if (!hit) {
+        // Empty strip under the pointer: drop the selection and leave the event to the page.
+        select(null);
+        return;
+      }
 
       // Only once something was actually grabbed: no text selection, no native image drag,
       // and on touch no synthetic mouse events afterwards.
       event.preventDefault();
+      if (!handle) select(hit.instanceId);
 
       drag.current = {
         pointerId: event.pointerId,
         instanceId: hit.instanceId,
+        gesture: handle ?? 'move',
         layout,
         grabX: hit.x - point.x,
         grabY: hit.y - point.y,
         originX: hit.x,
         originY: hit.y,
+        originRotation: hit.rotation,
+        originScale: hit.scale,
+        startAngle: angleAround(hit, point),
+        // Floored so a press dead on the centre cannot divide by zero on the first move.
+        startDistance: Math.max(1, distanceFrom(hit, point)),
         x: hit.x,
         y: hit.y,
+        rotation: hit.rotation,
+        scale: hit.scale,
       };
 
       // After `drag.current` is set: capture can synchronously fire `gotpointercapture`.
@@ -304,7 +402,7 @@ export function useStickers(
 
       publish();
     },
-    [canvasRef, pointerPoint, publish],
+    [canvasRef, pointerPoint, publish, select],
   );
 
   const onPointerMove = useCallback(
@@ -318,12 +416,28 @@ export function useStickers(
       const point = pointerPoint(event, canvas, current.layout);
       if (!point) return;
 
-      const x = point.x + current.grabX;
-      const y = point.y + current.grabY;
-      if (x === current.x && y === current.y) return;
+      // Turning and resizing pivot on the centre the gesture started from.
+      const centre = { x: current.originX, y: current.originY };
 
-      current.x = x;
-      current.y = y;
+      if (current.gesture === 'rotate') {
+        const rotation = normalizeRotation(
+          current.originRotation + angleAround(centre, point) - current.startAngle,
+        );
+        if (rotation === current.rotation) return;
+        current.rotation = rotation;
+      } else if (current.gesture === 'scale') {
+        const scale = clampStickerScale(
+          (current.originScale * distanceFrom(centre, point)) / current.startDistance,
+        );
+        if (scale === current.scale) return;
+        current.scale = scale;
+      } else {
+        const x = point.x + current.grabX;
+        const y = point.y + current.grabY;
+        if (x === current.x && y === current.y) return;
+        current.x = x;
+        current.y = y;
+      }
       schedule();
     },
     [canvasRef, pointerPoint, schedule],
@@ -405,12 +519,23 @@ export function useStickers(
   const stickers = useMemo(() => {
     if (!live) return options.stickers;
     return options.stickers.map((sticker) =>
-      sticker.instanceId === live.instanceId ? { ...sticker, x: live.x, y: live.y } : sticker,
+      sticker.instanceId === live.instanceId
+        ? { ...sticker, x: live.x, y: live.y, rotation: live.rotation, scale: live.scale }
+        : sticker,
     );
   }, [options.stickers, live]);
 
+  // Derived, not synced in an effect: a sticker removed by any route stops being selected
+  // on the very render it disappears.
+  const liveSelectedId =
+    selectedId && options.stickers.some((sticker) => sticker.instanceId === selectedId)
+      ? selectedId
+      : null;
+
   return {
     stickers,
+    selectedId: liveSelectedId,
+    select,
     draggingId: live?.instanceId ?? null,
     willRemove: live ? !live.onStrip : false,
     onPointerDown,
