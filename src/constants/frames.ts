@@ -77,7 +77,7 @@ export const DEFAULT_FRAME_ID: Record<LayoutId, FrameId> = {
   spotlight: `spotlight/${DEFAULT_FRAME_NAME.spotlight}`,
 };
 
-/** Breathing room around the first hole in the menu swatch, in viewBox units. */
+/** Breathing room around the swatch hole in the frame menu, in viewBox units. */
 export const FRAME_SWATCH_MARGIN = 8;
 
 // One glob per layout folder. Three literal calls and not a loop, because Vite expands
@@ -113,21 +113,74 @@ function viewBoxOf(layout: LayoutId): Rect {
   };
 }
 
-/**
- * The menu swatch is the **first hole** — smallest `y`, then smallest `x` — plus a small
- * margin, clamped to the viewBox. `LAYOUTS[layout].slots` is already sorted that way, and
- * the holes of all 8 frames of a layout sit on that same grid (verified against the 24
- * SVGs: the shaped holes agree with the slots to within ~3 units, which the margin covers).
- * That is the point of deriving it: the swatch cannot drift from the art.
- */
-function swatchOf(layout: LayoutId): Rect {
-  const viewBox = viewBoxOf(layout);
-  const [firstSlot] = LAYOUTS[layout].slots;
+type SlotIndex = 0 | 1 | 2 | 3;
 
-  const left = firstSlot.x / EXPORT_SCALE - FRAME_SWATCH_MARGIN;
-  const top = firstSlot.y / EXPORT_SCALE - FRAME_SWATCH_MARGIN;
-  const right = (firstSlot.x + firstSlot.width) / EXPORT_SCALE + FRAME_SWATCH_MARGIN;
-  const bottom = (firstSlot.y + firstSlot.height) / EXPORT_SCALE + FRAME_SWATCH_MARGIN;
+/** One row of the frame menu: the file stem and the hole its swatch shows. */
+type MenuEntry = readonly [name: string, slot: SlotIndex];
+
+/**
+ * **The frame menu, theme by theme** — the same eight themes in the same order in all three
+ * layouts, and the hole that names each theme as its swatch. Chosen by the owner on
+ * 2026-10-19, with `classic`'s numeric order as the reference.
+ *
+ * The files do not line up by number across layouts (the oval is `Frame 13` in `classic`,
+ * `Frame 8` in `wide` and `Frame 7` in `spotlight`), and in a frame that mixes shapes the
+ * first hole is not always the one that names it — the heart of `classic/Frame 12` is its
+ * fourth hole. Hence a table, matched by eye against the 24 SVGs. In `spotlight` the first
+ * hole is the big one, so a swatch from a small hole is the same shape at another scale.
+ *
+ * A file missing here still shows up, after these, in numeric order: new art is never
+ * hidden, it just has no place in the menu until someone gives it one.
+ */
+const FRAME_MENU: Record<LayoutId, readonly MenuEntry[]> = {
+  classic: [
+    ['Frame 7', 0], // rectangle
+    ['Frame 8', 1], // bunny
+    ['Frame 9', 0], // dome
+    ['Frame 10', 1], // ticket — its first hole is the star
+    ['Frame 11', 0], // blob
+    ['Frame 12', 3], // heart
+    ['Frame 13', 0], // oval
+    ['Frame 14', 0], // cat
+  ],
+  wide: [
+    ['Frame 7', 0], // rectangle
+    ['Frame 12', 1], // bunny
+    ['Frame 9', 0], // dome
+    ['Frame 10', 0], // ticket
+    ['Frame 11', 0], // blob
+    ['Frame 13', 2], // heart
+    ['Frame 8', 0], // oval
+    ['Frame 14', 0], // cat
+  ],
+  spotlight: [
+    ['Frame 8', 0], // rectangle
+    ['Frame 15', 0], // bunny
+    ['Frame 13', 0], // dome
+    ['Frame 12', 0], // ticket
+    ['Frame 10', 0], // blob
+    ['Frame 9', 3], // heart
+    ['Frame 7', 0], // oval
+    ['Frame 18', 1], // cat
+  ],
+};
+
+/**
+ * The menu swatch is one hole — the one `FRAME_MENU` names, the **first** (smallest `y`,
+ * then smallest `x`) for a frame it does not list — plus a small margin, clamped to the viewBox.
+ * `LAYOUTS[layout].slots` is already sorted that way, and the holes of all 8 frames of a
+ * layout sit on that same grid (verified against the 24 SVGs: the shaped holes agree with
+ * the slots to within ~3 units, which the margin covers). That is the point of deriving it:
+ * the swatch cannot drift from the art.
+ */
+function swatchOf(layout: LayoutId, slotIndex: SlotIndex): Rect {
+  const viewBox = viewBoxOf(layout);
+  const slot = LAYOUTS[layout].slots[slotIndex];
+
+  const left = slot.x / EXPORT_SCALE - FRAME_SWATCH_MARGIN;
+  const top = slot.y / EXPORT_SCALE - FRAME_SWATCH_MARGIN;
+  const right = (slot.x + slot.width) / EXPORT_SCALE + FRAME_SWATCH_MARGIN;
+  const bottom = (slot.y + slot.height) / EXPORT_SCALE + FRAME_SWATCH_MARGIN;
 
   const x = Math.max(0, left);
   const y = Math.max(0, top);
@@ -141,10 +194,6 @@ function swatchOf(layout: LayoutId): Rect {
 }
 
 /**
- * Same window for the 8 frames of a layout — what differs between them is the shape drawn
- * inside it. Exported so the panel can size its cells once instead of reading it off a
- * `FrameDef`.
- *
  * **Deviation from the contract, declared:** `assets.md` typed `swatch` as a `string`. No
  * honest string exists. Cropping an SVG needs a viewBox, `<img>` cannot be given one, and
  * `#svgView(...)` fragments are not reliable in `<img>` across browsers — so the choices
@@ -152,27 +201,30 @@ function swatchOf(layout: LayoutId): Rect {
  * rect and let it crop with its own `viewBox` (or an `overflow: hidden` box scaled by
  * `cell.width / swatch.width`). This is the third.
  */
-export const FRAME_SWATCH: Record<LayoutId, Rect> = {
-  classic: swatchOf('classic'),
-  wide: swatchOf('wide'),
-  spotlight: swatchOf('spotlight'),
-};
-
 function framesOf(layout: LayoutId): FrameDef[] {
   const viewBox = viewBoxOf(layout);
-  const swatch = FRAME_SWATCH[layout];
+  const menu = FRAME_MENU[layout];
+  const rank = (name: string) => {
+    const index = menu.findIndex(([menuName]) => menuName === name);
+    return index === -1 ? menu.length : index;
+  };
 
-  return toAssetEntries(FRAME_ART[layout]).map(({ name, src }) => ({
-    id: `${layout}/${name}`,
-    layout,
-    name,
-    art: src,
-    viewBox,
-    swatch,
-  }));
+  // `sort` is stable, so the unlisted files keep the numeric order `toAssetEntries` gave them.
+  return toAssetEntries(FRAME_ART[layout])
+    .sort((a, b) => rank(a.name) - rank(b.name))
+    .map(({ name, src }) => ({
+      id: `${layout}/${name}`,
+      layout,
+      name,
+      art: src,
+      viewBox,
+      swatch: swatchOf(layout, menu[rank(name)]?.[1] ?? 0),
+    }));
 }
 
-/** 8 frames per layout, in numeric file order. Generated from the disk: no entry can be dead. */
+/**
+ * 8 frames per layout, in `FRAME_MENU` order. Generated from the disk: no entry can be dead.
+ */
 export const FRAMES: Record<LayoutId, FrameDef[]> = {
   classic: framesOf('classic'),
   wide: framesOf('wide'),
@@ -192,6 +244,14 @@ if (import.meta.env.DEV) {
         `${layout} has ${defs.length} frames, expected ${FRAMES_PER_LAYOUT}. ` +
           `Check src/assets/frames/${layout}/.`,
       );
+    }
+  }
+
+  for (const [layout, menu] of Object.entries(FRAME_MENU)) {
+    for (const [name] of menu) {
+      if (!FRAMES_BY_ID.has(`${layout}/${name}`)) {
+        warn(`FRAME_MENU lists "${layout}/${name}", which the manifest does not have.`);
+      }
     }
   }
 

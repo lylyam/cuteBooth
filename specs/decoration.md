@@ -59,7 +59,7 @@ contenido de la rejilla. Un solo componente de panel parametrizado, no tres.
 
 La rejilla muestra los **8 marcos del layout activo** — hay 8 por layout, en
 `assets/frames/{classic,wide,spotlight}/`. Cada muestra se **genera del propio marco**,
-recortando su SVG al primer hueco: así muestra y marco no pueden desincronizarse.
+recortando su SVG al hueco que nombra el tema, y en el mismo orden de temas en los tres layouts (`FRAME_MENU`, decisión 14 revisada): así muestra y marco no pueden desincronizarse.
 
 Elegir una escribe un `frame`, que es un id acotado a su layout (`'classic/Frame 7'`).
 Cada SVG es la tira entera — borde exterior y cuatro huecos — y `canvasUtils` (C2) lo

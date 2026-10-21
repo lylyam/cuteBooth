@@ -131,6 +131,14 @@ Consecuencias:
 cada marco, la muestra es su propio SVG recortado al **primer hueco** (el de menor `y`,
 luego menor `x`) con un margen pequeño.
 
+**Revisado el 2026-10-19** por la propietaria: en un marco de formas mezcladas el primer
+hueco no siempre nombra el tema, y los ficheros no coinciden en número entre layouts (el
+óvalo es `Frame 13` en `classic`, `Frame 8` en `wide` y `Frame 7` en `spotlight`). La tabla
+`FRAME_MENU` (`frames.ts`) fija, por layout, el **orden** del menú —los mismos 8 temas en
+los tres: rectángulo, conejo, cúpula, ticket, mancha, corazón, óvalo, gato— y el **hueco**
+de cada muestra. Sigue siendo el mismo fichero: solo cambia qué ventana se recorta. Un
+fichero nuevo que la tabla no liste aparece al final, en orden numérico.
+
 Es determinista y **no puede desincronizarse**: muestra y marco son el mismo fichero. La
 alternativa —mantener a mano una tabla de 8 iconos × 3 layouts— era el único dato que
 faltaba para cerrar X1, y así deja de faltar.

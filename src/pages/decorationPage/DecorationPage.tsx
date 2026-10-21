@@ -61,21 +61,29 @@ function newStickerInstanceId(): string {
 }
 
 /**
- * A frame's menu swatch — its own SVG cropped to its first hole (`FrameDef.swatch`, in
- * viewBox units; `assets/frames/icons for frames menu/` is unused, per assets.md). The
- * outer `<svg>`'s `viewBox` does the cropping: an SVG root clips to its own viewport by
- * default, so this needs no CSS of its own — `.swatch` only centres and sizes the box.
+ * A frame's menu swatch — its own SVG cropped to one of its holes (`FrameDef.swatch`, in
+ * viewBox units; `assets/frames/icons for frames menu/` is unused, per assets.md).
+ *
+ * The outer `<svg>` scales the window to the cell; the inner one crops to it. The root
+ * alone is not enough: it clips to its *viewport*, and when the cell's aspect differs from
+ * the window's — `spotlight`'s big hole is wider than `.swatch`'s 172/121 — `meet`
+ * letterboxes and the neighbouring holes show above and below. A nested `<svg>` clips to
+ * exactly its `x y width height`, whatever the cell. `.swatch` only centres and sizes the box.
  */
 function FrameSwatchArt({ frame }: { frame: FrameDef }) {
   const { swatch, viewBox, art } = frame;
+  const crop = `${swatch.x} ${swatch.y} ${swatch.width} ${swatch.height}`;
   return (
-    <svg
-      viewBox={`${swatch.x} ${swatch.y} ${swatch.width} ${swatch.height}`}
-      width="100%"
-      height="100%"
-      aria-hidden="true"
-    >
-      <image href={art} x={viewBox.x} y={viewBox.y} width={viewBox.width} height={viewBox.height} />
+    <svg viewBox={crop} width="100%" height="100%" aria-hidden="true">
+      <svg x={swatch.x} y={swatch.y} width={swatch.width} height={swatch.height} viewBox={crop}>
+        <image
+          href={art}
+          x={viewBox.x}
+          y={viewBox.y}
+          width={viewBox.width}
+          height={viewBox.height}
+        />
+      </svg>
     </svg>
   );
 }
