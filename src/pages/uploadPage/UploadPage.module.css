@@ -125,9 +125,41 @@
   border: 0;
 }
 
+/* Mobile: the strip centred in the free space, `Continue` at the bottom at full width.
+   wide/spotlight take the whole width, so their margins and gaps can no longer be fixed
+   px — they are the canvas numbers (468 wide, contracts/layouts.md) as a share of the
+   window's width, through `cqw`, and the strip keeps its exact shape at any phone width. */
 @media (max-width: 640px) {
+  .windowContent {
+    justify-content: flex-start;
+    container-type: inline-size;
+  }
+
+  .strip {
+    margin-block: auto;
+  }
+
   .wide,
   .spotlight {
     width: 100%;
+  }
+
+  .wide {
+    gap: calc(16 * 100cqw / 468);
+    padding: calc(30 * 100cqw / 468) calc(23 * 100cqw / 468) calc(87 * 100cqw / 468);
+  }
+
+  .spotlight {
+    gap: calc(18 * 100cqw / 468) calc(10 * 100cqw / 468);
+    padding: calc(30 * 100cqw / 468) calc(23 * 100cqw / 468);
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions > button {
+    width: 100%;
+    padding-block: var(--mobile-button-padding-y);
   }
 }

@@ -28,3 +28,46 @@
     content: url('../../assets/PhotoBooth.png');
   }
 }
+
+/* Mobile: the upright booth, as big as the screen allows, with the button between its
+   screen and its slot. No hover on a phone, so the flicker runs all the time, at the same
+   speed as the desktop one on hover: the same two-frame `content` swap every 0.5 s. */
+@media (max-width: 640px) {
+  .imageWrapper {
+    width: min(
+      100% - 2 * var(--mobile-gutter),
+      calc((100dvh - 2 * var(--mobile-gutter)) * 346 / 699)
+    );
+    margin: var(--mobile-gutter) auto 0;
+  }
+
+  .photoBooth,
+  .photoBooth:hover {
+    animation: flicker-mobile 0.5s steps(1) infinite;
+  }
+
+  .buttonWrapper {
+    left: 31%;
+    top: 55%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .photoBooth,
+  .photoBooth:hover {
+    animation: none;
+  }
+}
+
+@keyframes flicker-mobile {
+  0% {
+    content: url('../../assets/PhotoboothMobile.png');
+  }
+  50% {
+    content: url('../../assets/PhotoboothMobile2.png');
+  }
+  100% {
+    content: url('../../assets/PhotoboothMobile.png');
+  }
+}

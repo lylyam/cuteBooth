@@ -56,6 +56,10 @@
      both "Frame 38" x=74 y=80 width=1292 height=763). One token so the window
      can't drift apart again across pages — see WebAppOldStyle.module.css. */
   --window-max-width: 1292px;
+  /* Mobile (<= 640px): the window goes full-screen; this is its side margin and the
+     extra height the primary actions get to be comfortable thumb targets. */
+  --mobile-gutter: 16px;
+  --mobile-button-padding-y: 14px;
 
   background-color: var(--background-color);
   color: var(--dark-secondary);

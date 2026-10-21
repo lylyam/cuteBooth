@@ -37,3 +37,16 @@
     min-height: calc(100dvh - 80px);
   }
 }
+
+/* Mobile: the window is the screen. No page padding around it — WebAppOldStyle takes the
+   full viewport and the footer sits below it, one scroll away. */
+@media (max-width: 640px) {
+  .page {
+    padding: 0;
+  }
+
+  .inner {
+    min-height: 100dvh;
+    gap: 0;
+  }
+}

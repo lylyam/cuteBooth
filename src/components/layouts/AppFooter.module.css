@@ -31,3 +31,9 @@
     flex-wrap: wrap;
   }
 }
+
+@media (max-width: 640px) {
+  .footer {
+    padding: var(--mobile-gutter);
+  }
+}

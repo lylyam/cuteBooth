@@ -30,3 +30,10 @@
   gap: 20px;
   flex: 1;
 }
+
+@media (max-width: 640px) {
+  .card {
+    padding: 24px var(--mobile-gutter);
+    gap: 16px;
+  }
+}

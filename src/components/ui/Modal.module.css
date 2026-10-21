@@ -45,3 +45,30 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Mobile: a bottom sheet. Anchored to the bottom edge, full width, rounded only on top,
+   and its actions stacked at full width where the thumb already is. */
+@media (max-width: 640px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .dialog {
+    width: 100%;
+    gap: 24px;
+    padding: 24px var(--mobile-gutter) calc(24px + env(safe-area-inset-bottom));
+    border-bottom: none;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footer > button {
+    width: 100%;
+    padding-block: var(--mobile-button-padding-y);
+  }
+}

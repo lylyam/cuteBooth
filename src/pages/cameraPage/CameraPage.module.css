@@ -114,3 +114,26 @@
 .progressDotFilled {
   background-color: var(--dark-secondary);
 }
+
+/* Mobile: icon and preview centred in the free space, the shutter button at the bottom
+   at full width. Both `margin-top: auto`s split the leftover height evenly. */
+@media (max-width: 640px) {
+  .windowContent {
+    justify-content: flex-start;
+    gap: 24px;
+  }
+
+  .icon {
+    margin-top: auto;
+  }
+
+  .preview {
+    width: 100%;
+  }
+
+  .windowContent > button {
+    width: 100%;
+    margin-top: auto;
+    padding-block: var(--mobile-button-padding-y);
+  }
+}

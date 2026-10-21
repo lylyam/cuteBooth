@@ -69,8 +69,27 @@
   }
 }
 
+/* Mobile: no window on a phone — the chrome becomes the app's own bar. Exactly one
+   screen tall, so each page lays its actions out against the bottom edge, and long
+   content (the layout cards) scrolls inside `.content`, under a fixed bar. */
 @media (max-width: 640px) {
+  .wrapper {
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
+  }
+
   .topBar {
-    padding: 8px 10px;
+    height: 56px;
+    padding: 0 var(--mobile-gutter);
+  }
+
+  .closeButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .content {
+    padding: 24px var(--mobile-gutter);
   }
 }

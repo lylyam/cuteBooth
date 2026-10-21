@@ -199,3 +199,26 @@ Con esto `:root` pasa de **24 a 26** custom properties.
       por el orquestador: 0 literales en los 6 ficheros del lote)
 - [x] Ningún breakpoint fuera de `640px`, `768px`, `900px` (el lote usó 640 y 768)
 - [x] `npm run build` limpio (ejecutado por el orquestador, no por el agente)
+
+## 6. Móvil (≤ 640 px) — añadido el 2026-10-21
+
+Pedido por la propietaria a partir del mockup `cutebooth · Mobile.html` (raíz del repo). El
+mockup marca **la forma**, no el aspecto: colores, tipografía, botones, iconos y fondos son
+los de siempre. Un solo punto de corte, `@media (max-width: 640px)`, literal (rule 6).
+
+| Pieza                 | En móvil                                                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageShell`           | sin padding; el pie queda bajo la pantalla, a un scroll                                                                                      |
+| `WebAppOldStyle`      | ventana a pantalla completa (`100dvh`), sin borde ni radio; barra de 56 px; el contenido hace scroll dentro                                  |
+| `Modal`               | hoja inferior: pegada abajo, radio solo arriba, acciones apiladas a ancho completo                                                           |
+| Acciones de página    | abajo del todo, a ancho completo (`--mobile-button-padding-y`); en `/decoration`, anterior/siguiente lado a lado                             |
+| `/`                   | `PhotoboothMobile.png`; parpadea siempre con `PhotoboothMobile2.png`, al ritmo del hover de escritorio (0,5 s), porque en móvil no hay hover |
+| `/review`, `/final`   | título arriba, tira inclinada en el alto que sobra, acciones abajo                                                                           |
+| `/decoration`         | tira arriba; el panel debajo como hoja, con UNA fila de muestras que hace scroll lateral                                                     |
+| `/upload` wide/spotl. | márgenes y huecos en `cqw` sobre el lienzo de 468, para que la tira conserve su forma a cualquier ancho                                      |
+
+Las tiras de `/review`, `/final` y `/decoration` se dimensionan con `cqw`/`cqh` contra su
+contenedor: caben a lo alto y a lo ancho sin deformarse. `useCanvas` ya redibuja al cambiar
+el tamaño (`ResizeObserver`).
+
+Tokens nuevos: `--mobile-gutter` (16 px) y `--mobile-button-padding-y` (14 px).

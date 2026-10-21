@@ -11,7 +11,7 @@
 
 @media (max-width: 640px) {
   .windowContent {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: var(--mobile-gutter);
+    padding-right: var(--mobile-gutter);
   }
 }

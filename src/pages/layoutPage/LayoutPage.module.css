@@ -47,3 +47,18 @@
     gap: 32px;
   }
 }
+
+/* Mobile: one card per row at full width; the window scrolls under the bar. */
+@media (max-width: 640px) {
+  .windowContent {
+    justify-content: flex-start;
+    gap: 24px;
+    padding-top: 32px;
+    padding-bottom: 24px;
+  }
+
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

@@ -316,20 +316,24 @@ function DecorationPage() {
             onAddSticker={handleAddSticker}
           />
 
-          <div className={`${styles.preview} ${PREVIEW_LAYOUT_CLASS[layout]}`}>
-            {/* Always mounted, per useCanvas's own rule: it is what does the painting.
-                The four pointer handlers are useStickers' (C5) whole gesture; onPointerCancel
-                is not optional, or a drag that loses capture freezes forever. */}
-            <canvas
-              ref={canvasRef}
-              className={styles.canvas}
-              aria-label="Your photo strip"
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerCancel}
-            />
-            {isDrawing && <Loading />}
+          {/* Layout-free on desktop (`display: contents`); on mobile, the box the strip is
+              sized against so it fits the height left above the panel. */}
+          <div className={styles.previewArea}>
+            <div className={`${styles.preview} ${PREVIEW_LAYOUT_CLASS[layout]}`}>
+              {/* Always mounted, per useCanvas's own rule: it is what does the painting.
+                  The four pointer handlers are useStickers' (C5) whole gesture; onPointerCancel
+                  is not optional, or a drag that loses capture freezes forever. */}
+              <canvas
+                ref={canvasRef}
+                className={styles.canvas}
+                aria-label="Your photo strip"
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerCancel}
+              />
+              {isDrawing && <Loading />}
+            </div>
           </div>
         </div>
 

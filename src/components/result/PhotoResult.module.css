@@ -170,3 +170,62 @@
     aspect-ratio: 468 / 419;
   }
 }
+
+/* Mobile: title on top, the strip in all the height that is left, the actions at the
+   bottom at full width. `.textBlock` dissolves (`display: contents`) so its two children
+   can sit on either side of the strip without the TSX changing for desktop.
+   The strip tilts again, as on desktop: it is the one place the screen has room for it.
+   It is sized to fit BOTH ways — `cqw`/`cqh` of `.stripWrapper` — so a tall classic strip
+   shrinks to the height left over and a wide one to the width, without ever distorting. */
+@media (max-width: 640px) {
+  .layout {
+    flex: 1;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .textBlock {
+    display: contents;
+  }
+
+  .subtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  .stripWrapper {
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    align-self: stretch;
+    padding: 0;
+    container-type: size;
+  }
+
+  .actions {
+    order: 1;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .actions > button {
+    width: 100%;
+    padding-block: var(--mobile-button-padding-y);
+  }
+
+  .strip {
+    --strip-rotation: 7.28;
+  }
+
+  .stripClassic {
+    width: min(100cqw, calc(100cqh * 296.97 / 659.49));
+    aspect-ratio: 296.97 / 659.49;
+  }
+
+  .stripWide,
+  .stripSpotlight {
+    width: min(100cqw, calc(100cqh * 517.23 / 474.93));
+    aspect-ratio: 517.23 / 474.93;
+  }
+}
