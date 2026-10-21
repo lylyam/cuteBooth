@@ -69,7 +69,7 @@ src/
 │   ├── layouts/               ← PageShell, WebAppOldStyle, AppFooter
 │   └── result/                ← PhotoResult · COMPARTIDO por /review y /final
 ├── context/
-│   └── PhotoBoothContext.tsx  ← useReducer · 6 campos, 12 acciones
+│   └── PhotoBoothContext.tsx  ← useReducer · 7 campos, 13 acciones
 ├── types/
 │   └── photobooth.ts          ← estado + unión de acciones · reexporta los ids de constants/
 ├── constants/
@@ -137,13 +137,13 @@ Léela antes de crear cualquier página.
 // context/PhotoBoothContext.tsx
 const { state, dispatch } = usePhotoBooth();
 // state: { selectedLayout, source, photos[], frame, background, stickers[] }
-// dispatch: unión discriminada de 12 acciones · types/photobooth.ts
+// dispatch: unión discriminada de 13 acciones · types/photobooth.ts
 
 // constants/layouts.ts (S2)
 type LayoutId = 'classic' | 'wide' | 'spotlight';
 ```
 
-Un `useReducer` con los 6 campos del flujo completo y las 12 acciones del contrato.
+Un `useReducer` con los 7 campos del flujo completo y las 13 acciones del contrato.
 `usePhotoBooth()` sigue lanzando fuera del provider (buena decisión, mantenida), y no
 expone setters de conveniencia: cada uno sería una segunda forma de mutar lo mismo.
 

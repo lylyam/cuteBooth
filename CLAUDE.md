@@ -19,7 +19,7 @@ briefing: current state, non-negotiable rules, first node, open decisions.
 | Taking over orchestration? Read this too    | [docs/orchestration/HANDOFF.md](docs/orchestration/HANDOFF.md)     |
 | Per-screen scope, literal copy, acceptance  | `specs/{camera,upload,review,decoration,final}.md`                 |
 
-**Twenty-two product decisions are CLOSED** in
+**Twenty-five product decisions are CLOSED** in
 [KICKOFF.md](docs/orchestration/KICKOFF.md) §4. Don't reopen them, and don't invent
 geometry or copy — if a datum is missing, report and ask. What is still **open** is
 tracked in [DAG.md](docs/orchestration/DAG.md) §9.
@@ -60,9 +60,10 @@ browser, walked with real clicks and zero console errors on 2026-08-11.
 holes as **closed filled paths**, which is what makes shaped clipping possible.
 
 **DAG-1 is closed, `S4` included** (persistence survives a reload since 2026-08-11), and no
-known defect breaks a user. Only `D2` (Code Connect, optional) is left. Next planned work
-is **DAG-2** (white default + flat-colour background: `S5 → C8 + D10b → U6`), blocked on
-three owner decisions — [DAG.md](docs/orchestration/DAG.md) §4.4. `R*` is unblocked, but
+known defect breaks a user. Only `D2` (Code Connect, optional) is left. **DAG-2 is done**
+(2026-10-21): any background works in any layout, a solid colour via the rainbow swatch's
+wheel — **provisional until the owner tests it by hand** — and step 2 is mandatory
+([DAG.md](docs/orchestration/DAG.md) §4.4). `R*` is unblocked, but
 **no screen has been reviewed yet** by `booth-reviewer`.
 
 **`Retake` resets everything** (decision 12, revised 2026-08-18): `RESET` → `/layout`, the
@@ -110,7 +111,7 @@ looking, and don't fix it as a side errand: it changes imports everywhere.
 - **Vite 8** (Rolldown). The React Compiler is wired manually as a Babel preset in `vite.config.ts` via `@rolldown/plugin-babel` — don't "simplify" it to `vite-plugin-react-compiler` without checking it still works with Rolldown.
 - **TypeScript** is project-referenced; `npm run build` runs `tsc -b` across both configs before `vite build`.
 - **React Router v7** with `BrowserRouter`. ⚠️ It wraps its navigations in `startTransition` — see LECCIONES §4 before dispatching-and-navigating in one handler.
-- No global state library: a `useReducer` in Context, 6 fields, 12 actions. Contract: [docs/contracts/state.md](docs/contracts/state.md).
+- No global state library: a `useReducer` in Context, 7 fields, 13 actions. Contract: [docs/contracts/state.md](docs/contracts/state.md).
 - CSS Modules per component/page, no Tailwind/styled-components.
 
 ## Architecture
@@ -123,7 +124,7 @@ Layer-based structure under `src/`:
 - `components/result/PhotoResult.tsx` — **shared by `/review` and `/final`**. Three props, zero copy literals inside. `/final` consumes it unmodified; keep it that way.
 - `context/PhotoBoothContext.tsx` — the one global state container, exposing
   `usePhotoBooth()`, which returns `{ state, dispatch }` and throws outside the provider.
-  6 fields, 12 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
+  7 fields, 13 actions, exhaustive `switch` with **no `default`** so `tsc` catches an
   unhandled action. No convenience setters. Extend this context; never create a second one.
 - `types/photobooth.ts` — state shape and the `PhotoBoothAction` union.
 - `constants/` — `layouts.ts` (`LayoutId`, slot geometry, `LAYOUT_LIST`; **`LayoutId` lives

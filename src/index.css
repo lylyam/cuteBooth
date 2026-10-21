@@ -14,6 +14,15 @@
   --overlay-color: rgba(34, 34, 34, 0.4);
   /* /camera: the shutter flash over the preview. */
   --flash-color: #fff;
+  /* /decoration step 2: the solid-colour wheel. Pure white and black are the ends of the
+     HSV model the wheel draws, not the palette's greys — they have to be exact. */
+  --color-white: #fff;
+  --color-black: #000;
+  /* Hue around the wheel: 0deg (red) at 12 o'clock, clockwise — colorUtils counts the same. */
+  --hue-ring: conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  /* The rainbow swatch that opens the wheel, in pastel tones (owner, 2026-10-21). Only the
+     swatch: the wheel keeps --hue-ring, whose saturated hues are its colour model. */
+  --rainbow: linear-gradient(#ffb3ba, #ffd8b1, #fff5ba, #baffc9, #bae1ff, #c9c1ff, #f1c1ff);
 
   /* ---- Typography ---- */
   --font-family-base: 'Fira Code', monospace;
@@ -60,6 +69,8 @@
      extra height the primary actions get to be comfortable thumb targets. */
   --mobile-gutter: 16px;
   --mobile-button-padding-y: 14px;
+  --color-wheel-size: 140px;
+  --color-wheel-marker-size: 16px;
 
   background-color: var(--background-color);
   color: var(--dark-secondary);

@@ -1,16 +1,23 @@
 /**
  * Background manifest — node X1. Contract: docs/contracts/assets.md.
  *
- * Backgrounds are **per layout family**, not global: `classic` has its own 25, `wide` and
- * `spotlight` share another 21 (numbered 1-18, 20-22 — there is no 19, and that is fine).
- * A `BackgroundId` from one family is meaningless in the other, so the family is part of
- * the id and `getBackgroundForLayout` is what rehydration must use.
+ * The art comes in two folders — `classic` has 25, `wide-and-spotlight` another 21
+ * (numbered 1-18, 20-22 — there is no 19, and that is fine) — but **every layout can use
+ * all 46** (owner, 2026-10-21). The folder stays in the id only because `classic/1` and
+ * `wideAndSpotlight/1` are different pictures, and because it keeps every id ever stored
+ * valid. A pattern drawn for one family looks right on the others: it is tiled one natural
+ * pixel per canvas unit (decision 19), so its scale does not depend on the strip.
+ *
+ * Besides the art, a background can be a **solid colour** — `SolidColor`, `'#rrggbb'` —
+ * chosen with the rainbow swatch, or **the user's own picture** — `UPLOADED_BACKGROUND`,
+ * whose pixels live in `state.uploadedBackground` (only the last one uploaded) and which
+ * covers the whole strip instead of tiling. `BackgroundChoice` is what `state.background`
+ * holds.
  *
  * The art enters as a **URL** (`?url&no-inline`): 46 PNGs, several MB, emitted next to the
  * JS chunk instead of inlined into it. `canvasUtils` (C2) loads the chosen one and draws it
  * as the bottom layer.
  */
-import type { LayoutId } from './layouts';
 import { toAssetEntries, type GlobUrlMap } from '../utils/assetManifest';
 
 export type BackgroundFamily = 'classic' | 'wideAndSpotlight';
@@ -27,12 +34,33 @@ export type BackgroundDef = {
   src: string;
 };
 
-/** Which set a layout draws from. Covers all three layouts, by construction of the type. */
-export const BACKGROUND_FAMILY: Record<LayoutId, BackgroundFamily> = {
-  classic: 'classic',
-  wide: 'wideAndSpotlight',
-  spotlight: 'wideAndSpotlight',
-};
+/** A solid background: always `'#rrggbb'`, lowercase — `toSolidColor` is the only way in. */
+export type SolidColor = `#${string}`;
+
+/**
+ * `state.background` when the user's own upload is the chosen one. A marker, not the image:
+ * the data URL is in `state.uploadedBackground`, so choosing another background and coming
+ * back to this one does not mean uploading it again.
+ */
+export const UPLOADED_BACKGROUND = 'upload';
+export type UploadedBackground = typeof UPLOADED_BACKGROUND;
+
+/** What `state.background` holds when a background is chosen: art, a colour, or the upload. */
+export type BackgroundChoice = BackgroundId | SolidColor | UploadedBackground;
+
+/** The colour the rainbow swatch starts from, before the user has turned the wheel. */
+export const DEFAULT_SOLID_COLOR: SolidColor = '#ffffff';
+
+/** A chosen background, resolved: what `canvasUtils` paints. */
+export type ResolvedBackground =
+  | { kind: 'image'; def: BackgroundDef }
+  | { kind: 'color'; color: SolidColor }
+  | { kind: 'upload'; src: string };
+
+/** An uploaded background is always one of ours: a JPEG data URL from `fileToDataUrl`. */
+export function isUploadedBackgroundData(value: unknown): value is string {
+  return typeof value === 'string' && value.startsWith('data:image/');
+}
 
 // One glob per family folder. Literal calls, not a loop: Vite expands `import.meta.glob`
 // at build time and needs to see the pattern.
@@ -68,10 +96,14 @@ const BACKGROUNDS_BY_ID = new Map<string, BackgroundDef>(
   Object.values(BACKGROUNDS).flatMap((defs) => defs.map((def) => [def.id, def] as const)),
 );
 
-/** What the decoration panel lists in step 2 for the active layout. */
-export function backgroundsForLayout(layout: LayoutId): BackgroundDef[] {
-  return BACKGROUNDS[BACKGROUND_FAMILY[layout]];
-}
+/**
+ * What the decoration panel lists in step 2, for **any** layout: the `classic` art first,
+ * then `wide-and-spotlight`'s, each in numeric file order.
+ */
+export const BACKGROUND_LIST: BackgroundDef[] = [
+  ...BACKGROUNDS.classic,
+  ...BACKGROUNDS.wideAndSpotlight,
+];
 
 /**
  * Resolves any string — including one rehydrated from `sessionStorage` — to a background,
@@ -82,16 +114,40 @@ export function getBackground(id: string | null | undefined): BackgroundDef | nu
   return BACKGROUNDS_BY_ID.get(id) ?? null;
 }
 
+/** `'#AABBCC'` → `'#aabbcc'`; anything that is not a 6-digit hex colour → `null`. */
+export function toSolidColor(value: unknown): SolidColor | null {
+  if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/i.test(value)) return null;
+  return value.toLowerCase() as SolidColor;
+}
+
 /**
- * Same, but a background from the other family counts as unknown. `classic/1` and
- * `wideAndSpotlight/1` are different pictures; letting one stand in for the other is
- * exactly the bug the family split exists to prevent.
+ * Any stored value — including one rehydrated from `sessionStorage` — as a picture, a colour,
+ * the upload or `null`. Valid for every layout: there are no per-layout backgrounds any more.
+ * `uploaded` is `state.uploadedBackground`: the marker means nothing without it.
  */
-export function getBackgroundForLayout(
-  id: string | null | undefined,
-  layout: LayoutId | null | undefined,
-): BackgroundDef | null {
-  const background = getBackground(id);
-  if (!background || !layout || background.family !== BACKGROUND_FAMILY[layout]) return null;
-  return background;
+export function resolveBackground(
+  value: unknown,
+  uploaded: string | null = null,
+): ResolvedBackground | null {
+  if (value === UPLOADED_BACKGROUND) {
+    return isUploadedBackgroundData(uploaded) ? { kind: 'upload', src: uploaded } : null;
+  }
+
+  const color = toSolidColor(value);
+  if (color) return { kind: 'color', color };
+
+  const def = typeof value === 'string' ? getBackground(value) : null;
+  return def ? { kind: 'image', def } : null;
+}
+
+/** `resolveBackground`, folded back into what the state stores. */
+export function toBackgroundChoice(
+  value: unknown,
+  uploaded: string | null = null,
+): BackgroundChoice | null {
+  const resolved = resolveBackground(value, uploaded);
+  if (!resolved) return null;
+  if (resolved.kind === 'color') return resolved.color;
+  if (resolved.kind === 'upload') return UPLOADED_BACKGROUND;
+  return resolved.def.id;
 }

@@ -9,6 +9,7 @@ const initialState: PhotoBoothState = {
   photos: [],
   frame: null,
   background: null,
+  uploadedBackground: null,
   stickers: [],
 };
 
@@ -37,6 +38,10 @@ function photoBoothReducer(state: PhotoBoothState, action: PhotoBoothAction): Ph
 
     case 'SET_BACKGROUND':
       return { ...state, background: action.background };
+
+    // Uploading is choosing: the new picture replaces the last one and is selected at once.
+    case 'SET_UPLOADED_BACKGROUND':
+      return { ...state, uploadedBackground: action.dataUrl, background: 'upload' };
 
     case 'ADD_STICKER':
       return { ...state, stickers: [...state.stickers, action.sticker] };

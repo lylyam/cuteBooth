@@ -156,19 +156,27 @@ la **forma dibujada dentro**, que es justo lo que la muestra debe enseñar.
 La carpeta de iconos del menú se queda donde está, sin usar. Borrarla es decisión de
 diseño, no de código.
 
-## Los fondos son por familia de layout, no globales
+## Los fondos valen para cualquier layout
 
-`classic` tiene su juego; `wide` y `spotlight` comparten otro. Un `BackgroundId` **no
-es válido para las dos familias**, y las cuentas no coinciden (25 frente a 21).
+**Revisado el 2026-10-21** (decisión 23). El arte sigue en dos carpetas —`classic` (25) y
+`wide-and-spotlight` (21)—, pero **los 46 valen para los tres layouts**: `BACKGROUND_LIST`
+los lista todos, los de `classic` primero. La familia se queda en el id solo porque
+`classic/1` y `wideAndSpotlight/1` son dibujos distintos, y así ningún id guardado deja de
+valer. Un patrón de una familia se ve bien en la otra porque se repite a un píxel natural
+por unidad de lienzo (decisión 19): su escala no depende de la tira.
+
+Además del arte, un fondo puede ser un **color plano** (`SolidColor`, `'#rrggbb'`,
+decisión 24), que no es un asset: no tiene fichero ni miniatura y se pinta como relleno; o
+**el fondo que sube el usuario** (decisión 26): `background: 'upload'` y los píxeles en
+`state.uploadedBackground`, recortados al lienzo del layout al subirlos y pintados
+**cubriendo** la tira, no repetidos.
 
 ```ts
-export type BackgroundFamily = 'classic' | 'wideAndSpotlight';
-export const BACKGROUND_FAMILY: Record<LayoutId, BackgroundFamily>;
+export type BackgroundChoice = BackgroundId | SolidColor; // lo que guarda state.background
+export function resolveBackground(value: unknown): ResolvedBackground | null;
 ```
 
-Si algún día se cambia de layout con un fondo ya elegido, el fondo se descarta. Hoy no
-puede pasar: el layout se elige antes de decorar y `/layout` no es alcanzable desde
-`/decoration`.
+Antes de esta revisión los fondos eran por familia y un id de una no valía en la otra.
 
 ## Reglas
 

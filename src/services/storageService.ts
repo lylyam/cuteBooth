@@ -61,7 +61,7 @@
  */
 import { LAYOUTS } from '../constants/layouts';
 import type { LayoutDef } from '../constants/layouts';
-import { getBackgroundForLayout } from '../constants/backgrounds';
+import { isUploadedBackgroundData, toBackgroundChoice } from '../constants/backgrounds';
 import { getFrameForLayout } from '../constants/frames';
 import { getSticker } from '../constants/stickers';
 import { clampStickerScale } from '../utils/canvasUtils';
@@ -311,7 +311,7 @@ export function loadState(): PhotoBoothState | null {
 //     a string that names no layout — means the entry was not written by this schema.
 //     `validateState` returns `null` and the caller throws the whole thing away.
 //   * **Semantic** drift — a frame id the manifest no longer has, a sticker whose PNG was
-//     deleted, a background from the other family — is expected and is *coerced*, per
+//     deleted, a malformed colour — is expected and is *coerced*, per
 //     state.md rule 4: the manifest outranks stored state. The session survives; the
 //     unresolvable bits become `null` or disappear.
 // ---------------------------------------------------------------------------------------
@@ -332,17 +332,22 @@ function validateState(value: unknown): PhotoBoothState | null {
   if (!Array.isArray(value.photos) || !Array.isArray(value.stickers)) return null;
 
   // `state.frame`/`state.background` resolve through the manifest, which is also where the
-  // narrow `FrameId`/`BackgroundId` types come from — so this needs no cast, and an id from
-  // another layout (or another background family) resolves to `null` by construction.
+  // narrow `FrameId`/`BackgroundChoice` types come from — so this needs no cast. A frame from
+  // another layout resolves to `null` by construction; a background is valid in any layout,
+  // and a solid colour is kept only if it is a well-formed `'#rrggbb'`.
   const frame = getFrameForLayout(asOptionalString(value.frame), selectedLayout);
-  const background = getBackgroundForLayout(asOptionalString(value.background), selectedLayout);
+  const uploadedBackground = isUploadedBackgroundData(value.uploadedBackground)
+    ? value.uploadedBackground
+    : null;
+  const background = toBackgroundChoice(value.background, uploadedBackground);
 
   return {
     selectedLayout,
     source,
     photos: validatePhotos(value.photos),
     frame: frame?.id ?? null,
-    background: background?.id ?? null,
+    background,
+    uploadedBackground,
     stickers: validateStickers(value.stickers),
   };
 }

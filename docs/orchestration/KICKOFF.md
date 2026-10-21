@@ -83,6 +83,10 @@ que una está mal, repórtalo y pregunta.
 | 20 | **Arrastrar una pegatina fuera de la tira la borra, pero SOLO si sale completa.** Sobresalir a medias es una decisión del usuario: la pegatina se queda y se ve cortada por el borde |
 | 21 | **Las pegatinas las pinta el canvas, no el DOM.** `useStickers` hace hit-test en coordenadas de canvas. Las clases `.sticker`/`.stickerLayer` que D5 habia escrito para una capa DOM **se borraron en D5b**: no existen |
 | 22 | **La pausa entre fotos sube a 1,5 s** (`SHOT_GAP_MS`); la cuenta atrás se queda en 3 s. Es el único hueco para cambiar de pose entre fotos. La sesión pasa de 14,4 s a **16,5 s** |
+| 23 | **Los 46 fondos valen para los tres layouts.** Los de `classic` se usan en `wide`/`spotlight` y al revés; el panel lista los de `classic` y luego los de `wide-and-spotlight`. La carpeta sigue en el id (`classic/1` ≠ `wideAndSpotlight/1`), así que ningún id guardado se invalida. Cerrada el 2026-10-21; antes cada familia era exclusiva de sus layouts |
+| 24 | **Un fondo puede ser un color plano**, elegido con la muestra arcoíris, que es **la primera** del paso 2 y abre una rueda de color (matiz y saturación) con un control de brillo y un **campo hex editable** (`#a1b2c3`, sin `#` o en mayúsculas; el corto `#fa0` cuenta al pulsar Enter o salir del campo). La muestra arcoíris va en **tonos pastel**; la rueda, en tonos plenos. `state.background` admite `'#rrggbb'`. ⚠️ **La rueda es PROVISIONAL**: solo vale cuando la propietaria la pruebe a mano, y puede cambiarse por el `<input type="color">` del navegador. Cerrada el 2026-10-21 |
+| 25 | **Elegir fondo es obligatorio.** En el paso 2, `Next step →` está deshabilitado hasta que hay un fondo (imagen o color), con el aviso `Pick a background to continue.` Cerrada el 2026-10-21 |
+| 26 | **El usuario puede subir su propio fondo.** La última muestra del paso 2 es un botón vacío con borde y `+`. La imagen **cubre la tira** (no se repite) y se recorta al lienzo del layout al subirla. **Solo se guarda la última**: su muestra aparece justo antes del botón, y subir otra la sustituye. Vive en `state.uploadedBackground` y sobrevive a una recarga. Cerrada el 2026-10-21 |
 
 Las decisiones 7-15 se cerraron el 2026-07-26, en la sesión que cerró DAG-0. Las **16 y
 17**, el mismo día, cuando aterrizó el arte definitivo de los marcos. Las **18 y 19** el
@@ -121,7 +125,7 @@ El flujo resultante son **seis rutas**, en [../ARCHITECTURE.md](../ARCHITECTURE.
 | `/decoration` | ✅ funciona · tres pasos, arrastre de pegatinas                     |
 | `/final`      | ✅ funciona · descarga el PNG                                       |
 
-Y por debajo, **todo**: reducer de 6 campos y 12 acciones, geometría de los 3 layouts,
+Y por debajo, **todo**: reducer de 7 campos y 13 acciones, geometría de los 3 layouts,
 guards, primitivas de imagen, composición sobre canvas con recorte por la forma del hueco,
 hooks de cámara, canvas y arrastre, persistencia cableada, y los manifiestos de los 343
 ficheros de arte.

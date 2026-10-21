@@ -5,8 +5,9 @@
  * here: `useCanvas` (C4) calls `composeStrip` to paint the preview and `exportStripAsBlob`
  * to produce the download. Four layers, bottom to top:
  *
- * 1. **background** — the family PNG **tiled**, never stretched. It shows through the paper
- *    area of the frame, which is why frames stay SVG instead of flattened PNGs.
+ * 1. **background** — a PNG **tiled**, never stretched; a solid colour filled flat; or the
+ *    user's own picture, **covering** the strip. It shows through the paper area of the
+ *    frame, which is why frames stay SVG instead of flattened PNGs.
  * 2. **photos** — `photos[i]` into hole `i`, clipped with the hole's own shape.
  * 3. **frame** — the SVG with its hole fills neutralised (see `frameArtUtils`).
  * 4. **stickers** — in array order, so the last one added is on top.
@@ -33,7 +34,7 @@
  * Layer rule: `utils/` imports `constants/` and `utils/`, and nothing else. State arrives
  * as a parameter — no context, no hook, no component.
  */
-import { getBackgroundForLayout } from '../constants/backgrounds';
+import { resolveBackground, type SolidColor } from '../constants/backgrounds';
 import { getEffectiveFrame, type Rect } from '../constants/frames';
 import { EXPORT_SCALE, LAYOUTS, type LayoutDef, type LayoutId } from '../constants/layouts';
 import { getSticker } from '../constants/stickers';
@@ -53,7 +54,7 @@ import { computeCoverRect, getSourceSize, loadImage, type Size } from './imageUt
  */
 export type CompositionState = Pick<
   PhotoBoothState,
-  'selectedLayout' | 'photos' | 'frame' | 'background' | 'stickers'
+  'selectedLayout' | 'photos' | 'frame' | 'background' | 'uploadedBackground' | 'stickers'
 > & {
   /**
    * **Preview only.** The sticker whose selection box and handles are drawn on top — the
@@ -378,9 +379,16 @@ type PhotoTarget = { box: Rect; clip: Path2D | null };
 
 type DrawableSticker = { image: HTMLImageElement; placement: StickerPlacement; size: Size };
 
+/** The bottom layer, ready to paint: a loaded pattern, a flat colour, or nothing. */
+type PreparedBackground =
+  | { kind: 'image'; image: HTMLImageElement }
+  | { kind: 'cover'; image: HTMLImageElement }
+  | { kind: 'color'; color: SolidColor }
+  | null;
+
 type Prepared = {
   layout: LayoutDef;
-  background: HTMLImageElement | null;
+  background: PreparedBackground;
   frame: FrameLayer | null;
   targets: PhotoTarget[];
   photos: (HTMLImageElement | null)[];
@@ -409,17 +417,34 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
   // `loadFrameLayer` either way, and a default that skipped that would cover the four photos
   // with `#222222` blocks.
   const frameDef = getEffectiveFrame(state.frame, layout.id);
-  const backgroundDef = getBackgroundForLayout(state.background, layout.id);
+  const resolvedBackground = resolveBackground(state.background, state.uploadedBackground);
+  const backgroundSrc =
+    resolvedBackground?.kind === 'image'
+      ? resolvedBackground.def.src
+      : resolvedBackground?.kind === 'upload'
+        ? resolvedBackground.src
+        : null;
 
-  const [frame, background] = await Promise.all([
+  const [frame, backgroundImage] = await Promise.all([
     frameDef
       ? loadFrameLayer(frameDef).catch((error: unknown) => {
           warn(`frame ${frameDef.id} could not be loaded: ${String(error)}`);
           return null;
         })
       : Promise.resolve(null),
-    optionalImage(backgroundDef?.src),
+    optionalImage(backgroundSrc),
   ]);
+
+  // A colour needs no loading; a picture that failed to load degrades to no background.
+  const background: PreparedBackground =
+    resolvedBackground?.kind === 'color'
+      ? resolvedBackground
+      : backgroundImage
+        ? {
+            kind: resolvedBackground?.kind === 'upload' ? 'cover' : 'image',
+            image: backgroundImage,
+          }
+        : null;
 
   const targets = photoTargets(layout, frame);
 
@@ -497,7 +522,19 @@ function paint(
       context.save();
       try {
         if (prepared.frame?.outline) context.clip(prepared.frame.outline);
-        drawTiled(context, prepared.background, unit);
+        if (prepared.background.kind === 'image') {
+          drawTiled(context, prepared.background.image, unit);
+        } else if (prepared.background.kind === 'cover') {
+          // The user's own picture is a photo, not a pattern: it covers the strip. It was
+          // already cropped to this layout's canvas on upload, so this is a 1:1 draw — the
+          // cover only matters if it ever is not.
+          drawCover(context, prepared.background.image, { x: 0, y: 0, ...unit });
+        } else {
+          // Same clip, same canvas units as the pattern: the preview and the download
+          // cannot disagree, which a CSS colour behind the canvas would (DAG-2 §4.4).
+          context.fillStyle = prepared.background.color;
+          context.fillRect(0, 0, unit.width, unit.height);
+        }
       } finally {
         context.restore();
       }

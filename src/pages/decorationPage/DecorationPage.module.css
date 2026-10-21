@@ -123,6 +123,45 @@
   object-fit: cover;
 }
 
+/* Step 2's first swatch: the rainbow that opens the solid-colour wheel. */
+.rainbowSwatch {
+  background: var(--rainbow);
+}
+
+/* Step 2's last swatch: no colour, just the border — the button to upload your own. */
+.uploadSwatch {
+  border: var(--border-width) solid var(--dark-secondary);
+  font-size: var(--font-size-md);
+  color: var(--dark-secondary);
+}
+
+.uploadSwatch:disabled {
+  cursor: progress;
+}
+
+/* Step 2: a file that could not be used as a background. */
+.error {
+  color: var(--dark-secondary);
+}
+
+/* The real file input stays off-screen; the upload swatch opens it. Same as /upload. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Step 2 only, until a background is chosen: why `Next step` is disabled. */
+.hint {
+  color: var(--secondary-color);
+}
+
 /* Right side: the live strip preview, painted by useCanvas (C4).
    No border/border-radius (C2b, same as PhotoResult's .strip): the canvas
    always draws the strip's frame, so a CSS ring here showed as a double edge. */

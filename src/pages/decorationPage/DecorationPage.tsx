@@ -26,8 +26,20 @@ import { LAYOUTS } from '../../constants/layouts';
 import type { LayoutId } from '../../constants/layouts';
 import { FRAMES, getEffectiveFrame } from '../../constants/frames';
 import type { FrameDef, FrameId } from '../../constants/frames';
-import { backgroundsForLayout } from '../../constants/backgrounds';
-import type { BackgroundId } from '../../constants/backgrounds';
+import ColorWheel from '../../components/ui/ColorWheel';
+import {
+  BACKGROUND_LIST,
+  DEFAULT_SOLID_COLOR,
+  resolveBackground,
+  toSolidColor,
+  UPLOADED_BACKGROUND,
+} from '../../constants/backgrounds';
+import type { BackgroundChoice, BackgroundId, SolidColor } from '../../constants/backgrounds';
+import {
+  IMAGE_ACCEPT_ATTRIBUTE,
+  fileToDataUrl,
+  isSupportedImageType,
+} from '../../utils/imageUtils';
 import { STICKERS, STICKER_STYLES, STICKER_STYLE_LABELS } from '../../constants/stickers';
 import type { StickerId, StickerStyle } from '../../constants/stickers';
 import styles from './DecorationPage.module.css';
@@ -42,6 +54,15 @@ const PANEL_TITLES: Record<Step, string> = {
   backgrounds: 'Backgrounds',
   icons: 'Icons',
 };
+
+// Same words as /upload's, for the same two failures (UploadPage.tsx): a background the
+// user brings is read with the same `fileToDataUrl` and fails the same way.
+const UNSUPPORTED_TYPE_MESSAGE = "That file isn't a photo. Try a PNG, JPG or WEBP.";
+const UNREADABLE_FILE_MESSAGE =
+  "We couldn't read that photo. It may be corrupted — try a different file.";
+
+/** Ties the disabled `Next step` of step 2 to the line that explains it. */
+const BACKGROUND_HINT_ID = 'decoration-background-hint';
 
 const PREVIEW_LAYOUT_CLASS: Record<LayoutId, string> = {
   classic: styles.previewClassic,
@@ -90,12 +111,25 @@ function FrameSwatchArt({ frame }: { frame: FrameDef }) {
 
 type DecorationPanelProps = {
   step: Step;
-  layout: LayoutId;
   frames: FrameDef[];
   effectiveFrameId: FrameId | null;
   onSelectFrame: (frameId: FrameId) => void;
-  backgroundId: BackgroundId | null;
+  background: BackgroundChoice | null;
   onSelectBackground: (backgroundId: BackgroundId) => void;
+  /** The rainbow swatch: selects the solid colour and opens or closes the wheel. */
+  onSelectRainbow: () => void;
+  /** Mounted only while open; `wheelColor` is where it starts each time it opens. */
+  isWheelOpen: boolean;
+  wheelColor: SolidColor;
+  onPreviewColor: (color: SolidColor) => void;
+  onCommitColor: (color: SolidColor) => void;
+  /** `state.uploadedBackground`: the last picture the user uploaded, if any. */
+  uploadedBackground: string | null;
+  onSelectUploaded: () => void;
+  /** The last swatch: opens the file picker. */
+  onUploadClick: () => void;
+  isUploading: boolean;
+  uploadError: string | null;
   stickerStyle: StickerStyle;
   onStickerStyleChange: (style: StickerStyle) => void;
   onAddSticker: (assetId: StickerId) => void;
@@ -108,19 +142,50 @@ type DecorationPanelProps = {
  */
 function DecorationPanel({
   step,
-  layout,
   frames,
   effectiveFrameId,
   onSelectFrame,
-  backgroundId,
+  background,
   onSelectBackground,
+  onSelectRainbow,
+  isWheelOpen,
+  wheelColor,
+  onPreviewColor,
+  onCommitColor,
+  uploadedBackground,
+  onSelectUploaded,
+  onUploadClick,
+  isUploading,
+  uploadError,
   stickerStyle,
   onStickerStyleChange,
   onAddSticker,
 }: DecorationPanelProps) {
+  const hasBackground = resolveBackground(background, uploadedBackground) !== null;
+  const isUploadedSelected = background === UPLOADED_BACKGROUND && uploadedBackground !== null;
+  const isSolid = toSolidColor(background) !== null;
+
   return (
     <div className={styles.panel}>
       <h2 className={styles.panelTitle}>{PANEL_TITLES[step]}</h2>
+
+      {/* Step 2 is mandatory (owner, 2026-10-21): `Next step` stays disabled until a
+          background is chosen, and this says why. */}
+      {step === 'backgrounds' && !hasBackground && (
+        <p id={BACKGROUND_HINT_ID} className={styles.hint}>
+          Pick a background to continue.
+        </p>
+      )}
+
+      {step === 'backgrounds' && uploadError && (
+        <p className={styles.error} role="alert">
+          {uploadError}
+        </p>
+      )}
+
+      {step === 'backgrounds' && isWheelOpen && (
+        <ColorWheel initialColor={wheelColor} onPreview={onPreviewColor} onCommit={onCommitColor} />
+      )}
 
       {step === 'icons' && (
         <div className={styles.tabs}>
@@ -155,21 +220,66 @@ function DecorationPanel({
             </button>
           ))}
 
+        {step === 'backgrounds' && (
+          <button
+            type="button"
+            className={`${styles.swatch} ${styles.backgroundSwatch} ${styles.rainbowSwatch} ${
+              isSolid ? styles.swatchSelected : ''
+            }`.trim()}
+            aria-pressed={isSolid}
+            aria-expanded={isWheelOpen}
+            aria-label="Solid color background"
+            onClick={onSelectRainbow}
+          />
+        )}
+
         {step === 'backgrounds' &&
-          backgroundsForLayout(layout).map((background) => (
+          BACKGROUND_LIST.map((art, index) => (
             <button
-              key={background.id}
+              key={art.id}
               type="button"
               className={`${styles.swatch} ${styles.backgroundSwatch} ${
-                background.id === backgroundId ? styles.swatchSelected : ''
+                art.id === background ? styles.swatchSelected : ''
               }`.trim()}
-              aria-pressed={background.id === backgroundId}
-              aria-label={`Background ${background.name}`}
-              onClick={() => onSelectBackground(background.id)}
+              aria-pressed={art.id === background}
+              // By position, not by file stem: the two art folders both have a "1".
+              aria-label={`Background ${index + 1}`}
+              onClick={() => onSelectBackground(art.id)}
             >
-              <img src={background.src} alt="" />
+              <img src={art.src} alt="" />
             </button>
           ))}
+
+        {/* The user's own background — only the last one uploaded — right before the button
+            that replaces it. */}
+        {step === 'backgrounds' && uploadedBackground && (
+          <button
+            type="button"
+            className={`${styles.swatch} ${styles.backgroundSwatch} ${
+              isUploadedSelected ? styles.swatchSelected : ''
+            }`.trim()}
+            aria-pressed={isUploadedSelected}
+            aria-label="Your background"
+            onClick={onSelectUploaded}
+          >
+            <img src={uploadedBackground} alt="" />
+          </button>
+        )}
+
+        {step === 'backgrounds' && (
+          <button
+            type="button"
+            className={`${styles.swatch} ${styles.uploadSwatch}`}
+            aria-label={
+              uploadedBackground ? 'Upload another background' : 'Upload your own background'
+            }
+            aria-busy={isUploading}
+            disabled={isUploading}
+            onClick={onUploadClick}
+          >
+            <span aria-hidden="true">{isUploading ? '…' : '+'}</span>
+          </button>
+        )}
 
         {step === 'icons' &&
           STICKERS[stickerStyle].map((sticker) => (
@@ -195,6 +305,19 @@ function DecorationPage() {
 
   const [step, setStep] = useState<Step>('frames');
   const [stickerStyle, setStickerStyle] = useState<StickerStyle>(STICKER_STYLES[0]);
+
+  // The solid-colour wheel: whether it is open, the last colour committed (where it reopens),
+  // and the colour of a gesture still in progress, which only the preview sees.
+  const [isWheelOpen, setIsWheelOpen] = useState(false);
+  const [lastColor, setLastColor] = useState<SolidColor>(
+    () => toSolidColor(state.background) ?? DEFAULT_SOLID_COLOR,
+  );
+  const [draftColor, setDraftColor] = useState<SolidColor | null>(null);
+
+  // The user's own background: the hidden file input the last swatch opens, and its states.
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // No `rotation` option: unlike /review and /final, this preview is never tilted.
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -240,9 +363,15 @@ function DecorationPage() {
   // `stickers` (from the hook), not `state.stickers`: it is the same array when nothing
   // is being dragged, so this does not loop, and it is what shows the live drag position.
   // `selectedStickerId` only paints the selection box here; the download never carries it.
+  // `draftColor` likewise: the wheel's live colour, painted before it is committed.
   useEffect(() => {
-    void draw({ ...state, stickers, selectedStickerId: selectedId });
-  }, [draw, state, stickers, selectedId]);
+    void draw({
+      ...state,
+      background: draftColor ?? state.background,
+      stickers,
+      selectedStickerId: selectedId,
+    });
+  }, [draw, state, stickers, selectedId, draftColor]);
 
   if (redirect) return redirect;
 
@@ -260,8 +389,66 @@ function DecorationPage() {
   };
 
   const handleSelectBackground = (backgroundId: BackgroundId) => {
+    setIsWheelOpen(false);
+    setUploadError(null);
     dispatch({ type: 'SET_BACKGROUND', background: backgroundId });
   };
+
+  // Choosing the rainbow is choosing a colour: it selects the last one at once (so `Next
+  // step` unlocks) and opens the wheel. Pressed again while selected, it only closes it.
+  const handleSelectRainbow = () => {
+    setUploadError(null);
+    if (isWheelOpen && toSolidColor(state.background)) {
+      setIsWheelOpen(false);
+      return;
+    }
+    dispatch({ type: 'SET_BACKGROUND', background: lastColor });
+    setIsWheelOpen(true);
+  };
+
+  const handleSelectUploaded = () => {
+    setIsWheelOpen(false);
+    setUploadError(null);
+    dispatch({ type: 'SET_BACKGROUND', background: UPLOADED_BACKGROUND });
+  };
+
+  const handleUploadClick = () => {
+    if (fileInputRef.current) fileInputRef.current.value = ''; // the same file twice still fires
+    fileInputRef.current?.click();
+  };
+
+  // Cover-cropped to this layout's whole canvas on the way in, so the strip draws it 1:1 and
+  // sessionStorage holds a strip-sized JPEG, never the 12 MP original (storageService).
+  const handleUploadFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadError(null);
+
+    if (!isSupportedImageType(file)) {
+      setUploadError(UNSUPPORTED_TYPE_MESSAGE);
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const dataUrl = await fileToDataUrl(file, LAYOUTS[layout].canvas);
+      setIsWheelOpen(false);
+      dispatch({ type: 'SET_UPLOADED_BACKGROUND', dataUrl });
+    } catch {
+      setUploadError(UNREADABLE_FILE_MESSAGE);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCommitColor = (color: SolidColor) => {
+    setDraftColor(null);
+    setLastColor(color);
+    dispatch({ type: 'SET_BACKGROUND', background: color });
+  };
+
+  const isNextBlocked =
+    step === 'backgrounds' &&
+    resolveBackground(state.background, state.uploadedBackground) === null;
 
   const handleAddSticker = (assetId: StickerId) => {
     const canvas = LAYOUTS[layout].canvas;
@@ -283,6 +470,7 @@ function DecorationPage() {
 
   const handlePrevious = () => {
     select(null);
+    setIsWheelOpen(false);
     if (stepIndex === 0) {
       navigate('/review');
       return;
@@ -291,7 +479,9 @@ function DecorationPage() {
   };
 
   const handleNext = () => {
+    if (isNextBlocked) return;
     select(null);
+    setIsWheelOpen(false);
     if (stepIndex === STEPS.length - 1) {
       navigate('/final');
       return;
@@ -305,12 +495,21 @@ function DecorationPage() {
         <div className={styles.layout}>
           <DecorationPanel
             step={step}
-            layout={layout}
             frames={FRAMES[layout]}
             effectiveFrameId={effectiveFrame?.id ?? null}
             onSelectFrame={handleSelectFrame}
-            backgroundId={state.background}
+            background={state.background}
             onSelectBackground={handleSelectBackground}
+            onSelectRainbow={handleSelectRainbow}
+            isWheelOpen={isWheelOpen}
+            wheelColor={lastColor}
+            onPreviewColor={setDraftColor}
+            onCommitColor={handleCommitColor}
+            uploadedBackground={state.uploadedBackground}
+            onSelectUploaded={handleSelectUploaded}
+            onUploadClick={handleUploadClick}
+            isUploading={isUploading}
+            uploadError={uploadError}
             stickerStyle={stickerStyle}
             onStickerStyleChange={setStickerStyle}
             onAddSticker={handleAddSticker}
@@ -341,10 +540,26 @@ function DecorationPage() {
           <Button type="button" onClick={handlePrevious}>
             ← Previous step
           </Button>
-          <Button type="button" onClick={handleNext}>
+          <Button
+            type="button"
+            onClick={handleNext}
+            disabled={isNextBlocked}
+            aria-describedby={isNextBlocked ? BACKGROUND_HINT_ID : undefined}
+          >
             Next step →
           </Button>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={IMAGE_ACCEPT_ATTRIBUTE}
+          className={styles.visuallyHidden}
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(event) => {
+            void handleUploadFile(event.target.files?.[0]);
+          }}
+        />
       </WebAppOldStyle>
     </PageShell>
   );

@@ -249,6 +249,23 @@ Detalle en [../design/FIGMA.md](../design/FIGMA.md).
 
 ## 4.4 · DAG-2 · Fondo blanco por defecto y fondo de color plano (A3)
 
+> ✅ **Hecho el 2026-10-21** (`S5`, `C8`, `D10b`, `U6`), con las decisiones 23-25 de
+> [KICKOFF.md](KICKOFF.md) §4. Las tres preguntas de abajo quedaron así:
+>
+> 1. **Blanco:** el preview sigue transparente hasta elegir; como elegir fondo es
+>    **obligatorio** (decisión 25), la descarga siempre lleva uno. El arcoíris arranca en
+>    `#ffffff`.
+> 2. **En el estado:** `background: BackgroundChoice | null`, donde `BackgroundChoice =
+BackgroundId | SolidColor` y `SolidColor` es `'#rrggbb'` en minúsculas
+>    (`toSolidColor`). `storageService` lo valida con `toBackgroundChoice`: un color mal
+>    formado cae a `null`, uno bueno sobrevive.
+> 3. **Dónde:** la muestra arcoíris es la primera de la rejilla y abre la rueda
+>    (`components/ui/ColorWheel.tsx`) dentro del panel, encima de las muestras. El último
+>    color se recuerda mientras la página está montada, **no tras recargar** (tras recargar,
+>    sí se conserva el fondo elegido).
+>
+> ⚠️ **La rueda es provisional** hasta que la propietaria la pruebe a mano (decisión 24).
+
 > **Alcance NUEVO, pedido por la propietaria el 2026-08-11.** No es un defecto ni un ajuste:
 > es una función que no existía. Se desglosa aquí antes de tocar nada, porque atraviesa las
 > cuatro capas y **ningún agente debe decidir su alcance por su cuenta**.

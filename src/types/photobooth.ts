@@ -12,9 +12,9 @@
 import type { LayoutId } from '../constants/layouts';
 import type { FrameId } from '../constants/frames';
 import type { StickerId } from '../constants/stickers';
-import type { BackgroundId } from '../constants/backgrounds';
+import type { BackgroundChoice, BackgroundId, SolidColor } from '../constants/backgrounds';
 
-export type { FrameId, StickerId, BackgroundId };
+export type { FrameId, StickerId, BackgroundId, BackgroundChoice, SolidColor };
 
 export type PhotoSource = 'camera' | 'upload';
 
@@ -37,7 +37,8 @@ export type PhotoBoothState = {
   source: PhotoSource | null;
   photos: Photo[]; // 0..4 · the index IS the slot number
   frame: FrameId | null; // /decoration step 1 · one frame, not 4 masks
-  background: BackgroundId | null; // /decoration step 2
+  background: BackgroundChoice | null; // /decoration step 2 · art id, '#rrggbb' or 'upload'
+  uploadedBackground: string | null; // the user's own background · JPEG data URL, strip-sized
   stickers: StickerInstance[]; // /decoration step 3
 };
 
@@ -48,7 +49,8 @@ export type PhotoBoothAction =
   | { type: 'SET_PHOTOS'; photos: Photo[] }
   | { type: 'CLEAR_PHOTOS' }
   | { type: 'SET_FRAME'; frame: FrameId | null }
-  | { type: 'SET_BACKGROUND'; background: BackgroundId | null }
+  | { type: 'SET_BACKGROUND'; background: BackgroundChoice | null }
+  | { type: 'SET_UPLOADED_BACKGROUND'; dataUrl: string }
   | { type: 'ADD_STICKER'; sticker: StickerInstance }
   | { type: 'MOVE_STICKER'; instanceId: string; x: number; y: number }
   | { type: 'TRANSFORM_STICKER'; instanceId: string; rotation: number; scale: number }

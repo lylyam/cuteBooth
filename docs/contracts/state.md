@@ -11,7 +11,7 @@
 import type { LayoutId } from '../constants/layouts';
 import type { FrameId } from '../constants/frames'; // X1
 import type { StickerId } from '../constants/stickers'; // X1
-import type { BackgroundId } from '../constants/backgrounds'; // X1
+import type { BackgroundChoice } from '../constants/backgrounds'; // X1 · BackgroundId | '#rrggbb'
 
 export type PhotoSource = 'camera' | 'upload';
 
@@ -34,7 +34,8 @@ export type PhotoBoothState = {
   source: PhotoSource | null;
   photos: Photo[]; // 0..4 · el índice ES el número de hueco
   frame: FrameId | null; // /decoration paso 1 · un marco, no 4 máscaras
-  background: BackgroundId | null; // /decoration paso 2
+  background: BackgroundChoice | null; // /decoration paso 2 · arte, '#rrggbb' o 'upload'
+  uploadedBackground: string | null; // el fondo propio del usuario · JPEG data URL a tamaño de tira
   stickers: StickerInstance[]; // /decoration paso 3
 };
 ```
@@ -65,20 +66,21 @@ declaran como `string` con un `TODO` que nombre X1, y X1 los estrecha al llegar.
 
 ## Las doce acciones
 
-| Acción              | Payload                                                   | Quién la dispara                                              | Efecto                                                                 |
-| ------------------- | --------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `SET_LAYOUT`        | `{ layout: LayoutId }`                                    | `/layout`                                                     |                                                                        |
-| `SET_SOURCE`        | `{ source: PhotoSource }`                                 | modal de `/layout`                                            | Lo necesitan los "repetir" de `/review` y `/final`                     |
-| `ADD_PHOTO`         | `{ photo: Photo }`                                        | `/camera`                                                     | **No-op si ya hay 4**                                                  |
-| `SET_PHOTOS`        | `{ photos: Photo[] }`                                     | `/upload`                                                     | Reemplaza el lote. Trunca a 4                                          |
-| `CLEAR_PHOTOS`      | —                                                         | ninguno hoy                                                   | Vacía `photos`. **Conserva todo lo demás**                             |
-| `SET_FRAME`         | `{ frame: FrameId \| null }`                              | `/decoration` 1                                               | `null` = **sin elección** → se dibuja el rectangular del layout (C2b)  |
-| `SET_BACKGROUND`    | `{ background: BackgroundId \| null }`                    | `/decoration` 2                                               | `null` = sin fondo                                                     |
-| `ADD_STICKER`       | `{ sticker: StickerInstance }`                            | `/decoration` 3                                               |                                                                        |
-| `MOVE_STICKER`      | `{ instanceId: string; x: number; y: number }`            | `/decoration` 3                                               | Posición absoluta, no delta                                            |
-| `TRANSFORM_STICKER` | `{ instanceId: string; rotation: number; scale: number }` | `/decoration` 3                                               | Giro y tamaño absolutos, no delta. Uno por gesto, al soltar el tirador |
-| `REMOVE_STICKER`    | `{ instanceId: string }`                                  | `/decoration` 3                                               |                                                                        |
-| `RESET`             | —                                                         | `Retake` de `/review` y `/final`, la cruz de `WebAppOldStyle` | Vuelve a `initialState`                                                |
+| Acción                    | Payload                                                   | Quién la dispara                                              | Efecto                                                                 |
+| ------------------------- | --------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `SET_LAYOUT`              | `{ layout: LayoutId }`                                    | `/layout`                                                     |                                                                        |
+| `SET_SOURCE`              | `{ source: PhotoSource }`                                 | modal de `/layout`                                            | Lo necesitan los "repetir" de `/review` y `/final`                     |
+| `ADD_PHOTO`               | `{ photo: Photo }`                                        | `/camera`                                                     | **No-op si ya hay 4**                                                  |
+| `SET_PHOTOS`              | `{ photos: Photo[] }`                                     | `/upload`                                                     | Reemplaza el lote. Trunca a 4                                          |
+| `CLEAR_PHOTOS`            | —                                                         | ninguno hoy                                                   | Vacía `photos`. **Conserva todo lo demás**                             |
+| `SET_FRAME`               | `{ frame: FrameId \| null }`                              | `/decoration` 1                                               | `null` = **sin elección** → se dibuja el rectangular del layout (C2b)  |
+| `SET_BACKGROUND`          | `{ background: BackgroundChoice \| null }`                | `/decoration` 2                                               | `null` = sin fondo · `'upload'` = el fondo subido                      |
+| `SET_UPLOADED_BACKGROUND` | `{ dataUrl: string }`                                     | `/decoration` 2                                               | Sustituye el fondo subido anterior **y lo selecciona**                 |
+| `ADD_STICKER`             | `{ sticker: StickerInstance }`                            | `/decoration` 3                                               |                                                                        |
+| `MOVE_STICKER`            | `{ instanceId: string; x: number; y: number }`            | `/decoration` 3                                               | Posición absoluta, no delta                                            |
+| `TRANSFORM_STICKER`       | `{ instanceId: string; rotation: number; scale: number }` | `/decoration` 3                                               | Giro y tamaño absolutos, no delta. Uno por gesto, al soltar el tirador |
+| `REMOVE_STICKER`          | `{ instanceId: string }`                                  | `/decoration` 3                                               |                                                                        |
+| `RESET`                   | —                                                         | `Retake` de `/review` y `/final`, la cruz de `WebAppOldStyle` | Vuelve a `initialState`                                                |
 
 **2026-10-18:** `TRANSFORM_STICKER` es nueva — los tiradores de girar y reescalar que pidió la
 propietaria. Y `CLEAR_PHOTOS` se ha quedado **sin consumidor**: desde la revisión de la decisión
@@ -119,8 +121,9 @@ mantiene.
 | `/camera`, `/upload`               | `selectedLayout !== null`                        |
 | `/review`, `/decoration`, `/final` | `selectedLayout !== null && photos.length === 4` |
 
-`/final` **no** exige `frame`, `background` ni `stickers`: decorar es opcional y se
-puede cruzar `/decoration` sin elegir nada. El guard no es donde se fuerza el gusto.
+`/final` **no** exige `frame`, `background` ni `stickers` en el guard. Pero desde el
+2026-10-21 el **fondo es obligatorio** (decisión 25): lo fuerza `/decoration`, que no deja
+pasar del paso 2 sin uno, no el guard — que no es donde se fuerza el gusto.
 
 Es un hook y no un componente envolvente: la página decide dónde llamarlo y no se añade
 una capa al árbol. El `Navigate` sale del `return` de la página, nunca de un efecto.
