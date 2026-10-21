@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -20.6 203 203">
+  <!-- The bunny, filled with the app's dark secondary (#222222) and centred on a square
+       canvas. On a dark browser theme it turns the app's light background (#dedede), or
+       it would vanish into a dark tab strip. -->
+  <style>
+    @media (prefers-color-scheme: dark) {
+      path { fill: #dedede; }
+    }
+  </style>
+  <path fill="#222222" d="M121.913 0C135.601 0.000114427 146.698 11.0969 146.698 24.7852L146.697 55.5879H153C180.614 55.5879 203 77.9737 203 105.588V111.809C203 139.423 180.614 161.809 153 161.809H50C22.3858 161.809 0 139.423 0 111.809V105.588C0 77.9737 22.3858 55.5879 50 55.5879H57V24.7852C57 11.0968 68.0968 0 81.7852 0C90.0359 6.95934e-05 97.3437 4.03268 101.849 10.2334C106.354 4.03248 113.662 0 121.913 0Z"/>
+</svg>
