@@ -7,7 +7,7 @@
  * for whatever `error.kind` the hook reports (its own default messages are ignored on
  * purpose — see the U1 report).
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageShell from '../../components/layouts/PageShell';
 import WebAppOldStyle from '../../components/layouts/WebAppOldStyle';
@@ -35,6 +35,16 @@ const ERROR_MESSAGES: Record<CameraErrorKind, string> = {
   unknown: 'Something went wrong with your camera. Upload your photos instead.',
 };
 
+/** Shots in a strip — one progress dot each. */
+const SHOT_COUNT = 4;
+
+/**
+ * Length of the shutter flash. The page owns it, not the CSS, because the last shot has to
+ * wait it out: `/review` is pushed this long after the fourth photo, or that flash would
+ * never be seen.
+ */
+const FLASH_MS = 450;
+
 function CameraPage() {
   const navigate = useNavigate();
   const { state, dispatch } = usePhotoBooth();
@@ -44,13 +54,21 @@ function CameraPage() {
     useCamera();
 
   const photoCount = state.photos.length;
+  // The shot that comes next, 1-based; with the strip full, the last one stays lit.
+  const currentShot = Math.min(photoCount + 1, SHOT_COUNT);
+
+  // One flash per photo: a new `key` remounts the overlay, which replays its animation.
+  const [flashCount, setFlashCount] = useState(0);
 
   // specs/camera.md: "Sale a /review en cuanto photos.length === 4. Automático." Driven
   // by the committed state rather than threaded through the capture callback, so it can't
   // race this page's own guard (which doesn't care about `photos` anyway — see DAG.md
   // LECCIONES §4, the race that bit U5's "Retake").
+  // The hand-off waits `FLASH_MS` so the fourth flash plays out first.
   useEffect(() => {
-    if (photoCount === 4) navigate('/review');
+    if (photoCount !== SHOT_COUNT) return;
+    const timer = window.setTimeout(() => navigate('/review'), FLASH_MS);
+    return () => window.clearTimeout(timer);
   }, [photoCount, navigate]);
 
   if (redirect) return redirect;
@@ -62,8 +80,11 @@ function CameraPage() {
 
   const handleStart = () => {
     void captureWithCountdown({
-      shots: 4,
-      onPhoto: (photo) => dispatch({ type: 'ADD_PHOTO', photo }),
+      shots: SHOT_COUNT,
+      onPhoto: (photo) => {
+        dispatch({ type: 'ADD_PHOTO', photo });
+        setFlashCount((count) => count + 1);
+      },
     });
   };
 
@@ -77,21 +98,45 @@ function CameraPage() {
       <WebAppOldStyle contentClassName={styles.windowContent}>
         <img className={styles.icon} src={cameraIcon} alt="" />
 
-        <div className={styles.previewBox}>
-          <video
-            ref={videoRef}
-            className={styles.previewVideo}
-            playsInline
-            muted
-            autoPlay
-            aria-label="Live preview from your camera"
-          />
+        <div className={styles.preview}>
+          <div className={styles.previewBox}>
+            <video
+              ref={videoRef}
+              className={styles.previewVideo}
+              playsInline
+              muted
+              autoPlay
+              aria-label="Live preview from your camera"
+            />
 
-          <span className={styles.countdown} aria-live="polite" aria-atomic="true">
-            {countdown ?? ''}
-          </span>
+            <span className={styles.countdown} aria-live="polite" aria-atomic="true">
+              {countdown ?? ''}
+            </span>
 
-          {isStarting && <Loading />}
+            {flashCount > 0 && (
+              <span
+                key={flashCount}
+                className={styles.flash}
+                style={{ animationDuration: `${FLASH_MS}ms` }}
+                aria-hidden="true"
+              />
+            )}
+
+            {isStarting && <Loading />}
+          </div>
+
+          {!isFatalError && (
+            <ol className={styles.progress} aria-label={`Photo ${currentShot} of ${SHOT_COUNT}`}>
+              {Array.from({ length: SHOT_COUNT }, (_, index) => (
+                <li
+                  key={index}
+                  className={`${styles.progressDot} ${
+                    index < currentShot ? styles.progressDotFilled : ''
+                  }`.trim()}
+                />
+              ))}
+            </ol>
+          )}
         </div>
 
         {error && (

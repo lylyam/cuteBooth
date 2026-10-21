@@ -11,9 +11,17 @@
   flex-shrink: 0;
 }
 
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--progress-offset);
+  width: min(574px, 100%);
+}
+
 .previewBox {
   position: relative;
-  width: min(574px, 100%);
+  width: 100%;
   aspect-ratio: 574 / 388;
   overflow: hidden;
   border: var(--border-width) solid var(--dark-secondary);
@@ -47,4 +55,62 @@
 .error {
   max-width: 460px;
   text-align: center;
+}
+
+/* Shutter flash: one white burst over the preview per shot. Remounted with a new `key`
+   for every photo, so the animation restarts; its duration comes from the page
+   (`FLASH_MS`), which also waits it out before leaving for /review. */
+.flash {
+  position: absolute;
+  inset: 0;
+  background-color: var(--flash-color);
+  pointer-events: none;
+  opacity: 0;
+  animation-name: flash;
+  animation-timing-function: ease-out;
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* A full white burst is exactly the kind of flicker this setting asks to avoid. */
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation-name: flash-soft;
+  }
+
+  @keyframes flash-soft {
+    from {
+      opacity: 0.4;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+/* Which shot is next: the dots up to it filled, the rest hollow. */
+.progress {
+  display: flex;
+  gap: var(--progress-dot-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progressDot {
+  width: var(--progress-dot-size);
+  height: var(--progress-dot-size);
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-pill);
+}
+
+.progressDotFilled {
+  background-color: var(--dark-secondary);
 }

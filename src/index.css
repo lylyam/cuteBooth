@@ -12,6 +12,8 @@
   --background-color: #dedede;
   --dark-secondary: #222;
   --overlay-color: rgba(34, 34, 34, 0.4);
+  /* /camera: the shutter flash over the preview. */
+  --flash-color: #fff;
 
   /* ---- Typography ---- */
   --font-family-base: 'Fira Code', monospace;
@@ -45,6 +47,10 @@
   --page-padding-x: 10px;
   --content-max-width: 743px;
   --footer-links-gap: 33px;
+  /* /camera: the four dots under the preview that say which shot is next. */
+  --progress-dot-size: 12px;
+  --progress-dot-gap: 6px;
+  --progress-offset: 12px; /* from the preview's bottom edge to the dots */
   /* T6 resolved (D9b): Frame 38 measures 1292px on every one of the 12 Figma
      screens (confirmed 2026-07-28 via get_metadata on 88:1676 and 91:1346,
      both "Frame 38" x=74 y=80 width=1292 height=763). One token so the window

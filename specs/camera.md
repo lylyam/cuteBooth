@@ -127,3 +127,12 @@ configurable. Grabar vídeo. Subir desde archivo (es `/upload`).
 ## Nodo Figma
 
 `91:954` — https://www.figma.com/design/df7hAve66qYTKiNz0UXE1E/cuteBooth--Copy-?node-id=91-954
+
+## Añadido el 2026-10-21 por la propietaria
+
+- **Indicador de foto** justo debajo del preview: cuatro puntos; están rellenos los de las
+  fotos ya hechas y el de la siguiente, el resto huecos. `aria-label`: `Photo N of 4`. No
+  se muestra con un error fatal (no hay cámara de la que contar fotos).
+- **Flash** al disparar: un destello blanco sobre el preview que se apaga en 450 ms
+  (`FLASH_MS`), uno por foto. Tras la cuarta, el paso a `/review` espera esos 450 ms para
+  que el último flash se vea. Con `prefers-reduced-motion` el destello es suave (40 %).
