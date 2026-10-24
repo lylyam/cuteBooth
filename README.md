@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/assets/PhotoBooth.png" alt="CuteBooth — a hand-drawn photo booth with a decorated strip on its screen" width="520" />
+<img src="src/assets/PhotoBooth-readme.png" alt="CuteBooth — a hand-drawn photo booth with a decorated strip on its screen" width="520" />
 
 # 📸 CuteBooth
 
