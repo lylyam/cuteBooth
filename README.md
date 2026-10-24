@@ -22,6 +22,14 @@ decorate it with frames, backgrounds and stickers, and download it as a PNG.
 
 ---
 
+## 🎬 Demo
+
+<div align="center">
+
+<img src="docs/cutebooth-demo.gif" alt="CuteBooth demo: choosing a layout, uploading four photos, picking frames and a background, adding stickers and reaching the download screen" width="720" />
+
+</div>
+
 ## ✨ Features
 
 |     | Feature               | Details                                                                        |
