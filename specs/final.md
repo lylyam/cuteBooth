@@ -5,7 +5,8 @@
 
 ## Objetivo
 
-El usuario ve su tira decorada, se la descarga, y si no le gusta repite las fotos.
+El usuario ve su tira decorada, se la descarga, vuelve a retocar la decoración, o si no le
+gusta repite las fotos.
 
 ## Entra / Sale
 
@@ -13,20 +14,24 @@ El usuario ve su tira decorada, se la descarga, y si no le gusta repite las foto
   **No** exige frame, fondo ni stickers: decorar es opcional.
 - **Sale a** `/layout` con `Retake`: se dispara `RESET`. Misma semántica que el
   `Retake photos` de `/review` — ver ese spec para el porqué del cambio del 2026-08-18.
+- **Sale a** `/decoration` con `Back to decoration`: no dispara nada, la decoración se
+  conserva (añadido el 2026-10-24).
 - **No sale** con `Download`: descargar no navega.
 
 ## Copy — DECIDIDO, no es el de Figma
 
 El nodo `2074:52` sigue con el copy de `/review` sin actualizar. **Manda este spec:**
 
-| Elemento        | Texto                                           |
-| --------------- | ----------------------------------------------- |
-| `h1`            | `Here's your decorated strip!`                  |
-| Subtítulo       | `Download it, or start over to make a new one.` |
-| Botón izquierdo | `Download`                                      |
-| Botón derecho   | `Retake`                                        |
+| Elemento  | Texto                                           |
+| --------- | ----------------------------------------------- |
+| `h1`      | `Here's your decorated strip!`                  |
+| Subtítulo | `Download it, or start over to make a new one.` |
+| Botón 1   | `Download`                                      |
+| Botón 2   | `Back to decoration`                            |
+| Botón 3   | `Retake`                                        |
 
-Los dos botones **sí** son literales de Figma. Los dos textos son nuevos, para que el
+`Download` y `Retake` **sí** son literales de Figma. `Back to decoration` no está en Figma:
+se pidió el 2026-10-24, con ese texto. Los dos textos son nuevos, para que el
 usuario note que ha avanzado: en `/review` la tira está cruda, aquí está terminada.
 
 ✅ El subtítulo dice _"start over"_ y desde el 2026-08-18 eso es **literalmente** lo que
@@ -51,6 +56,11 @@ fotos, ni marco, ni fondo, ni pegatinas. El usuario vuelve al principio del fluj
 otra vez layout y origen. Es la misma semántica que el `Retake photos` de `/review`, y por
 eso comparten acción.
 
+**`Back to decoration`** navega a `/decoration` sin despachar nada. Marco, fondo y pegatinas
+siguen en el estado, así que la tira se abre como estaba. El paso interno de `/decoration`
+es `useState` local: se entra por el paso 1 (marcos) y se pueden recorrer de nuevo. Como
+no hay `dispatch`, no aplica la carrera de `startTransition` de `Retake`.
+
 ## Dependencias
 
 - **Hooks:** `useCanvas` (C4) — `draw(state)` y `exportAsBlob()`.
@@ -66,6 +76,8 @@ eso comparten acción.
 - [x] El PNG incluye recorte de frame, fondo y pegatinas en su sitio
 - [x] Descargar dos veces seguidas funciona y no fuga object URLs
 - [x] `Retake` va a `/layout` y deja el estado a cero, decoración incluida
+- [ ] `Back to decoration` vuelve a `/decoration` con marco, fondo y pegatinas intactos,
+      en móvil y en escritorio — falta probarlo a mano
 - [x] `PhotoResult` se reutiliza sin cambiarlo: solo cambian props
 - [x] Entrar en frío redirige a `/`
 - [x] `npm run build` y `npm run lint` limpios
@@ -73,7 +85,7 @@ eso comparten acción.
 ## Fuera de alcance
 
 Compartir en redes. Guardar en servidor — no hay backend. Imprimir. Elegir formato o
-calidad. Volver a `/decoration` a retocar. Galería de tiras anteriores.
+calidad. Galería de tiras anteriores.
 
 ## Supuestos — no están en el diseño
 

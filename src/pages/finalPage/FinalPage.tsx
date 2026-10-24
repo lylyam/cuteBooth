@@ -34,6 +34,12 @@ function FinalPage() {
     void download(state);
   };
 
+  // Nothing is dispatched: frame, background and stickers stay in state, so
+  // `/decoration` reopens with the strip as it was and the user picks up from there.
+  const handleBackToDecoration = () => {
+    navigate('/decoration');
+  };
+
   const handleRetake = () => {
     // specs/final.md (revised): "Retake" resets the whole session — RESET, not just
     // CLEAR_PHOTOS — and sends the user back to `/layout` to choose again. The decoration
@@ -64,6 +70,9 @@ function FinalPage() {
             <>
               <Button type="button" onClick={handleDownload} disabled={isExporting}>
                 Download
+              </Button>
+              <Button type="button" onClick={handleBackToDecoration}>
+                Back to decoration
               </Button>
               <Button type="button" onClick={handleRetake}>
                 Retake
