@@ -19,11 +19,13 @@
   flex-wrap: wrap;
 }
 
-/* Left panel: title + tabs (step 3 only) + scrollable grid */
+/* Left panel: title + tabs (step 3 only) + scrollable grid. A fixed height, not just a
+   cap: the art steps always fill it, and a short list — the `Upload` tab with only its
+   `+` — must not shrink the panel. */
 .panel {
   flex: 1 1 380px;
   max-width: 425px;
-  max-height: 543px;
+  height: 543px;
   display: flex;
   flex-direction: column;
   gap: 25px;
@@ -249,7 +251,7 @@
   .panel {
     flex: none;
     max-width: none;
-    max-height: none;
+    height: auto;
     margin-inline: calc(-1 * var(--mobile-gutter));
     gap: 12px;
     padding: 16px var(--mobile-gutter) 0;

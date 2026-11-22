@@ -98,3 +98,76 @@ export function getSticker(id: string | null | undefined): StickerDef | null {
   if (!id) return null;
   return STICKERS_BY_ID.get(id) ?? null;
 }
+
+// ---------------------------------------------------------------------------------------
+// The user's own icons. Uploaded in step 3's `Upload` tab, kept in `state.uploadedStickers`
+// (every one uploaded this session, in upload order) and placed on the strip like any other
+// sticker: a `StickerInstance` whose `assetId` is the upload's id instead of a manifest id.
+// ---------------------------------------------------------------------------------------
+
+/** `upload/${uuid}` — never collides with a manifest id, whose prefix is a style folder. */
+export type UploadedStickerId = `upload/${string}`;
+
+/** What `StickerInstance.assetId` holds: a sticker from the art, or one the user uploaded. */
+export type StickerAssetId = StickerId | UploadedStickerId;
+
+export type UploadedSticker = {
+  id: UploadedStickerId;
+  /** PNG or WEBP data URL, transparency kept, longest side ≤ `UPLOADED_STICKER_MAX_SIDE`. */
+  dataUrl: string;
+};
+
+const UPLOADED_STICKER_PREFIX = 'upload/';
+
+/**
+ * Longest side, in pixels, an uploaded icon is stored at. A sticker at its biggest — the
+ * resize handle's 3×, on the layout with the widest short side — is drawn ~690 canvas px
+ * wide, so 512 is close enough to that to stay sharp while keeping `sessionStorage` light.
+ */
+export const UPLOADED_STICKER_MAX_SIDE = 512;
+
+export function isUploadedStickerId(value: unknown): value is UploadedStickerId {
+  return (
+    typeof value === 'string' &&
+    value.startsWith(UPLOADED_STICKER_PREFIX) &&
+    value.length > UPLOADED_STICKER_PREFIX.length
+  );
+}
+
+export function toUploadedStickerId(key: string): UploadedStickerId {
+  return `${UPLOADED_STICKER_PREFIX}${key}`;
+}
+
+/** An uploaded icon is always one of ours: an image data URL from `fileToStickerDataUrl`. */
+export function isUploadedStickerData(value: unknown): value is string {
+  return typeof value === 'string' && value.startsWith('data:image/');
+}
+
+/**
+ * Any stored value as an `assetId` that still resolves — the manifest's or an upload's own
+ * id, so the narrow type comes from where the picture lives — or `null`.
+ */
+export function toStickerAssetId(
+  value: unknown,
+  uploaded: readonly UploadedSticker[],
+): StickerAssetId | null {
+  if (isUploadedStickerId(value)) {
+    return uploaded.find((sticker) => sticker.id === value)?.id ?? null;
+  }
+  return typeof value === 'string' ? (getSticker(value)?.id ?? null) : null;
+}
+
+/**
+ * The picture behind any `assetId` — a manifest sticker's URL, or an uploaded icon's data
+ * URL — or `null` when it resolves to neither, which drops the instance instead of drawing
+ * a hole.
+ */
+export function resolveStickerSrc(
+  assetId: string | null | undefined,
+  uploaded: readonly UploadedSticker[],
+): string | null {
+  if (isUploadedStickerId(assetId)) {
+    return uploaded.find((sticker) => sticker.id === assetId)?.dataUrl ?? null;
+  }
+  return getSticker(assetId)?.src ?? null;
+}

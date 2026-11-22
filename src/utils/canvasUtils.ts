@@ -37,7 +37,7 @@
 import { resolveBackground, type SolidColor } from '../constants/backgrounds';
 import { getEffectiveFrame, type Rect } from '../constants/frames';
 import { EXPORT_SCALE, LAYOUTS, type LayoutDef, type LayoutId } from '../constants/layouts';
-import { getSticker } from '../constants/stickers';
+import { resolveStickerSrc } from '../constants/stickers';
 import type { PhotoBoothState } from '../types/photobooth';
 import { clearFrameLayerCache, loadFrameLayer, type FrameLayer } from './frameArtUtils';
 import { computeCoverRect, getSourceSize, loadImage, type Size } from './imageUtils';
@@ -54,7 +54,13 @@ import { computeCoverRect, getSourceSize, loadImage, type Size } from './imageUt
  */
 export type CompositionState = Pick<
   PhotoBoothState,
-  'selectedLayout' | 'photos' | 'frame' | 'background' | 'uploadedBackground' | 'stickers'
+  | 'selectedLayout'
+  | 'photos'
+  | 'frame'
+  | 'background'
+  | 'uploadedBackground'
+  | 'uploadedStickers'
+  | 'stickers'
 > & {
   /**
    * **Preview only.** The sticker whose selection box and handles are drawn on top — the
@@ -455,10 +461,10 @@ async function prepare(state: CompositionState): Promise<Prepared | null> {
   const stickers = (
     await Promise.all(
       state.stickers.map(async (sticker): Promise<DrawableSticker | null> => {
-        const definition = getSticker(sticker.assetId);
-        if (!definition) return null; // Unknown asset: drop it, do not draw a hole.
+        const src = resolveStickerSrc(sticker.assetId, state.uploadedStickers);
+        if (!src) return null; // Unknown asset: drop it, do not draw a hole.
 
-        const image = await optionalImage(definition.src);
+        const image = await optionalImage(src);
         if (!image) return null;
 
         // Geometry resolved here, once: paint stays a straight sequence of drawImage calls.

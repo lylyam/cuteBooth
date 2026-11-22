@@ -214,6 +214,63 @@ export async function fileToDataUrl(file: File, target: Size): Promise<string> {
 }
 
 /**
+ * `File` → data URL for a sticker the user uploads. Unlike `fileToDataUrl` it keeps the
+ * **whole picture and its transparency**: no crop, no white flattening — an icon with a
+ * transparent background must stay cut out on the strip. It is only scaled down, never up,
+ * so its longest side is at most `maxSide`.
+ *
+ * WEBP when the browser can encode it (alpha and a fraction of PNG's weight, which is what
+ * `sessionStorage` holds), PNG otherwise. Rejects on the same two failures as `fileToDataUrl`.
+ */
+export async function fileToStickerDataUrl(file: File, maxSide: number): Promise<string> {
+  if (!isSupportedImageType(file)) {
+    throw new Error(`Unsupported image type: ${file.type || 'unknown'}. Use PNG, JPG or WEBP.`);
+  }
+
+  let decoded: ImageBitmap | HTMLImageElement;
+  try {
+    decoded = await decodeFile(file);
+  } catch (cause) {
+    throw new Error(`Could not read "${file.name}". The file may be corrupt.`, { cause });
+  }
+
+  const canvas = document.createElement('canvas');
+  try {
+    const source = getSourceSize(decoded);
+    assertPositiveSize(source, 'source');
+    const ratio = Math.min(1, maxSide / Math.max(source.width, source.height));
+    canvas.width = Math.max(1, Math.round(source.width * ratio));
+    canvas.height = Math.max(1, Math.round(source.height * ratio));
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not get a 2D canvas context.');
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(decoded, 0, 0, canvas.width, canvas.height);
+
+    // A browser that cannot encode WEBP hands back a PNG by spec; 'data:,' is a failure.
+    let dataUrl: string;
+    try {
+      dataUrl = canvas.toDataURL('image/webp', JPEG_QUALITY);
+    } catch (cause) {
+      throw new Error('Could not encode the sticker.', { cause });
+    }
+    if (!dataUrl.startsWith('data:image/')) {
+      throw new Error('Could not encode the sticker.');
+    }
+    return dataUrl;
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+    if (typeof ImageBitmap !== 'undefined' && decoded instanceof ImageBitmap) {
+      decoded.close();
+    }
+  }
+}
+
+/**
  * Data URL → `Blob`, for the download in `/final`. Synchronous on purpose: the caller
  * hands the blob straight to `URL.createObjectURL`, and an await there buys nothing.
  */

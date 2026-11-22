@@ -38,10 +38,17 @@ import type { BackgroundChoice, BackgroundId, SolidColor } from '../../constants
 import {
   IMAGE_ACCEPT_ATTRIBUTE,
   fileToDataUrl,
+  fileToStickerDataUrl,
   isSupportedImageType,
 } from '../../utils/imageUtils';
-import { STICKERS, STICKER_STYLES, STICKER_STYLE_LABELS } from '../../constants/stickers';
-import type { StickerId, StickerStyle } from '../../constants/stickers';
+import {
+  STICKERS,
+  STICKER_STYLES,
+  STICKER_STYLE_LABELS,
+  UPLOADED_STICKER_MAX_SIDE,
+  toUploadedStickerId,
+} from '../../constants/stickers';
+import type { StickerAssetId, StickerStyle, UploadedSticker } from '../../constants/stickers';
 import styles from './DecorationPage.module.css';
 
 const STEPS = ['frames', 'backgrounds', 'icons'] as const;
@@ -60,6 +67,18 @@ const PANEL_TITLES: Record<Step, string> = {
 const UNSUPPORTED_TYPE_MESSAGE = "That file isn't a photo. Try a PNG, JPG or WEBP.";
 const UNREADABLE_FILE_MESSAGE =
   "We couldn't read that photo. It may be corrupted — try a different file.";
+
+/**
+ * Step 3's tabs: the four art styles, then the user's own icons. `upload` is not a style —
+ * it lists `state.uploadedStickers` and ends with the same `+` swatch as step 2.
+ */
+const UPLOAD_TAB = 'upload';
+type StickerTab = StickerStyle | typeof UPLOAD_TAB;
+const STICKER_TABS: readonly StickerTab[] = [...STICKER_STYLES, UPLOAD_TAB];
+const STICKER_TAB_LABELS: Record<StickerTab, string> = {
+  ...STICKER_STYLE_LABELS,
+  [UPLOAD_TAB]: 'Upload',
+};
 
 /** Ties the disabled `Next step` of step 2 to the line that explains it. */
 const BACKGROUND_HINT_ID = 'decoration-background-hint';
@@ -129,10 +148,15 @@ type DecorationPanelProps = {
   /** The last swatch: opens the file picker. */
   onUploadClick: () => void;
   isUploading: boolean;
+  /** A file that could not be used, in step 2 or step 3. */
   uploadError: string | null;
-  stickerStyle: StickerStyle;
-  onStickerStyleChange: (style: StickerStyle) => void;
-  onAddSticker: (assetId: StickerId) => void;
+  stickerTab: StickerTab;
+  onStickerTabChange: (tab: StickerTab) => void;
+  onAddSticker: (assetId: StickerAssetId) => void;
+  /** `state.uploadedStickers`: every icon the user uploaded, listed in the `Upload` tab. */
+  uploadedStickers: UploadedSticker[];
+  /** The `Upload` tab's last swatch: opens the file picker for an icon. */
+  onUploadStickerClick: () => void;
 };
 
 /**
@@ -157,9 +181,11 @@ function DecorationPanel({
   onUploadClick,
   isUploading,
   uploadError,
-  stickerStyle,
-  onStickerStyleChange,
+  stickerTab,
+  onStickerTabChange,
   onAddSticker,
+  uploadedStickers,
+  onUploadStickerClick,
 }: DecorationPanelProps) {
   const hasBackground = resolveBackground(background, uploadedBackground) !== null;
   const isUploadedSelected = background === UPLOADED_BACKGROUND && uploadedBackground !== null;
@@ -177,7 +203,7 @@ function DecorationPanel({
         </p>
       )}
 
-      {step === 'backgrounds' && uploadError && (
+      {(step === 'backgrounds' || step === 'icons') && uploadError && (
         <p className={styles.error} role="alert">
           {uploadError}
         </p>
@@ -189,15 +215,15 @@ function DecorationPanel({
 
       {step === 'icons' && (
         <div className={styles.tabs}>
-          {STICKER_STYLES.map((availableStyle) => (
+          {STICKER_TABS.map((tab) => (
             <button
-              key={availableStyle}
+              key={tab}
               type="button"
-              className={`${styles.tab} ${availableStyle === stickerStyle ? styles.tabActive : ''}`.trim()}
-              aria-pressed={availableStyle === stickerStyle}
-              onClick={() => onStickerStyleChange(availableStyle)}
+              className={`${styles.tab} ${tab === stickerTab ? styles.tabActive : ''}`.trim()}
+              aria-pressed={tab === stickerTab}
+              onClick={() => onStickerTabChange(tab)}
             >
-              {STICKER_STYLE_LABELS[availableStyle]}
+              {STICKER_TAB_LABELS[tab]}
             </button>
           ))}
         </div>
@@ -282,7 +308,8 @@ function DecorationPanel({
         )}
 
         {step === 'icons' &&
-          STICKERS[stickerStyle].map((sticker) => (
+          stickerTab !== UPLOAD_TAB &&
+          STICKERS[stickerTab].map((sticker) => (
             <button
               key={sticker.id}
               type="button"
@@ -293,6 +320,36 @@ function DecorationPanel({
               <img src={sticker.src} alt="" />
             </button>
           ))}
+
+        {/* The user's own icons, in upload order, then the same `+` swatch as step 2. */}
+        {step === 'icons' &&
+          stickerTab === UPLOAD_TAB &&
+          uploadedStickers.map((sticker, index) => (
+            <button
+              key={sticker.id}
+              type="button"
+              className={styles.swatch}
+              aria-label={`Add your icon ${index + 1}`}
+              onClick={() => onAddSticker(sticker.id)}
+            >
+              <img src={sticker.dataUrl} alt="" />
+            </button>
+          ))}
+
+        {step === 'icons' && stickerTab === UPLOAD_TAB && (
+          <button
+            type="button"
+            className={`${styles.swatch} ${styles.uploadSwatch}`}
+            aria-label={
+              uploadedStickers.length > 0 ? 'Upload another icon' : 'Upload your own icon'
+            }
+            aria-busy={isUploading}
+            disabled={isUploading}
+            onClick={onUploadStickerClick}
+          >
+            <span aria-hidden="true">{isUploading ? '…' : '+'}</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -304,7 +361,7 @@ function DecorationPage() {
   const redirect = useRouteGuard('layoutAndPhotos');
 
   const [step, setStep] = useState<Step>('frames');
-  const [stickerStyle, setStickerStyle] = useState<StickerStyle>(STICKER_STYLES[0]);
+  const [stickerTab, setStickerTab] = useState<StickerTab>(STICKER_STYLES[0]);
 
   // The solid-colour wheel: whether it is open, the last colour committed (where it reopens),
   // and the colour of a gesture still in progress, which only the preview sees.
@@ -316,6 +373,8 @@ function DecorationPage() {
 
   // The user's own background: the hidden file input the last swatch opens, and its states.
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Step 3's own picker: the user's icons. Same busy and error states as step 2's.
+  const stickerInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -450,7 +509,7 @@ function DecorationPage() {
     step === 'backgrounds' &&
     resolveBackground(state.background, state.uploadedBackground) === null;
 
-  const handleAddSticker = (assetId: StickerId) => {
+  const handleAddSticker = (assetId: StickerAssetId) => {
     const canvas = LAYOUTS[layout].canvas;
     const instanceId = newStickerInstanceId();
     dispatch({
@@ -468,9 +527,39 @@ function DecorationPage() {
     select(instanceId);
   };
 
+  const handleUploadStickerClick = () => {
+    if (stickerInputRef.current) stickerInputRef.current.value = ''; // the same file twice still fires
+    stickerInputRef.current?.click();
+  };
+
+  // Kept whole and transparent, only scaled down (fileToStickerDataUrl). Uploading is
+  // choosing, as in step 2: the icon joins the `Upload` tab and lands on the strip at once.
+  const handleUploadStickerFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadError(null);
+
+    if (!isSupportedImageType(file)) {
+      setUploadError(UNSUPPORTED_TYPE_MESSAGE);
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const dataUrl = await fileToStickerDataUrl(file, UPLOADED_STICKER_MAX_SIDE);
+      const id = toUploadedStickerId(newStickerInstanceId());
+      dispatch({ type: 'ADD_UPLOADED_STICKER', sticker: { id, dataUrl } });
+      handleAddSticker(id);
+    } catch {
+      setUploadError(UNREADABLE_FILE_MESSAGE);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handlePrevious = () => {
     select(null);
     setIsWheelOpen(false);
+    setUploadError(null);
     if (stepIndex === 0) {
       navigate('/review');
       return;
@@ -482,6 +571,7 @@ function DecorationPage() {
     if (isNextBlocked) return;
     select(null);
     setIsWheelOpen(false);
+    setUploadError(null);
     if (stepIndex === STEPS.length - 1) {
       navigate('/final');
       return;
@@ -510,9 +600,14 @@ function DecorationPage() {
             onUploadClick={handleUploadClick}
             isUploading={isUploading}
             uploadError={uploadError}
-            stickerStyle={stickerStyle}
-            onStickerStyleChange={setStickerStyle}
+            stickerTab={stickerTab}
+            onStickerTabChange={(tab) => {
+              setUploadError(null);
+              setStickerTab(tab);
+            }}
             onAddSticker={handleAddSticker}
+            uploadedStickers={state.uploadedStickers}
+            onUploadStickerClick={handleUploadStickerClick}
           />
 
           {/* Layout-free on desktop (`display: contents`); on mobile, the box the strip is
@@ -558,6 +653,17 @@ function DecorationPage() {
           aria-hidden="true"
           onChange={(event) => {
             void handleUploadFile(event.target.files?.[0]);
+          }}
+        />
+        <input
+          ref={stickerInputRef}
+          type="file"
+          accept={IMAGE_ACCEPT_ATTRIBUTE}
+          className={styles.visuallyHidden}
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(event) => {
+            void handleUploadStickerFile(event.target.files?.[0]);
           }}
         />
       </WebAppOldStyle>

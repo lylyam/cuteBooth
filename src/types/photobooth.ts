@@ -11,10 +11,24 @@
  */
 import type { LayoutId } from '../constants/layouts';
 import type { FrameId } from '../constants/frames';
-import type { StickerId } from '../constants/stickers';
+import type {
+  StickerAssetId,
+  StickerId,
+  UploadedSticker,
+  UploadedStickerId,
+} from '../constants/stickers';
 import type { BackgroundChoice, BackgroundId, SolidColor } from '../constants/backgrounds';
 
-export type { FrameId, StickerId, BackgroundId, BackgroundChoice, SolidColor };
+export type {
+  FrameId,
+  StickerId,
+  StickerAssetId,
+  UploadedSticker,
+  UploadedStickerId,
+  BackgroundId,
+  BackgroundChoice,
+  SolidColor,
+};
 
 export type PhotoSource = 'camera' | 'upload';
 
@@ -25,7 +39,7 @@ export type Photo = {
 
 export type StickerInstance = {
   instanceId: string;
-  assetId: StickerId;
+  assetId: StickerAssetId; // a manifest sticker, or one of `uploadedStickers`
   x: number; // px of the active layout's canvas, NOT css px nor % · the CENTRE
   y: number;
   rotation: number; // degrees, clockwise, around the centre · 0 = upright
@@ -39,6 +53,7 @@ export type PhotoBoothState = {
   frame: FrameId | null; // /decoration step 1 · one frame, not 4 masks
   background: BackgroundChoice | null; // /decoration step 2 · art id, '#rrggbb' or 'upload'
   uploadedBackground: string | null; // the user's own background · JPEG data URL, strip-sized
+  uploadedStickers: UploadedSticker[]; // the user's own icons · every one uploaded, in order
   stickers: StickerInstance[]; // /decoration step 3
 };
 
@@ -51,6 +66,7 @@ export type PhotoBoothAction =
   | { type: 'SET_FRAME'; frame: FrameId | null }
   | { type: 'SET_BACKGROUND'; background: BackgroundChoice | null }
   | { type: 'SET_UPLOADED_BACKGROUND'; dataUrl: string }
+  | { type: 'ADD_UPLOADED_STICKER'; sticker: UploadedSticker }
   | { type: 'ADD_STICKER'; sticker: StickerInstance }
   | { type: 'MOVE_STICKER'; instanceId: string; x: number; y: number }
   | { type: 'TRANSFORM_STICKER'; instanceId: string; rotation: number; scale: number }

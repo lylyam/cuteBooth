@@ -63,7 +63,12 @@ import { LAYOUTS } from '../constants/layouts';
 import type { LayoutDef } from '../constants/layouts';
 import { isUploadedBackgroundData, toBackgroundChoice } from '../constants/backgrounds';
 import { getFrameForLayout } from '../constants/frames';
-import { getSticker } from '../constants/stickers';
+import {
+  isUploadedStickerData,
+  isUploadedStickerId,
+  toStickerAssetId,
+} from '../constants/stickers';
+import type { UploadedSticker } from '../constants/stickers';
 import { clampStickerScale } from '../utils/canvasUtils';
 import type { Photo, PhotoBoothState, PhotoSource, StickerInstance } from '../types/photobooth';
 
@@ -340,6 +345,8 @@ function validateState(value: unknown): PhotoBoothState | null {
     ? value.uploadedBackground
     : null;
   const background = toBackgroundChoice(value.background, uploadedBackground);
+  // Missing in an entry saved before icons could be uploaded: that is an empty list, not damage.
+  const uploadedStickers = validateUploadedStickers(value.uploadedStickers);
 
   return {
     selectedLayout,
@@ -348,7 +355,8 @@ function validateState(value: unknown): PhotoBoothState | null {
     frame: frame?.id ?? null,
     background,
     uploadedBackground,
-    stickers: validateStickers(value.stickers),
+    uploadedStickers,
+    stickers: validateStickers(value.stickers, uploadedStickers),
   };
 }
 
@@ -404,11 +412,33 @@ function validatePhotos(value: unknown[]): Photo[] {
 }
 
 /**
+ * The user's own icons. Per entry, like stickers: one that is not ours is dropped and the
+ * rest survive. Anything but an array — including the field missing altogether — is `[]`.
+ */
+function validateUploadedStickers(value: unknown): UploadedSticker[] {
+  if (!Array.isArray(value)) return [];
+
+  const uploaded: UploadedSticker[] = [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    if (!isRecord(entry)) continue;
+    const { id, dataUrl } = entry;
+    if (!isUploadedStickerId(id) || seen.has(id) || !isUploadedStickerData(dataUrl)) continue;
+    seen.add(id);
+    uploaded.push({ id, dataUrl });
+  }
+  return uploaded;
+}
+
+/**
  * Per sticker, unlike photos: instances are independent, so one whose art was deleted from
  * the manifest is dropped and the rest of the decoration survives. Duplicate `instanceId`s
  * are collapsed — two stickers sharing an id would move together under one drag.
  */
-function validateStickers(value: unknown[]): StickerInstance[] {
+function validateStickers(
+  value: unknown[],
+  uploaded: readonly UploadedSticker[],
+): StickerInstance[] {
   const stickers: StickerInstance[] = [];
   const seen = new Set<string>();
 
@@ -419,16 +449,16 @@ function validateStickers(value: unknown[]): StickerInstance[] {
     if (!isFiniteNumber(x) || !isFiniteNumber(y)) continue;
     if (!isFiniteNumber(rotation) || !isFiniteNumber(scale)) continue;
 
-    // The manifest is the source of the narrow `StickerId`, so `sticker.id` is typed and an
-    // asset that no longer exists is dropped instead of being drawn as a hole.
-    const sticker = getSticker(asOptionalString(assetId));
-    if (!sticker) continue;
+    // An asset that resolves to nothing — art deleted from the manifest, an upload that did
+    // not survive validation — is dropped instead of being drawn as a hole.
+    const resolvedAssetId = toStickerAssetId(assetId, uploaded);
+    if (!resolvedAssetId) continue;
 
     seen.add(instanceId);
     // Clamped, not rejected: an out-of-range size is still the sticker the user placed.
     stickers.push({
       instanceId,
-      assetId: sticker.id,
+      assetId: resolvedAssetId,
       x,
       y,
       rotation,

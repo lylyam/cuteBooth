@@ -10,6 +10,7 @@ const initialState: PhotoBoothState = {
   frame: null,
   background: null,
   uploadedBackground: null,
+  uploadedStickers: [],
   stickers: [],
 };
 
@@ -42,6 +43,10 @@ function photoBoothReducer(state: PhotoBoothState, action: PhotoBoothAction): Ph
     // Uploading is choosing: the new picture replaces the last one and is selected at once.
     case 'SET_UPLOADED_BACKGROUND':
       return { ...state, uploadedBackground: action.dataUrl, background: 'upload' };
+
+    // Only adds it to the `Upload` tab; placing it on the strip is a separate ADD_STICKER.
+    case 'ADD_UPLOADED_STICKER':
+      return { ...state, uploadedStickers: [...state.uploadedStickers, action.sticker] };
 
     case 'ADD_STICKER':
       return { ...state, stickers: [...state.stickers, action.sticker] };
