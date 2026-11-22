@@ -26,7 +26,7 @@ decorate it with frames, backgrounds and stickers, and download it as a PNG.
 
 <div align="center">
 
-<img src=".github/cutebooth-demo.gif" alt="CuteBooth demo: from the home screen, choosing a layout, uploading four photos, picking frames and a background, adding stickers and reaching the download screen" width="720" />
+<img src=".github/cutebooth-demo-v2.gif" alt="CuteBooth demo: from the home screen, choosing a layout, uploading four photos, picking frames and a background, adding stickers and reaching the download screen" width="720" />
 
 </div>
 
