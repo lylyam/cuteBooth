@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.engram/
+
+# Local working material
+.claude/
+CLAUDE.md
+docs/
+specs/
+Analisis/

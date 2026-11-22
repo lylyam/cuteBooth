@@ -26,7 +26,7 @@ decorate it with frames, backgrounds and stickers, and download it as a PNG.
 
 <div align="center">
 
-<img src="docs/cutebooth-demo.gif" alt="CuteBooth demo: choosing a layout, uploading four photos, picking frames and a background, adding stickers and reaching the download screen" width="720" />
+<img src=".github/cutebooth-demo.gif" alt="CuteBooth demo: choosing a layout, uploading four photos, picking frames and a background, adding stickers and reaching the download screen" width="720" />
 
 </div>
 
@@ -81,7 +81,6 @@ flowchart LR
 
 The slot geometry is read **from the frame artwork itself**, not from the wireframe: the
 frame is drawn on top of the photos, so it is the only source that can be right.
-Numbers and method in [docs/contracts/layouts.md](docs/contracts/layouts.md).
 
 ## 🚀 Getting started
 
@@ -172,8 +171,6 @@ frame, a background or a sticker, just drop the file into its folder under
 | `backgrounds/wide-and-spotlight/`     | 21 backgrounds for the landscape ones |
 | `stickers/{3d,draw,felt,pixel}Style/` | 102 · 75 · 75 · 21 PNG stickers       |
 
-Art rules in [docs/contracts/assets.md](docs/contracts/assets.md).
-
 ### Stack
 
 - **React 19** with the **React Compiler**, wired by hand as a Babel preset in
@@ -184,21 +181,6 @@ Art rules in [docs/contracts/assets.md](docs/contracts/assets.md).
   `switch` with no `default` so `tsc` flags an unhandled action).
 - **CSS Modules** per component and page, on top of the custom properties in
   `src/index.css`. Fonts: _Fira Code_ and _Pixelify Sans_.
-
-## 📚 Documentation
-
-The internal documentation lives in [`docs/`](docs/README.md) and is written in
-Spanish. The product, including `alt` text, is in English.
-
-| If you want to…                          | Read                                                               |
-| ---------------------------------------- | ------------------------------------------------------------------ |
-| Pick up the project                      | [docs/orchestration/KICKOFF.md](docs/orchestration/KICKOFF.md)     |
-| Understand the architecture and its debt | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                       |
-| See what's left and what blocks what     | [docs/orchestration/DAG.md](docs/orchestration/DAG.md)             |
-| Avoid traps that already cost time       | [docs/orchestration/LECCIONES.md](docs/orchestration/LECCIONES.md) |
-| Check each screen's scope and copy       | [`specs/`](specs/)                                                 |
-| Look at the Figma design                 | [docs/design/FIGMA.md](docs/design/FIGMA.md)                       |
-| Work with Claude Code agents             | [CLAUDE.md](CLAUDE.md)                                             |
 
 ## 🤝 Conventions
 
