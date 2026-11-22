@@ -55,7 +55,6 @@
   --page-padding-y: clamp(1.5rem, 5vh, 80px);
   --page-padding-x: 10px;
   --content-max-width: 743px;
-  --footer-links-gap: 33px;
   /* /camera: the four dots under the preview that say which shot is next. */
   --progress-dot-size: 12px;
   --progress-dot-gap: 6px;
