@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { PhotoBoothProvider } from './context/PhotoBoothContext';
 import HomePage from './pages/homePage/HomePage';
 import LayoutPage from './pages/layoutPage/LayoutPage';
@@ -10,7 +10,7 @@ import FinalPage from './pages/finalPage/FinalPage';
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <PhotoBoothProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -22,7 +22,7 @@ function App() {
           <Route path="/final" element={<FinalPage />} />
         </Routes>
       </PhotoBoothProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
