@@ -111,13 +111,67 @@ export function computeCoverRect(source: Size, target: Size): CropRect {
 }
 
 /**
+ * How the user framed a photo inside its hole, on top of the centred cover crop.
+ *
+ * - `zoom` ≥ 1 shrinks the cover rectangle by that factor (1 = plain cover, nothing lost
+ *   beyond what cover already trims).
+ * - `panX` / `panY` ∈ [0, 1] place that rectangle inside the room left over on each axis:
+ *   0 = against the left/top edge, 1 = against the right/bottom, 0.5 = centred.
+ *
+ * Fractions instead of pixels so a framing is valid for any source and any zoom: the crop
+ * can never leave the picture, and changing the zoom keeps the same relative position.
+ */
+export type PhotoFraming = { zoom: number; panX: number; panY: number };
+
+export const CENTERED_FRAMING: PhotoFraming = { zoom: 1, panX: 0.5, panY: 0.5 };
+
+export const MAX_FRAMING_ZOOM = 3;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/** The same framing with every field inside its legal range. */
+export function clampFraming(framing: PhotoFraming): PhotoFraming {
+  return {
+    zoom: clamp(framing.zoom, 1, MAX_FRAMING_ZOOM),
+    panX: clamp(framing.panX, 0, 1),
+    panY: clamp(framing.panY, 0, 1),
+  };
+}
+
+/**
+ * The source rectangle a framing selects: the cover rectangle, shrunk by `zoom` and slid
+ * by `panX`/`panY` through the room left over. With `CENTERED_FRAMING` it is exactly
+ * `computeCoverRect`.
+ */
+export function computeFramedRect(source: Size, target: Size, framing: PhotoFraming): CropRect {
+  const cover = computeCoverRect(source, target);
+  const { zoom, panX, panY } = clampFraming(framing);
+  const sWidth = cover.sWidth / zoom;
+  const sHeight = cover.sHeight / zoom;
+
+  return {
+    sx: (source.width - sWidth) * panX,
+    sy: (source.height - sHeight) * panY,
+    sWidth,
+    sHeight,
+  };
+}
+
+/**
  * Encodes any drawable source as a JPEG data URL of exactly `target` pixels, cover-cropped
- * from the centre. Transparency is flattened onto white, because JPEG has no alpha.
+ * from the centre unless a `framing` says otherwise. Transparency is flattened onto white,
+ * because JPEG has no alpha.
  *
  * This is the shared engine behind `fileToDataUrl` (U2) and the camera capture (C3).
  * It works in image pixels: `devicePixelRatio` belongs to the on-screen canvas (C2/C4).
  */
-export function sourceToDataUrl(source: DrawableImageSource, target: Size): string {
+export function sourceToDataUrl(
+  source: DrawableImageSource,
+  target: Size,
+  framing: PhotoFraming = CENTERED_FRAMING,
+): string {
   const sourceSize = getSourceSize(source);
   assertPositiveSize(sourceSize, 'source');
   assertPositiveSize(target, 'target');
@@ -141,7 +195,7 @@ export function sourceToDataUrl(source: DrawableImageSource, target: Size): stri
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    const { sx, sy, sWidth, sHeight } = computeCoverRect(sourceSize, { width, height });
+    const { sx, sy, sWidth, sHeight } = computeFramedRect(sourceSize, { width, height }, framing);
     ctx.drawImage(source, sx, sy, sWidth, sHeight, 0, 0, width, height);
 
     let dataUrl: string;
@@ -187,12 +241,17 @@ async function decodeFile(file: File): Promise<ImageBitmap | HTMLImageElement> {
 }
 
 /**
- * `File` → resized JPEG data URL, ready for `Photo.dataUrl`.
+ * `File` → resized JPEG data URL, ready for `Photo.dataUrl`, cropped as `framing` says
+ * (centred cover by default).
  *
  * Rejects — never hangs — on an unsupported type and on a file the browser cannot decode
  * (an iPhone HEIC hits the second case). Both are states the UI paints, not crashes.
  */
-export async function fileToDataUrl(file: File, target: Size): Promise<string> {
+export async function fileToDataUrl(
+  file: File,
+  target: Size,
+  framing: PhotoFraming = CENTERED_FRAMING,
+): Promise<string> {
   if (!isSupportedImageType(file)) {
     throw new Error(`Unsupported image type: ${file.type || 'unknown'}. Use PNG, JPG or WEBP.`);
   }
@@ -205,7 +264,7 @@ export async function fileToDataUrl(file: File, target: Size): Promise<string> {
   }
 
   try {
-    return sourceToDataUrl(decoded, target);
+    return sourceToDataUrl(decoded, target, framing);
   } finally {
     if (typeof ImageBitmap !== 'undefined' && decoded instanceof ImageBitmap) {
       decoded.close();

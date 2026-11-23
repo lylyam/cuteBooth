@@ -1,0 +1,62 @@
+/* PhotoFramingModal — drag and zoom an uploaded photo inside its hole. */
+
+.framer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Same look as an `/upload` hole: dark border, medium radius. `touch-action: none` hands
+   every finger gesture to the pointer handlers instead of scrolling the page. */
+.viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: var(--border-width) solid var(--dark-secondary);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-white);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.viewport:active {
+  cursor: grabbing;
+}
+
+.viewport:focus-visible {
+  outline: var(--border-width) dashed var(--dark-secondary);
+  outline-offset: 3px;
+}
+
+/* Sized and placed by the hook, in percentages of the viewport. */
+.image {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+
+.message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  text-align: center;
+}
+
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zoom input {
+  flex: 1;
+  accent-color: var(--dark-secondary);
+}
+
+.hint {
+  margin: 0;
+}

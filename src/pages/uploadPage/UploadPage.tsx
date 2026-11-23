@@ -9,6 +9,11 @@
  * since its index IS the hole number. It becomes a single `SET_PHOTOS` only
  * when the user presses Continue, which stays visible and disabled until all
  * four holes are full.
+ *
+ * Decision of 2026-11-23: a picked file does not go straight into its hole. It
+ * opens `PhotoFramingModal`, where the user drags and zooms it, and only "Use
+ * photo" crops it — with that framing — into the hole. Cancel leaves the hole
+ * as it was.
  */
 import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
@@ -16,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import PageShell from '../../components/layouts/PageShell';
 import WebAppOldStyle from '../../components/layouts/WebAppOldStyle';
 import Button from '../../components/ui/Button';
+import PhotoFramingModal from '../../components/upload/PhotoFramingModal';
 import { usePhotoBooth } from '../../context/PhotoBoothContext';
 import { useRouteGuard } from '../../hooks/useRouteGuard';
 import {
@@ -23,6 +29,7 @@ import {
   isSupportedImageType,
   IMAGE_ACCEPT_ATTRIBUTE,
 } from '../../utils/imageUtils';
+import type { PhotoFraming } from '../../utils/imageUtils';
 import { LAYOUTS } from '../../constants/layouts';
 import type { LayoutId } from '../../constants/layouts';
 import type { Photo } from '../../types/photobooth';
@@ -66,6 +73,7 @@ function UploadPage() {
 
   const [slots, setSlots] = useState<(Photo | null)[]>(() => [...EMPTY_SLOTS]);
   const [targetIndex, setTargetIndex] = useState<number | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,13 +97,12 @@ function UploadPage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     event.target.value = '';
 
     // The user closed the picker without choosing anything — not an error.
     if (!file || targetIndex === null) return;
-    const index = targetIndex;
 
     if (!isSupportedImageType(file)) {
       setError(UNSUPPORTED_TYPE_MESSAGE);
@@ -103,9 +110,21 @@ function UploadPage() {
       return;
     }
 
+    setPendingFile(file);
+  };
+
+  const handleFramingCancel = () => {
+    setPendingFile(null);
+    setTargetIndex(null);
+  };
+
+  const handleFramingConfirm = async (framing: PhotoFraming) => {
+    if (!pendingFile || targetIndex === null) return;
+    const index = targetIndex;
+
     setIsProcessing(true);
     try {
-      const dataUrl = await fileToDataUrl(file, slotGeometry[index]);
+      const dataUrl = await fileToDataUrl(pendingFile, slotGeometry[index], framing);
       setSlots((previous) =>
         previous.map((slot, i) => (i === index ? { id: newPhotoId(), dataUrl } : slot)),
       );
@@ -113,6 +132,7 @@ function UploadPage() {
       setError(UNREADABLE_FILE_MESSAGE);
     } finally {
       setIsProcessing(false);
+      setPendingFile(null);
       setTargetIndex(null);
     }
   };
@@ -178,11 +198,20 @@ function UploadPage() {
           className={styles.visuallyHidden}
           tabIndex={-1}
           aria-hidden="true"
-          onChange={(event) => {
-            void handleFileChange(event);
-          }}
+          onChange={handleFileChange}
         />
       </WebAppOldStyle>
+
+      <PhotoFramingModal
+        file={pendingFile}
+        target={slotGeometry[targetIndex ?? 0]}
+        slotNumber={(targetIndex ?? 0) + 1}
+        isSaving={isProcessing}
+        onCancel={handleFramingCancel}
+        onConfirm={(framing) => {
+          void handleFramingConfirm(framing);
+        }}
+      />
     </PageShell>
   );
 }
