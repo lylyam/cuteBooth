@@ -51,6 +51,15 @@
  * - Blocked autoplay: `play()` is retried from inside the click, which is a user gesture.
  * - A denied permission is a **state**, never a thrown error. `captureWithCountdown` never
  *   rejects either: it resolves with fewer photos than asked and leaves `error` set.
+ *
+ * ## Front and rear camera (decision of 2026-11-23)
+ *
+ * The page may offer `switchCamera()` when `canSwitchCamera` is true — the device reported
+ * more than one video input, which is a phone or a laptop with an external webcam. The old
+ * stream is stopped **before** the new one is requested: many phones cannot open both
+ * cameras at once. `isMirrored` says whether the live camera faces the user; the preview
+ * mirrors only then, and so does the saved photo (a rear-camera shot of a street sign must
+ * read the right way round).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
@@ -85,28 +94,34 @@ const FRAME_TIMEOUT_MS = 2000;
 const FRAME_POLL_MS = 50;
 
 /**
- * The saved photo is mirrored, like the preview. Spec supuesto 2: a photobooth shows you
- * your reflection, and a capture that comes back unflipped reads as somebody else's photo.
- * Flip this one flag to change both the intent and the pixels — the CSS mirror of the
- * preview lives in `CameraPage.module.css` (D3) and has to agree with it.
+ * A front-camera photo is saved mirrored, like the preview. Spec supuesto 2: a photobooth
+ * shows you your reflection, and a capture that comes back unflipped reads as somebody
+ * else's photo. Flip this one flag to change both the intent and the pixels — the page
+ * mirrors the preview from `isMirrored`, which already folds this flag in. The rear camera
+ * is never mirrored.
  */
-const MIRROR_CAPTURE = true;
+const MIRROR_FRONT_CAPTURE = true;
+
+/** Which way the camera looks: `user` is the selfie camera, `environment` the rear one. */
+export type CameraFacing = 'user' | 'environment';
 
 /**
  * `ideal`, never `exact`: a 640×480 webcam still works, it just gives less to crop from.
  * 1080p because the biggest slot in the app is `spotlight`'s hero at 1266×738 export px,
  * and 720p would already be upscaling it.
  */
-const PREFERRED_CONSTRAINTS: MediaStreamConstraints = {
-  // A photobooth records no sound: asking for audio would add a second permission prompt
-  // and a mic indicator for nothing.
-  audio: false,
-  video: {
-    facingMode: { ideal: 'user' },
-    width: { ideal: 1920 },
-    height: { ideal: 1080 },
-  },
-};
+function preferredConstraints(facing: CameraFacing): MediaStreamConstraints {
+  return {
+    // A photobooth records no sound: asking for audio would add a second permission prompt
+    // and a mic indicator for nothing.
+    audio: false,
+    video: {
+      facingMode: { ideal: facing },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+    },
+  };
+}
 
 /** Number of photos a strip holds. Comes from the geometry, not from a loose 4. */
 const SLOT_COUNT = LAYOUTS.classic.slots.length;
@@ -174,6 +189,12 @@ export type UseCameraResult = {
   stop: () => void;
   /** Runs a session of `shots` countdowns. Never rejects; resolves with what it got. */
   captureWithCountdown: (options?: CaptureOptions) => Promise<Photo[]>;
+  /** The live camera faces the user: mirror the preview. False for the rear camera. */
+  isMirrored: boolean;
+  /** The device has more than one camera, so offering a switch makes sense. */
+  canSwitchCamera: boolean;
+  /** Stops the current camera and opens the other one. A no-op while capturing. */
+  switchCamera: () => void;
 };
 
 function cameraError(kind: CameraErrorKind): CameraError {
@@ -191,6 +212,8 @@ export function useCamera(): UseCameraResult {
   const [error, setError] = useState<CameraError | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(MIRROR_FRONT_CAPTURE);
+  const [canSwitchCamera, setCanSwitchCamera] = useState(false);
 
   // `stream` also lives in a ref: `stop()` and the unmount cleanup must see the current
   // stream without being re-created on every render, or the cleanup closes over a stale one.
@@ -203,6 +226,10 @@ export function useCamera(): UseCameraResult {
   // Aborts the countdown of the running session.
   const sessionRef = useRef<AbortController | null>(null);
   const capturingRef = useRef(false);
+  // The camera `start()` asks for next. A ref so `start` keeps a stable identity.
+  const facingRef = useRef<CameraFacing>('user');
+  // Read by the shutter, which runs outside render.
+  const mirroredRef = useRef(MIRROR_FRONT_CAPTURE);
 
   /** Drops the stream and everything hanging off it. Does not touch `error`. */
   const release = useCallback((): void => {
@@ -254,7 +281,7 @@ export function useCamera(): UseCameraResult {
 
     let next: MediaStream;
     try {
-      next = await requestStream(devices);
+      next = await requestStream(devices, facingRef.current);
     } catch (cause) {
       // The prompt can outlive the page: only the current generation may paint.
       if (!aliveRef.current || generation !== generationRef.current) return;
@@ -282,10 +309,35 @@ export function useCamera(): UseCameraResult {
       );
     }
 
+    // Trust what the browser actually opened over what was asked: `facingMode` is only an
+    // `ideal`, and a laptop webcam reports no facing at all (it faces the user).
+    const opened = next.getVideoTracks()[0]?.getSettings().facingMode;
+    const mirrored = MIRROR_FRONT_CAPTURE && opened !== 'environment';
+    mirroredRef.current = mirrored;
+
     streamRef.current = next;
     setStream(next);
+    setIsMirrored(mirrored);
     setIsStarting(false);
+
+    // Device labels and the full list only show up once permission is granted, so the
+    // count is taken here and not on mount.
+    try {
+      const inputs = await devices.enumerateDevices();
+      if (!aliveRef.current || generation !== generationRef.current) return;
+      setCanSwitchCamera(inputs.filter((device) => device.kind === 'videoinput').length > 1);
+    } catch {
+      // Without the list the switch just stays hidden; the camera itself works.
+    }
   }, [release]);
+
+  const switchCamera = useCallback((): void => {
+    if (capturingRef.current) return;
+    const next: CameraFacing = facingRef.current === 'user' ? 'environment' : 'user';
+    facingRef.current = next;
+    stop();
+    void start();
+  }, [start, stop]);
 
   // Start on mount, and — the expensive one to get wrong — stop on unmount, always.
   useEffect(() => {
@@ -362,7 +414,11 @@ export function useCamera(): UseCameraResult {
           try {
             photo = {
               id: newPhotoId(),
-              dataUrl: grabFrame(video, captureTarget(selectedLayout, firstSlot + shot)),
+              dataUrl: grabFrame(
+                video,
+                captureTarget(selectedLayout, firstSlot + shot),
+                mirroredRef.current,
+              ),
             };
           } catch {
             if (aliveRef.current && !signal.aborted) setError(cameraError('capture'));
@@ -400,6 +456,9 @@ export function useCamera(): UseCameraResult {
     start,
     stop,
     captureWithCountdown,
+    isMirrored,
+    canSwitchCamera,
+    switchCamera,
   };
 }
 
@@ -411,9 +470,9 @@ function stopTracks(stream: MediaStream | null): void {
   }
 }
 
-async function requestStream(devices: MediaDevices): Promise<MediaStream> {
+async function requestStream(devices: MediaDevices, facing: CameraFacing): Promise<MediaStream> {
   try {
-    return await devices.getUserMedia(PREFERRED_CONSTRAINTS);
+    return await devices.getUserMedia(preferredConstraints(facing));
   } catch (cause) {
     // Some devices reject a resolution hint outright instead of picking the nearest mode.
     // A plain `video: true` is better than no camera at all.
@@ -526,13 +585,14 @@ function captureTarget(layout: LayoutId | null, index: number): Size {
 /**
  * Current video frame → JPEG data URL of exactly `target` pixels.
  *
+ * `mirror` comes from the camera that is live: true for the front one, false for the rear.
  * The mirroring is why there is an intermediate canvas: `sourceToDataUrl` (C1) crops and
  * encodes but does not flip, and flipping is a property of the capture, not of the crop.
  * The buffer is at native video resolution so the flip costs no quality, and C1 does the
  * one resize.
  */
-function grabFrame(video: HTMLVideoElement, target: Size): string {
-  if (!MIRROR_CAPTURE) return sourceToDataUrl(video, target);
+function grabFrame(video: HTMLVideoElement, target: Size, mirror: boolean): string {
+  if (!mirror) return sourceToDataUrl(video, target);
 
   const width = video.videoWidth;
   const height = video.videoHeight;

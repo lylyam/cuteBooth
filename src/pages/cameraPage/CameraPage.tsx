@@ -6,6 +6,10 @@
  * `<video>`, reacts to `state.photos.length` to hand off to `/review`, and owns the copy
  * for whatever `error.kind` the hook reports (its own default messages are ignored on
  * purpose — see the U1 report).
+ *
+ * Decision of 2026-11-23: when the device has more than one camera (a phone), a round
+ * button in the preview's corner switches between the front and the rear one. Only the
+ * front camera is mirrored, in the preview and in the saved photo.
  */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -45,13 +49,45 @@ const SHOT_COUNT = 4;
  */
 const FLASH_MS = 450;
 
+/** Two arrows chasing each other around a lens, drawn in the app's line style. */
+function SwitchCameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+      <path
+        d="M4 13a8 8 0 0 0 14.5 4.5M20 11A8 8 0 0 0 5.5 6.5"
+        stroke="currentColor"
+        strokeWidth="1.94"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 3v3.5h3.5M19 21v-3.5h-3.5"
+        stroke="currentColor"
+        strokeWidth="1.94"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.94" />
+    </svg>
+  );
+}
+
 function CameraPage() {
   const navigate = useNavigate();
   const { state, dispatch } = usePhotoBooth();
   const redirect = useRouteGuard('layout');
 
-  const { videoRef, stream, countdown, error, isStarting, isCapturing, captureWithCountdown } =
-    useCamera();
+  const {
+    videoRef,
+    stream,
+    countdown,
+    error,
+    isStarting,
+    isCapturing,
+    captureWithCountdown,
+    isMirrored,
+    canSwitchCamera,
+    switchCamera,
+  } = useCamera();
 
   const photoCount = state.photos.length;
   // The shot that comes next, 1-based; with the strip full, the last one stays lit.
@@ -102,7 +138,7 @@ function CameraPage() {
           <div className={styles.previewBox}>
             <video
               ref={videoRef}
-              className={styles.previewVideo}
+              className={`${styles.previewVideo} ${isMirrored ? styles.mirrored : ''}`.trim()}
               playsInline
               muted
               autoPlay
@@ -120,6 +156,19 @@ function CameraPage() {
                 style={{ animationDuration: `${FLASH_MS}ms` }}
                 aria-hidden="true"
               />
+            )}
+
+            {canSwitchCamera && !isFatalError && (
+              <button
+                type="button"
+                className={styles.switchCamera}
+                onClick={switchCamera}
+                disabled={isCapturing || isStarting}
+                aria-label="Switch camera"
+                title="Switch camera"
+              >
+                <SwitchCameraIcon />
+              </button>
             )}
 
             {isStarting && <Loading />}
