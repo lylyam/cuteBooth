@@ -62,6 +62,13 @@
   cursor: pointer;
 }
 
+/* Pixel-art arrows (Streamline Pixel-Mono), sized to sit inside the 44px circle. */
+.switchCameraIcon {
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+}
+
 .switchCamera:disabled {
   opacity: 0.5;
   cursor: default;

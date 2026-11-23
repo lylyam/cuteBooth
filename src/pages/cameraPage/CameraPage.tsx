@@ -22,6 +22,7 @@ import { useRouteGuard } from '../../hooks/useRouteGuard';
 import { useCamera } from '../../hooks/useCamera';
 import type { CameraErrorKind } from '../../hooks/useCamera';
 import cameraIcon from '../../assets/camera.svg';
+import switchCameraIcon from '../../assets/switch-camera.svg';
 import styles from './CameraPage.module.css';
 
 // Copy is owned by this page, not by `useCamera` — see specs/camera.md SUPUESTO 3 for the
@@ -48,28 +49,6 @@ const SHOT_COUNT = 4;
  * never be seen.
  */
 const FLASH_MS = 450;
-
-/** Two arrows chasing each other around a lens, drawn in the app's line style. */
-function SwitchCameraIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
-      <path
-        d="M4 13a8 8 0 0 0 14.5 4.5M20 11A8 8 0 0 0 5.5 6.5"
-        stroke="currentColor"
-        strokeWidth="1.94"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5 3v3.5h3.5M19 21v-3.5h-3.5"
-        stroke="currentColor"
-        strokeWidth="1.94"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.94" />
-    </svg>
-  );
-}
 
 function CameraPage() {
   const navigate = useNavigate();
@@ -167,7 +146,7 @@ function CameraPage() {
                 aria-label="Switch camera"
                 title="Switch camera"
               >
-                <SwitchCameraIcon />
+                <img className={styles.switchCameraIcon} src={switchCameraIcon} alt="" />
               </button>
             )}
 
